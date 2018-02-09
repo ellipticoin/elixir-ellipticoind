@@ -1,28 +1,37 @@
-defmodule Blacksmith.MixProject do
+defmodule Blacksmith.Mixfile do
   use Mix.Project
 
   def project do
     [
       app: :blacksmith,
       version: "0.1.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.3",
+      build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
+      compilers: [:rustler] ++ Mix.compilers(),
+      rustler_crates: rustler_crates(),
       deps: deps()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
-  def application do
-    [
-      extra_applications: [:logger]
-    ]
+  defp rustler_crates do
+    [vm: [
+      path: "native/vm",
+      mode: (if Mix.env == :prod, do: :release, else: :debug),
+    ]]
   end
 
-  # Run "mix help deps" to learn about dependencies.
+  def application do
+    [mod: {BlacksmithApp, []}, applications: [:lager, :logger, :grpc]]
+  end
+
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
+      {:grpc, github: "tony612/grpc-elixir"},
+      # {:grpc, path: "../../"},
+      {:rustler, "0.16.0"},
+      # {:rox, "~> 1.0"},
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
     ]
   end
 end
