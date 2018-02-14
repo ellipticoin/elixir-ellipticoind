@@ -1,3 +1,14 @@
+defmodule Elipticoin.InitializeArgs do
+  use Protobuf, syntax: :proto3
+
+  @type t :: %__MODULE__{
+    initial_supply: non_neg_integer
+  }
+  defstruct [:initial_supply]
+
+  field :initial_supply, 1, type: :uint64
+end
+
 defmodule Elipticoin.Empty do
   use Protobuf, syntax: :proto3
 

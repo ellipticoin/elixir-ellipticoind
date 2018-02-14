@@ -2,9 +2,13 @@ syntax = "proto3";
 package elipticoin;
 
 service BaseToken {
-  rpc _Initialize (Empty) returns (Empty) {}
+  rpc _Initialize (InitializeArgs) returns (Empty) {}
   rpc BalanceOf (Address) returns (Balance) {}
   rpc Transfer (TransferArgs) returns (Empty) {}
+}
+
+message InitializeArgs {
+  uint64 initial_supply = 1;
 }
 
 message Empty {
