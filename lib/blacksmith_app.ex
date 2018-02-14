@@ -5,7 +5,7 @@ defmodule BlacksmithApp do
     import Supervisor.Spec
 
     children = [
-      supervisor(GRPC.Server.Supervisor, [{Blacksmith.Server, 4047}])
+      # supervisor(GRPC.Server.Supervisor, [{Blacksmith.Server, 4047}])
     ]
 
     opts = [strategy: :one_for_one, name: BlacksmithApp]

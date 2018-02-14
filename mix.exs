@@ -31,7 +31,9 @@ defmodule Blacksmith.Mixfile do
       # {:grpc, path: "../../"},
       {:rustler, "0.16.0"},
       # {:rox, "~> 1.0"},
-      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false}
+      {:ed25519, "~> 1.2.0"},
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:benchee, "~> 0.11", only: [:dev, :test]}
     ]
   end
 end

@@ -1,0 +1,18 @@
+syntax = "proto3";
+package elipticoin;
+
+service Elipticoin {
+  rpc Call (FuncAndArgs) returns (ReturnData) {}
+}
+
+message FuncAndArgs {
+  string func = 1;
+  bytes args = 2;
+  bytes public_key= 3;
+  bytes signature = 4;
+}
+
+message ReturnData {
+  bytes bytes = 1;
+}
+

@@ -1,0 +1,25 @@
+syntax = "proto3";
+package elipticoin;
+
+service BaseToken {
+  rpc _Initialize (Empty) returns (Empty) {}
+  rpc BalanceOf (Address) returns (Balance) {}
+  rpc Transfer (TransferArgs) returns (Empty) {}
+}
+
+message Empty {
+}
+
+message Address {
+  bytes bytes = 1;
+}
+
+message TransferArgs {
+  bytes receiver_address = 1;
+  uint64 amount = 2;
+}
+
+message Balance {
+  uint64 amount = 1;
+}
+
