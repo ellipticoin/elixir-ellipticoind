@@ -46,7 +46,11 @@ struct Runtime<'a> {
 
 impl<'a> Runtime<'a> {
     fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
-        write_pointer(self.instance, &mut self.memory, vec)
+        write_pointer(self, vec)
+    }
+
+    fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {
+        read_pointer(self, ptr)
     }
 }
 const SENDER_FUNC_INDEX: usize = 0;
@@ -66,19 +70,19 @@ impl<'a> Externals for Runtime<'a> {
             }
             READ_FUNC_INDEX => {
                 let db = DB::open_default("tmp/blockchain.db").unwrap();
-                let key = read_pointer(self.memory, args.nth(0));
+                let key = self.read_pointer(args.nth(0));
 
                 let vec: Vec<u8> = match db.get(key.as_slice()) {
                     Ok(Some(value)) => value.to_vec(),
                     Ok(None) => vec![0],
                     Err(e) => vec![0],
                 };
-                let read_pointer = write_pointer(&self.instance, &mut self.memory, vec);
-                Ok(Some(read_pointer.into()))
+
+                Ok(Some(self.write_pointer(vec).into()))
             }
             WRITE_FUNC_INDEX => {
-                let key = read_pointer(self.memory, args.nth(0));
-                let value = read_pointer(self.memory, args.nth(1));
+                let key = read_pointer(self, args.nth(0));
+                let value = read_pointer(self, args.nth(1));
                 let db = DB::open_default("tmp/blockchain.db").unwrap();
                 db.put(key.as_slice(), value.as_slice());
 
@@ -124,13 +128,8 @@ fn memory(m: &ModuleRef) -> MemoryRef {
     }
 }
 
-fn call(m: &ModuleRef, mut memory: &mut MemoryRef, func: &str, arg: u32) -> u32 {
-    let mut runtime = Runtime {
-        state: &mut VMState {},
-        memory: &mut memory,
-        instance: m,
-    };
-    match m.invoke_export(func, &[RuntimeValue::I32(arg as i32)], &mut runtime) {
+fn call(runtime: &mut Runtime, func: &str, arg: u32) -> u32 {
+    match runtime.instance.invoke_export(func, &[RuntimeValue::I32(arg as i32)], runtime) {
         Ok(Some(RuntimeValue::I32(value))) => value as u32,
         Ok(Some(_)) => 0,
         Ok(None) => 0,
@@ -138,19 +137,19 @@ fn call(m: &ModuleRef, mut memory: &mut MemoryRef, func: &str, arg: u32) -> u32 
     }
 }
 
-fn write_pointer(m: &ModuleRef, mut memory: &mut MemoryRef, vec: Vec<u8>) -> u32 {
+fn write_pointer(runtime: &mut Runtime, vec: Vec<u8>) -> u32 {
     let vec_with_length = vec.to_vec_with_length();
-    let vec_pointer = call(m, &mut memory, &"alloc", vec_with_length.len() as u32);
-    memory.set(vec_pointer, vec_with_length.as_slice());
+    let vec_pointer = call(runtime, &"alloc", vec_with_length.len() as u32);
+    runtime.memory.set(vec_pointer, vec_with_length.as_slice());
     vec_pointer
 }
 
-fn read_pointer(mut memory: &mut MemoryRef, ptr: u32) -> Vec<u8>{
-    let length_slice = memory.get(ptr, 4).unwrap();
+fn read_pointer(runtime: &mut Runtime, ptr: u32) -> Vec<u8>{
+    let length_slice = runtime.memory.get(ptr, 4).unwrap();
     let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
     length_u8.clone_from_slice(&length_slice);
     let length: u32 = unsafe {transmute(length_u8)};
-    memory.get(ptr + 4, length.to_be() as usize).unwrap()
+    runtime.memory.get(ptr + 4, length.to_be() as usize).unwrap()
 }
 
 fn wasmi_run(code: Vec<u8>, func: &str, arg: &[u8]) -> Vec<u8> {
@@ -167,9 +166,14 @@ fn wasmi_run(code: Vec<u8>, func: &str, arg: &[u8]) -> Vec<u8> {
         .expect("Failed to run start function in module");
 
    let mut memory = memory(&main);
-   let arg_pointer = write_pointer(&main, &mut memory, arg.to_vec());
-   let pointer = call(&main, &mut memory, &func, arg_pointer);
-   read_pointer(&mut memory, pointer)
+   let mut runtime = Runtime {
+       state: &mut VMState {},
+       memory: &mut memory,
+       instance: &main,
+   };
+   let arg_pointer = write_pointer(&mut runtime, arg.to_vec());
+   let pointer = call(&mut runtime, &func, arg_pointer);
+   read_pointer(&mut runtime, pointer)
 }
 
 fn run<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
