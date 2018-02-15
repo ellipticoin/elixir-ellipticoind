@@ -1,28 +1,21 @@
 #[macro_use] extern crate rustler;
-#[macro_use] extern crate rustler_codegen;
 #[macro_use] extern crate lazy_static;
-extern crate wasmi;
 extern crate rocksdb;
+extern crate wasmi;
 use rocksdb::DB;
 
+mod elipticoin_api;
 mod helpers;
-use helpers::*;
-use std::mem;
-use std::mem::transmute;
-use std::env::args;
-
-use wasmi::*;
-use wasmi::RuntimeValue;
-use wasmi::{Error as InterpreterError};
-use memory_units::Pages;
+mod vm;
+use vm::VM;
 use std::io::Write;
+use wasmi::*;
+use elipticoin_api::ElipticoinAPI;
 
 
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use rustler::types::binary::{ NifBinary, OwnedNifBinary };
 
-const LENGTH_BYTE_COUNT: usize = 4;
-const SENDER: [u8; 20] = [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ];
 
 mod atoms {
     rustler_atoms! {
@@ -35,153 +28,21 @@ rustler_export_nifs! {
     [("run", 3, run)],
     None
 }
-pub struct VMState {
-}
 
-struct Runtime<'a> {
-    state: &'a mut VMState,
-    memory: &'a mut MemoryRef,
-    instance: &'a ModuleRef,
-}
-
-impl<'a> Runtime<'a> {
-    fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
-        write_pointer(self, vec)
-    }
-
-    fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {
-        read_pointer(self, ptr)
-    }
-}
-const SENDER_FUNC_INDEX: usize = 0;
-const READ_FUNC_INDEX: usize = 1;
-const WRITE_FUNC_INDEX: usize = 2;
-const THROW_FUNC_INDEX: usize = 3;
-
-impl<'a> Externals for Runtime<'a> {
-    fn invoke_index(
-        &mut self,
-        index: usize,
-        args: RuntimeArgs,
-        ) -> Result<Option<RuntimeValue>, Trap> {
-        match index {
-            SENDER_FUNC_INDEX => {
-                Ok(Some(self.write_pointer(SENDER.to_vec()).into()))
-            }
-            READ_FUNC_INDEX => {
-                let db = DB::open_default("tmp/blockchain.db").unwrap();
-                let key = self.read_pointer(args.nth(0));
-
-                let vec: Vec<u8> = match db.get(key.as_slice()) {
-                    Ok(Some(value)) => value.to_vec(),
-                    Ok(None) => vec![0],
-                    Err(e) => vec![0],
-                };
-
-                Ok(Some(self.write_pointer(vec).into()))
-            }
-            WRITE_FUNC_INDEX => {
-                let key = read_pointer(self, args.nth(0));
-                let value = read_pointer(self, args.nth(1));
-                let db = DB::open_default("tmp/blockchain.db").unwrap();
-                db.put(key.as_slice(), value.as_slice());
-
-                Ok(None)
-            }
-            THROW_FUNC_INDEX => {
-                Ok(None)
-            }
-            _ => panic!("unknown function index")
-        }
-    }
-}
-
-struct RuntimeModuleImportResolver;
-
-impl<'a> ModuleImportResolver for RuntimeModuleImportResolver {
-    fn resolve_func(
-        &self,
-        field_name: &str,
-        _signature: &Signature,
-        ) -> Result<FuncRef, InterpreterError> {
-        let func_ref = match field_name {
-            "sender" => {
-                FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), SENDER_FUNC_INDEX)
-            },
-            "read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
-            "write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
-            "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
-            _ => return Err(
-                InterpreterError::Function(
-                    format!("host module doesn't export function with name {}", field_name)
-                    )
-                )
-        };
-        Ok(func_ref)
-    }
-}
-
-fn memory(m: &ModuleRef) -> MemoryRef {
-    match m.export_by_name("memory").unwrap() {
-        ExternVal::Memory(x) => x,
-        _ => MemoryInstance::alloc(Pages(256), None).unwrap(),
-    }
-}
-
-fn call(runtime: &mut Runtime, func: &str, arg: u32) -> u32 {
-    match runtime.instance.invoke_export(func, &[RuntimeValue::I32(arg as i32)], runtime) {
-        Ok(Some(RuntimeValue::I32(value))) => value as u32,
-        Ok(Some(_)) => 0,
-        Ok(None) => 0,
-        Err(e) => 0,
-    }
-}
-
-fn write_pointer(runtime: &mut Runtime, vec: Vec<u8>) -> u32 {
-    let vec_with_length = vec.to_vec_with_length();
-    let vec_pointer = call(runtime, &"alloc", vec_with_length.len() as u32);
-    runtime.memory.set(vec_pointer, vec_with_length.as_slice());
-    vec_pointer
-}
-
-fn read_pointer(runtime: &mut Runtime, ptr: u32) -> Vec<u8>{
-    let length_slice = runtime.memory.get(ptr, 4).unwrap();
-    let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
-    length_u8.clone_from_slice(&length_slice);
-    let length: u32 = unsafe {transmute(length_u8)};
-    runtime.memory.get(ptr + 4, length.to_be() as usize).unwrap()
-}
-
-fn wasmi_run(code: Vec<u8>, func: &str, arg: &[u8]) -> Vec<u8> {
-    let module = Module::from_buffer(code).unwrap();
-
-    let mut imports = ImportsBuilder::new();
-    imports.push_resolver("env", &RuntimeModuleImportResolver);
-    let mut main = ModuleInstance::new(
-        &module,
-        &imports
-    )
-        .expect("Failed to instantiate module")
-        .run_start(&mut NopExternals)
-        .expect("Failed to run start function in module");
-
-   let mut memory = memory(&main);
-   let mut runtime = Runtime {
-       state: &mut VMState {},
-       memory: &mut memory,
-       instance: &main,
-   };
-   let arg_pointer = write_pointer(&mut runtime, arg.to_vec());
-   let pointer = call(&mut runtime, &func, arg_pointer);
-   read_pointer(&mut runtime, pointer)
-}
 
 fn run<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let code: NifBinary = try!(args[0].decode());
     let func: &str = try!(args[1].decode());
     let arg: NifBinary = try!(args[2].decode());
 
-    let output = wasmi_run(code.to_vec(), func, arg.as_slice());
+    let db = DB::open_default("tmp/blockchain.db").unwrap();
+    let module = ElipticoinAPI::new_module(code.to_vec());
+    let mut vm = VM::new(&module, &db);
+
+    let arg_pointer = vm.write_pointer(arg.to_vec());
+    let pointer = vm.call(&func, arg_pointer);
+    let output = vm.read_pointer(pointer);
+
     let mut binary = OwnedNifBinary::new(output.len()).unwrap();
     binary.as_mut_slice().write(&output).unwrap();
     Ok((atoms::ok(), binary.release(env)).encode(env))

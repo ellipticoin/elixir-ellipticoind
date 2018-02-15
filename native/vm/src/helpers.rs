@@ -1,16 +1,5 @@
 use std::mem::transmute;
-const LENGTH_BYTE_COUNT: usize = 4;
-
-// pub fn from_pointer_with_length(ptr: *const u8) -> Vec<u8> {
-//     let length_slice = unsafe { slice::from_raw_parts(ptr.offset(0) as *const u8, LENGTH_BYTE_COUNT as usize) };
-//     let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
-//     length_u8.clone_from_slice(&length_slice);
-//     let length: u32 = unsafe {transmute(length_u8)};
-//
-//     unsafe {
-//         slice::from_raw_parts(ptr.offset(LENGTH_BYTE_COUNT as isize) as *const u8, length.to_be() as usize).to_vec()
-//     }
-// }
+pub const LENGTH_BYTE_COUNT: usize = 4;
 
 pub unsafe trait VecWithLength {
     fn to_vec_with_length(&self) -> Vec<u8>;
