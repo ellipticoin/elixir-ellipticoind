@@ -38,23 +38,28 @@ impl ElipticoinAPI {
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
 
-                let vec: Vec<u8> = match vm.db.get(key.as_slice()) {
+                let value: Vec<u8> = match vm.db.get(key.as_slice()) {
                     Ok(Some(value)) => value.to_vec(),
-                    Ok(None) => vec![0],
-                    Err(_e) => vec![0],
+                    Ok(None) => vec![0,0,0,0,0,0,0,0],
+                    Err(_e) => vec![0,0,0,0,0,0,0,0],
                 };
+                // println!("{:?} = {:?}", key, value);
 
-                Ok(Some(vm.write_pointer(vec).into()))
+                Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
                 vm.db.put(key.as_slice(), value.as_slice())
                     .expect("failed to write");
+                // println!("{:?} => {:?}", key, value);
 
                 Ok(None)
             }
             THROW_FUNC_INDEX => {
+                let message = vm.read_pointer(args.nth(0));
+                // println!("Thrown:");
+                // println!("{:?}", message);
                 Ok(None)
             }
             _ => panic!("unknown function index")
