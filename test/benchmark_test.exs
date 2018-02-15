@@ -6,29 +6,32 @@ defmodule BlacksmithTest do
   use ExUnit.Case
 
   test "run benchmarks" do
-    VM.run(@base_token_contract, "_initialize", Elipticoin.InitializeArgs.encode(Elipticoin.InitializeArgs.new(initial_supply: 10000)))
+    {:ok, db} = VM.open_db("tmp/blockchain.db")
+    IO.inspect db
+    VM.run(db, @base_token_contract, "_initialize", Elipticoin.InitializeArgs.encode(Elipticoin.InitializeArgs.new(initial_supply: 10000)))
     Benchee.run(%{
-      "base_token_transfer"    => fn -> transfer(@receiver, 1) end,
+      "base_token_transfer"    => fn -> transfer(db, @receiver, 1) end,
     }, time: 1)
     IO.puts "Balance after benchmark:"
     sender = Elipticoin.Address.encode(Elipticoin.Address.new(bytes: @sender))
-    {:ok, balance} = VM.run(@base_token_contract, "balance_of", sender)
+    {:ok, balance} = VM.run(db, @base_token_contract, "balance_of", sender)
+    IO.inspect balance
     IO.inspect Elipticoin.Balance.decode(balance).amount
   end
 
-  def transfer(receiver, amount) do
+  def transfer(db, receiver, amount) do
     func_and_args_with_signature = Elipticoin.FuncAndArgs
     .decode(@base_token_transfer)
     func_and_args = Map.put(func_and_args_with_signature, :signature, <<>>)
 
-    if Ed25519.valid_signature?(
-      Map.get(func_and_args_with_signature, :signature),
-      Elipticoin.FuncAndArgs.encode(func_and_args),
-      Map.get(func_and_args_with_signature, :public_key)
-    ) do
-      VM.run(@base_token_contract, "transfer", Elipticoin.TransferArgs.encode(Elipticoin.TransferArgs.new(receiver_address: receiver, amount: amount)))
-    else
-      IO.puts "Invalid Transaction signature"
-    end
+    # if Ed25519.valid_signature?(
+    #   Map.get(func_and_args_with_signature, :signature),
+    #   Elipticoin.FuncAndArgs.encode(func_and_args),
+    #   Map.get(func_and_args_with_signature, :public_key)
+    # ) do
+      VM.run(db, @base_token_contract, "transfer", Elipticoin.TransferArgs.encode(Elipticoin.TransferArgs.new(receiver_address: receiver, amount: amount)))
+    # else
+    #   IO.puts "Invalid Transaction signature"
+    # end
   end
 end

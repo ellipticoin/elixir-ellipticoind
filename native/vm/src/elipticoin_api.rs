@@ -12,7 +12,7 @@ const THROW_FUNC_INDEX: usize = 3;
 pub struct ElipticoinAPI;
 
 impl ElipticoinAPI {
-    pub fn new_module(code: Vec<u8>) -> ModuleRef {
+    pub fn new_module(code: &[u8]) -> ModuleRef {
         let module = Module::from_buffer(code).unwrap();
 
         let mut imports = ImportsBuilder::new();

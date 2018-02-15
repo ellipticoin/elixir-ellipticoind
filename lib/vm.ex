@@ -1,5 +1,6 @@
 defmodule VM do
   use Rustler, otp_app: :blacksmith, crate: :vm
 
-  def run(_arg1, _arg2, _arg3), do: exit(:nif_not_loaded)
+  def run(_db, _code, _func, _arg), do: exit(:nif_not_loaded)
+  def open_db(_arg1), do: exit(:nif_not_loaded)
 end
