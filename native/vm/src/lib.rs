@@ -1,6 +1,5 @@
 #![feature(custom_attribute)]
 #[macro_use] extern crate rustler;
-#[macro_use] extern crate rustler_codegen;
 #[macro_use] extern crate lazy_static;
 extern crate rocksdb;
 extern crate wasmi;

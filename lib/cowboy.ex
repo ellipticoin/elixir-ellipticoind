@@ -1,5 +1,7 @@
-defmodule BlacksmithApp do
-  def start(_type, _args) do
+defmodule Cowboy do
+  use GenServer
+
+  def start_link(opts) do
     { :ok, _ } = :cowboy.start_clear(:http,
       [{:port, 4047}],
       %{env: %{dispatch: dispatch_config()}}

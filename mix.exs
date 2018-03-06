@@ -22,18 +22,20 @@ defmodule Blacksmith.Mixfile do
   end
 
   def application do
-    [mod: {BlacksmithApp, []}, applications: [:lager, :logger, :grpc]]
+    [
+      mod: {Blacksmith, []},
+      applications: [:cowboy, :ranch, :httpoison]]
   end
 
   defp deps do
     [
-      {:grpc, github: "tony612/grpc-elixir"},
-      # {:grpc, path: "../../"},
       {:rustler, "0.16.0"},
-      # {:rox, "~> 1.0"},
+      {:cowboy, "~> 2.2.0"},
+      {:cbor, "~> 0.1.0"},
       {:ed25519, "~> 1.2.0"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
-      {:benchee, "~> 0.11", only: [:dev, :test]}
+      {:benchee, "~> 0.11", only: [:dev, :test]},
+      {:httpoison, "~> 1.0", only: [:dev, :test]},
     ]
   end
 end

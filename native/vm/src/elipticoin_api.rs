@@ -8,6 +8,8 @@ const SENDER_FUNC_INDEX: usize = 0;
 const READ_FUNC_INDEX: usize = 1;
 const WRITE_FUNC_INDEX: usize = 2;
 const THROW_FUNC_INDEX: usize = 3;
+const MEMCPY_FUNC_INDEX: usize = 4;
+const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 5;
 
 pub struct ElipticoinAPI;
 
@@ -57,8 +59,20 @@ impl ElipticoinAPI {
                 Ok(None)
             }
             THROW_FUNC_INDEX => {
-                let message = vm.read_pointer(args.nth(0));
+                // let message = vm.read_pointer(args.nth(0));
                 // println!("Thrown:");
+                // println!("{:?}", message);
+                Ok(None)
+            }
+            MEMCPY_FUNC_INDEX => {
+                // let message = vm.read_pointer(args.nth(0));
+                println!("Copying:");
+                // println!("{:?}", message);
+                Ok(Some((0).into()))
+            }
+            RUST_BEGIN_UNWIND_FUNC_INDEX => {
+                // let message = vm.read_pointer(args.nth(0));
+                println!("Copying:");
                 // println!("{:?}", message);
                 Ok(None)
             }
@@ -80,6 +94,8 @@ impl<'a> ModuleImportResolver for ElipticoinAPI {
             "read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
             "write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
             "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
+            "memcpy" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32][..], Some(ValueType::I32)), MEMCPY_FUNC_INDEX),
+            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32, ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
             _ => return Err(
                 InterpreterError::Function(
                     format!("host module doesn't export function with name {}", field_name)

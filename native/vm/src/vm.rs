@@ -22,7 +22,7 @@ impl<'a> VM<'a> {
 
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(&"alloc", vec_with_length.len() as u32);
+        let vec_pointer = self.call(&"allocate", vec_with_length.len() as u32);
         self.memory().set(vec_pointer, vec_with_length.as_slice()).unwrap();
         vec_pointer
     }
@@ -32,7 +32,7 @@ impl<'a> VM<'a> {
         let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
         length_u8.clone_from_slice(&length_slice);
         let length: u32 = unsafe {transmute(length_u8)};
-        self.memory().get(ptr + 4, length.to_be() as usize).unwrap()
+        self.memory().get(ptr + 4, length as usize).unwrap()
     }
 
     pub fn call(&mut self, func: &str, arg: u32) -> u32 {
