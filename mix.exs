@@ -24,11 +24,12 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith, []},
-      applications: [:cowboy, :ranch, :httpoison]]
+      applications: [:cowboy, :ranch]]
   end
 
   defp deps do
     [
+      {:distillery, "~> 1.5", runtime: false},
       {:rustler, "0.16.0"},
       {:cowboy, "~> 2.2.0"},
       {:cbor, "~> 0.1.0"},
