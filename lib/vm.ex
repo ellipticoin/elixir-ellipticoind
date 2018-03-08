@@ -2,7 +2,7 @@ defmodule VM do
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm
 
-  def run(_db, _code, _func, _arg), do: exit(:nif_not_loaded)
+  def run(_db, _env, _code, _func, _arg), do: exit(:nif_not_loaded)
   def open_db(_arg1), do: exit(:nif_not_loaded)
 
   def start_link(opts) do
@@ -25,9 +25,10 @@ defmodule VM do
   end
 
   def handle_call(
-    {
-      :run,
-      rpc,
+    %{
+      rpc: rpc,
+      sender: sender,
+      nonce: _nonce,
     },
     _from,
     state=%{
@@ -35,7 +36,11 @@ defmodule VM do
       contracts: %{base_token: base_token_contract}
     }
   ) do
-    result = run(db, base_token_contract, "call", rpc)
+    env = %{
+      sender: sender
+    }
+
+    result = run(db, env, base_token_contract, "call", rpc)
 
     {:reply, result, state}
   end

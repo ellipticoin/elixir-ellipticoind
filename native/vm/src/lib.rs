@@ -16,14 +16,16 @@ use std::ops::Deref;
 use std::sync::{RwLock,Arc};
 
 
-use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
+use rustler::{NifEnv, NifTerm, NifResult, NifEncoder };
 use rustler::types::binary::{ NifBinary, OwnedNifBinary };
+use rustler::types::map::{ NifMapIterator };
 use rustler::resource::ResourceArc;
 
 
 mod atoms {
     rustler_atoms! {
         atom ok;
+        atom sender;
     }
 }
 
@@ -31,7 +33,7 @@ rustler_export_nifs! {
     "Elixir.VM",
     [
         ("open_db", 1, open_db),
-        ("run", 4, run),
+        ("run", 5, run),
     ],
     Some(on_load)
 }
@@ -62,12 +64,21 @@ fn open_db<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> 
     Ok(resp)
 }
 
-fn run<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+fn run<'a>(nif_env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let db_arc: ResourceArc<DBHandle> = args[0].decode()?;
     let db = db_arc.deref().db.write().unwrap();
-    let code: NifBinary = try!(args[1].decode());
-    let func: &str = try!(args[2].decode());
-    let arg: NifBinary = try!(args[3].decode());
+    let env_iter: NifMapIterator = try!(args[1].decode());
+    let code: NifBinary = try!(args[2].decode());
+    let func: &str = try!(args[3].decode());
+    let arg: NifBinary = try!(args[4].decode());
+
+    // env.map_get(atoms::sender().to_term(nif_env));
+
+    let mut vec: Vec<(String, String)> = vec![];
+    for (key, value) in env_iter {
+        let key_string: NifTerm = try!(key.decode());
+    //     vec.push((key_string, value));
+    }
 
     let module = ElipticoinAPI::new_module(&code);
     let mut vm = VM::new(&module, &db);
@@ -78,5 +89,5 @@ fn run<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
 
     let mut binary = OwnedNifBinary::new(output.len()).unwrap();
     binary.as_mut_slice().write(&output).unwrap();
-    Ok((atoms::ok(), binary.release(env)).encode(env))
+    Ok((atoms::ok(), binary.release(nif_env)).encode(nif_env))
 }

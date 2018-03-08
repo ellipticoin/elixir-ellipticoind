@@ -49,7 +49,7 @@ defmodule RequestHandler do
 
 
       if Crypto.valid_signature?(signature, message, sender) do
-        GenServer.call(VM, {:run, rpc})
+        GenServer.call(VM, %{rpc: rpc, sender: sender, nonce: nonce})
       else
         {:error, 401, "Invalid signature"}
       end
