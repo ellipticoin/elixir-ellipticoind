@@ -11,6 +11,9 @@ defmodule VM do
 
   def init(state) do
     {:ok, db} = VM.open_db("tmp/blockchain.db")
+    IO.puts "Base Contracts Path"
+    IO.puts Application.get_env(:blacksmith, :base_contracts_path)
+
     base_token_contract = File.read!(Application.get_env(:blacksmith, :base_contracts_path) <> "/base_token.wasm")
 
     {:ok, Map.merge(state, %{

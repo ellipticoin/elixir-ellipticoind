@@ -1,7 +1,11 @@
 defmodule Cowboy do
   use GenServer
 
-  def start_link(opts) do
+  def init(args) do
+    {:ok, args}
+  end
+
+  def start_link(_opts) do
     { :ok, _ } = :cowboy.start_clear(:http,
       [{:port, 4047}],
       %{env: %{dispatch: dispatch_config()}}

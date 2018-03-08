@@ -1,13 +1,57 @@
 defmodule RequestHandler do
-  @base_token_contract File.read!("base_contracts/base_token.wasm")
-
   def init(request, options) do
     if (:cowboy_req.method(request) == "POST") do
-      headers = %{"Content-Type" => "application/cbor"}
-      {:ok, body, _headers} = :cowboy_req.read_body(request)
-      {:ok, result} = GenServer.call(VM, {:run, body})
-      request2 = :cowboy_req.reply(200, headers, result, request)
-      {:ok, request2, options}
+      reply = case run(read_body(request)) do
+        {:ok, result} ->
+          success(result, request)
+        {:error, code, message} ->
+          error(code, message, request)
+      end
+
+
+      {:ok, reply, options}
     end
+  end
+
+  def read_body(request) do
+    {:ok, body, _headers} = :cowboy_req.read_body(request)
+    body
+  end
+
+  def success(payload, request) do
+    :cowboy_req.reply(
+      200,
+      %{"Content-Type" => "application/cbor"},
+      payload,
+      request
+    )
+  end
+
+  def error(code, message, request) do
+    :cowboy_req.reply(
+      code,
+      %{"Content-Type" => "text/plain"},
+      message,
+      request
+    )
+  end
+
+  def run(<<
+    signature::binary-size(64),
+    message::binary
+    >>) do
+
+      <<
+        sender::binary-size(32),
+        nonce::binary-size(4),
+        rpc::binary
+      >> = message
+
+
+      if Crypto.valid_signature?(signature, message, sender) do
+        GenServer.call(VM, {:run, rpc})
+      else
+        {:error, 401, "Invalid signature"}
+      end
   end
 end

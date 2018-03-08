@@ -9,6 +9,7 @@
   "dialyxir": {:hex, :dialyxir, "0.5.1", "b331b091720fd93e878137add264bac4f644e1ddae07a70bf7062c7862c4b952", [:mix], [], "hexpm"},
   "distillery": {:hex, :distillery, "1.5.2", "eec18b2d37b55b0bcb670cf2bcf64228ed38ce8b046bb30a9b636a6f5a4c0080", [:mix], [], "hexpm"},
   "ed25519": {:hex, :ed25519, "1.2.0", "9ce0b4e62de5b8d2035a5149bb322620b8d37b512c40758dedc84786fd5157fb", [:mix], [], "hexpm"},
+  "enacl": {:git, "https://github.com/jlouis/enacl.git", "c8403ab198b80863479c2ab5a9ccd0a8d73a57c4", []},
   "excbor": {:git, "https://github.com/cabo/excbor.git", "3b69e45cb2d35eee5b91774300dd1b997c0d4c33", []},
   "goldrush": {:git, "https://github.com/basho/goldrush.git", "8f1b715d36b650ec1e1f5612c00e28af6ab0de82", [tag: "0.1.9"]},
   "grpc": {:git, "https://github.com/tony612/grpc-elixir.git", "0d70e235864262995250f9824ea3ecf39a2ea16f", []},

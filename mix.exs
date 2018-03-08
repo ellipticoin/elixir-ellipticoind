@@ -33,7 +33,7 @@ defmodule Blacksmith.Mixfile do
       {:rustler, "0.16.0"},
       {:cowboy, "~> 2.2.0"},
       {:cbor, "~> 0.1.0"},
-      {:ed25519, "~> 1.2.0"},
+      {:enacl, git: "https://github.com/jlouis/enacl.git"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:httpoison, "~> 1.0", only: [:dev, :test]},
