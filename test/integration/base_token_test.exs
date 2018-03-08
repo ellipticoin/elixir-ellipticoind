@@ -8,14 +8,42 @@ defmodule Integration.BaseTokenTest do
   use ExUnit.Case
 
   test "send some tokens" do
-    call(0, :constructor, [100])
-    call(1, :transfer, [@receiver, 3])
-    {:ok, response} = call(1, :balance_of, [@sender])
+    call(%{
+      nonce: 0,
+      method: :constructor,
+      params: [100],
+    })
+
+    {:ok, response} = call(%{
+      nonce: 2,
+      method: :balance_of,
+      params: [@sender, 100],
+    })
+
+    assert Cbor.decode(response.body) == 100
+
+    call(%{
+      nonce: 1,
+      method: :transfer,
+      params: [@receiver, 3],
+    })
+
+    {:ok, response} = call(%{
+      nonce: 2,
+      method: :balance_of,
+      params: [@sender, 3],
+    })
 
     assert Cbor.decode(response.body) == 97
+
+
   end
 
-  def call(nonce, method, params) do
+  def call(%{
+    nonce: nonce,
+    method: method,
+    params: params,
+  }) do
     rpc = Cbor.encode(%{
       method: method,
       params: params,

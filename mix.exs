@@ -30,7 +30,7 @@ defmodule Blacksmith.Mixfile do
   defp deps do
     [
       {:distillery, "~> 1.5", runtime: false},
-      {:rustler, "0.16.0"},
+      {:rustler, github: "hansihe/rustler"},
       {:cowboy, "~> 2.2.0"},
       {:cbor, "~> 0.1.0"},
       {:enacl, git: "https://github.com/jlouis/enacl.git"},

@@ -35,7 +35,11 @@ impl ElipticoinAPI {
         ) -> Result<Option<RuntimeValue>, Trap> {
         match index {
             SENDER_FUNC_INDEX => {
-                Ok(Some(vm.write_pointer(SENDER.to_vec()).into()))
+                if let Some(sender) = vm.env.get("sender") {
+                    Ok(Some(vm.write_pointer(sender.to_vec()).into()))
+                } else {
+                    Ok(None)
+                }
             }
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
@@ -45,7 +49,6 @@ impl ElipticoinAPI {
                     Ok(None) => vec![0,0,0,0,0,0,0,0],
                     Err(_e) => vec![0,0,0,0,0,0,0,0],
                 };
-                // println!("{:?} = {:?}", key, value);
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
@@ -54,26 +57,16 @@ impl ElipticoinAPI {
                 let value = vm.read_pointer(args.nth(1));
                 vm.db.put(key.as_slice(), value.as_slice())
                     .expect("failed to write");
-                // println!("{:?} => {:?}", key, value);
 
                 Ok(None)
             }
             THROW_FUNC_INDEX => {
-                // let message = vm.read_pointer(args.nth(0));
-                // println!("Thrown:");
-                // println!("{:?}", message);
                 Ok(None)
             }
             MEMCPY_FUNC_INDEX => {
-                // let message = vm.read_pointer(args.nth(0));
-                println!("Copying:");
-                // println!("{:?}", message);
                 Ok(Some((0).into()))
             }
             RUST_BEGIN_UNWIND_FUNC_INDEX => {
-                // let message = vm.read_pointer(args.nth(0));
-                println!("Copying:");
-                // println!("{:?}", message);
                 Ok(None)
             }
             _ => panic!("unknown function index")

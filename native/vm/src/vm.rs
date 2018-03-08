@@ -2,6 +2,7 @@ extern crate rocksdb;
 use self::rocksdb::DB;
 use helpers::*;
 use wasmi::*;
+use std::collections::HashMap;
 use wasmi::RuntimeValue;
 use memory_units::Pages;
 use std::mem::transmute;
@@ -10,13 +11,15 @@ use elipticoin_api::*;
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub db: &'a DB,
+    pub env: &'a HashMap<String, &'a [u8]>,
 }
 
 impl<'a> VM<'a> {
-    pub fn new(main: &'a ModuleRef, db: &'a DB) -> VM<'a> {
+    pub fn new(db: &'a DB, env: &'a HashMap<String, &'a [u8]>, main: &'a ModuleRef) -> VM<'a> {
         VM {
             instance: main,
             db: db,
+            env: env,
         }
     }
 
