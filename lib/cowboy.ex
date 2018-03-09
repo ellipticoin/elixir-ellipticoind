@@ -6,8 +6,9 @@ defmodule Cowboy do
   end
 
   def start_link(_opts) do
+    IO.puts "Listening on port #{port}..."
     { :ok, _ } = :cowboy.start_clear(:http,
-      [{:port, 4047}],
+      [{:port, port}],
       %{env: %{dispatch: dispatch_config()}}
     )
   end
@@ -20,5 +21,9 @@ defmodule Cowboy do
         ]
       }
     ])
+  end
+
+  defp port do
+    Application.get_env(:blacksmith, :port)
   end
 end

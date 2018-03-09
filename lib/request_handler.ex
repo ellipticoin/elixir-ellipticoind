@@ -44,9 +44,15 @@ defmodule RequestHandler do
       <<
         sender::binary-size(32),
         nonce::binary-size(4),
+        _contract::binary-size(32),
         rpc::binary
       >> = message
 
+
+      IO.inspect byte_size(message)
+      IO.inspect byte_size(signature)
+      IO.inspect byte_size(sender)
+      IO.inspect Crypto.valid_signature?(signature, message, sender)
 
       if Crypto.valid_signature?(signature, message, sender) do
         GenServer.call(VM, %{rpc: rpc, sender: sender, nonce: nonce})
