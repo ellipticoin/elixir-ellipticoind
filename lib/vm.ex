@@ -38,15 +38,19 @@ defmodule VM do
       sender: sender
     }
 
-    {:ok, <<
-      error::binary-size(4),
-      result::binary,
-    >>} = run(db, env, base_token_contract, rpc)
+    case run(db, env, base_token_contract, rpc) do
+      {:ok, <<
+        error_binary::binary-size(4),
+        result::binary,
+        >>} ->
+        error_code = :binary.decode_unsigned(error_binary, :little)
 
-    if :binary.decode_unsigned(error) == 0 do
-      {:reply, {:ok, result}, state}
-    else
-      {:reply, {:error, code: error, message: result}, state}
+        if error_code == 0 do
+          {:reply, {:ok, result}, state}
+        else
+          {:reply, {:error, error_code, Atom.to_string(Cbor.decode(result))}, state}
+        end
+      _ -> {:reply, {:error, 0, "VM panic"}, state}
     end
   end
 end
