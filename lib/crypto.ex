@@ -16,10 +16,6 @@ defmodule Crypto do
   end
 
   def valid_signature?(signature, message, public_key) do
-    # case :enacl.sign_verify_detached(signature, message, public_key) do
-    #   {:ok, _data} -> true
-    #   {:error, _message} -> false
-    # end
     case :libsodium_crypto_sign_ed25519.verify_detached(signature, message, public_key) do
       0 -> true
       1 -> false

@@ -3,7 +3,6 @@ use vm::*;
 use wasmi::{Error as InterpreterError};
 use wasmi::*;
 
-const SENDER: [u8; 32] = [ 177, 20, 237, 76, 136, 182, 27, 70, 255, 84, 78, 145, 32, 22, 76, 181, 220, 73, 167, 17, 87, 194, 18, 247, 105, 149, 191, 29, 106, 236, 171, 14 ];
 const SENDER_FUNC_INDEX: usize = 0;
 const READ_FUNC_INDEX: usize = 1;
 const WRITE_FUNC_INDEX: usize = 2;

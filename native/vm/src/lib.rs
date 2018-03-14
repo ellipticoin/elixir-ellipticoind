@@ -3,11 +3,15 @@
 #[macro_use] extern crate lazy_static;
 extern crate rocksdb;
 extern crate wasmi;
+extern crate serde_cbor;
+
+use serde_cbor::{from_slice, to_vec, Value};
 use rocksdb::DB;
 
 mod elipticoin_api;
 mod helpers;
 mod vm;
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use vm::VM;
 use std::io::Write;
@@ -20,14 +24,12 @@ use std::sync::{RwLock,Arc};
 use rustler::{Env, Term, Encoder, NifResult};
 use rustler::types::binary::{ Binary, OwnedBinary };
 use rustler::types::map::{ MapIterator };
-use rustler::types::atom::{ Atom };
 use rustler::resource::ResourceArc;
 
 
 mod atoms {
     rustler_atoms! {
         atom ok;
-        atom sender;
     }
 }
 
@@ -35,7 +37,7 @@ rustler_export_nifs! {
     "Elixir.VM",
     [
         ("open_db", 1, open_db),
-        ("run", 5, run),
+        ("run", 4, run),
     ],
     Some(on_load)
 }
@@ -71,8 +73,14 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let db = db_arc.deref().db.write().unwrap();
     let env_iter: MapIterator = try!(args[1].decode());
     let code: Binary = try!(args[2].decode());
-    let func: &str = try!(args[3].decode());
-    let arg: Binary = try!(args[4].decode());
+    let rpc_binary: Binary = try!(args[3].decode());
+    let rpc: BTreeMap<String, Value> = from_slice(rpc_binary.as_slice()).unwrap();
+    let ref func = rpc.get("method").unwrap().as_string().unwrap();
+    let args_iter = rpc
+        .get("params")
+        .unwrap()
+        .as_array()
+        .unwrap();
 
     let mut env = HashMap::new();
     for (key, value) in env_iter {
@@ -85,8 +93,19 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let module = ElipticoinAPI::new_module(&code);
     let mut vm = VM::new(&db, &env, &module);
 
-    let arg_pointer = vm.write_pointer(arg.to_vec());
-    let pointer = vm.call(&func, arg_pointer);
+    let mut args = Vec::new();
+
+    for arg in args_iter {
+        if arg.is_number() {
+            args.push(RuntimeValue::I32(arg.as_u64().unwrap() as i32));
+        } else {
+            let arg_pointer = vm.write_pointer(to_vec(arg).unwrap());
+            args.push(RuntimeValue::I32(arg_pointer as i32));
+        }
+    }
+
+
+    let pointer = vm.call(&func, &args);
     let output = vm.read_pointer(pointer);
 
     let mut binary = OwnedBinary::new(output.len()).unwrap();

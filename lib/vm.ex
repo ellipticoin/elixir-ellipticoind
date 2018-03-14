@@ -2,7 +2,7 @@ defmodule VM do
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm
 
-  def run(_db, _env, _code, _func, _arg), do: exit(:nif_not_loaded)
+  def run(_db, _env, _code, _rpc), do: exit(:nif_not_loaded)
   def open_db(_arg1), do: exit(:nif_not_loaded)
 
   def start_link(opts) do
@@ -38,8 +38,15 @@ defmodule VM do
       sender: sender
     }
 
-    result = run(db, env, base_token_contract, "call", rpc)
+    {:ok, <<
+      error::binary-size(4),
+      result::binary,
+    >>} = run(db, env, base_token_contract, rpc)
 
-    {:reply, result, state}
+    if :binary.decode_unsigned(error) == 0 do
+      {:reply, {:ok, result}, state}
+    else
+      {:reply, {:error, code: error, message: result}, state}
+    end
   end
 end

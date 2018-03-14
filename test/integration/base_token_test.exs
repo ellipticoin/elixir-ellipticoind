@@ -20,9 +20,8 @@ defmodule Integration.BaseTokenTest do
       private_key: @sender_private_key,
       nonce: 2,
       method: :balance_of,
-      params: [@sender, 100],
+      params: [@sender],
     })
-    IO.inspect response
 
     assert Cbor.decode(response.body) == 100
 
@@ -70,11 +69,9 @@ defmodule Integration.BaseTokenTest do
       params: params,
     })
 
-    IO.inspect byte_size(@base_token_contract)
     public_key =  Crypto.public_key_from_private_key(private_key)
     message = public_key <> <<nonce::size(32)>> <> @base_token_contract <> rpc
     signature = Crypto.sign(message, private_key)
-    IO.inspect Crypto.valid_signature?(signature, message, public_key)
 
     HTTPoison.post(
       @host,

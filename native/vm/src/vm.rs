@@ -25,7 +25,7 @@ impl<'a> VM<'a> {
 
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(&"allocate", vec_with_length.len() as u32);
+        let vec_pointer = self.call(&"allocate", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
         self.memory().set(vec_pointer, vec_with_length.as_slice()).unwrap();
         vec_pointer
     }
@@ -38,8 +38,8 @@ impl<'a> VM<'a> {
         self.memory().get(ptr + 4, length as usize).unwrap()
     }
 
-    pub fn call(&mut self, func: &str, arg: u32) -> u32 {
-        match self.instance.invoke_export(func, &[RuntimeValue::I32(arg as i32)], self) {
+    pub fn call(&mut self, func: &str, args: &[RuntimeValue]) -> u32 {
+        match self.instance.invoke_export(func, args, self) {
             Ok(Some(RuntimeValue::I32(value))) => value as u32,
             Ok(Some(_)) => 0,
             Ok(None) => 0,

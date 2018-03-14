@@ -49,7 +49,7 @@ release :blacksmith do
   set applications: [
     :runtime_tools,
     :cbor,
-    :ed25519,
+    :libsodium,
     :rustler,
   ]
 end
