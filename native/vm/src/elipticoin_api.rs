@@ -2,12 +2,15 @@ extern crate rocksdb;
 use vm::*;
 use wasmi::{Error as InterpreterError};
 use wasmi::*;
+use std::str;
+
 
 const SENDER_FUNC_INDEX: usize = 0;
 const READ_FUNC_INDEX: usize = 1;
 const WRITE_FUNC_INDEX: usize = 2;
 const THROW_FUNC_INDEX: usize = 3;
 const MEMCPY_FUNC_INDEX: usize = 4;
+const CALL_FUNC_INDEX: usize = 5;
 const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 5;
 
 pub struct ElipticoinAPI;
@@ -68,6 +71,20 @@ impl ElipticoinAPI {
             MEMCPY_FUNC_INDEX => {
                 Ok(Some((0).into()))
             }
+            CALL_FUNC_INDEX => {
+                let code = vm.read_pointer(args.nth(0));
+                let method = vm.read_pointer(args.nth(1));
+                let params: i32 = args.nth(2);
+                let storage = vm.read_pointer(args.nth(3));
+
+                let module = ElipticoinAPI::new_module(&code);
+                let mut inner_vm = VM::new(&vm.db, &vm.env, &module);
+
+                let pointer = inner_vm.call(str::from_utf8(&method).unwrap(), &[RuntimeValue::I32(params)]);
+
+                let result = inner_vm.read_pointer(pointer).clone();
+                Ok(Some(vm.write_pointer(vec![result[4] as u8]).into()))
+            }
             RUST_BEGIN_UNWIND_FUNC_INDEX => {
                 Ok(None)
             }
@@ -90,7 +107,8 @@ impl<'a> ModuleImportResolver for ElipticoinAPI {
             "write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
             "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
             "memcpy" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32][..], Some(ValueType::I32)), MEMCPY_FUNC_INDEX),
-            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32, ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
+            "_call" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], Some(ValueType::I32)), CALL_FUNC_INDEX),
+            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
             _ => return Err(
                 InterpreterError::Function(
                     format!("host module doesn't export function with name {}", field_name)
