@@ -7,7 +7,7 @@ defmodule Integration.BaseTokenTest do
   @receiver  Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
   @receiver_private_key Base.decode16!("1e598351b3347ca287da6a77de2ca43fb2f7bd85350d54c870f1333add33443a027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
   @base_token_contract Base.decode16!("02082cf471002b5c5dfefdd6cbd30666ff02c4df90169f766877caec26ed4f88", case: :lower)
-  @echo_contract  File.read!("test/support/echo.wasm")
+  @adder_contract  File.read!("test/support/adder.wasm")
 
   use ExUnit.Case
 
@@ -87,16 +87,16 @@ defmodule Integration.BaseTokenTest do
       private_key: @sender_private_key,
       nonce: 0,
       method: :deploy,
-      params: [:echo, @echo_contract],
+      params: [:adder, @adder_contract],
     })
 
     {:ok, response} = call(%{
       private_key: @sender_private_key,
       nonce: 0,
       method: :call,
-      params: [@sender, :echo, :echo, 7],
+      params: [@sender, :adder, :add, [1, 2]],
     })
 
-    assert Cbor.decode(response.body) == 7
+    assert Cbor.decode(response.body) == 3
   end
 end

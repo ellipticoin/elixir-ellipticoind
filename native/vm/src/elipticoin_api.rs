@@ -1,6 +1,7 @@
 extern crate rocksdb;
 use vm::*;
 use wasmi::{Error as InterpreterError};
+use serde_cbor::{from_slice, to_vec, Value};
 use wasmi::*;
 use std::str;
 
@@ -11,7 +12,7 @@ const WRITE_FUNC_INDEX: usize = 2;
 const THROW_FUNC_INDEX: usize = 3;
 const MEMCPY_FUNC_INDEX: usize = 4;
 const CALL_FUNC_INDEX: usize = 5;
-const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 5;
+const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 6;
 
 pub struct ElipticoinAPI;
 
@@ -74,16 +75,28 @@ impl ElipticoinAPI {
             CALL_FUNC_INDEX => {
                 let code = vm.read_pointer(args.nth(0));
                 let method = vm.read_pointer(args.nth(1));
-                let params: i32 = args.nth(2);
-                let storage = vm.read_pointer(args.nth(3));
+                let args_value = from_slice::<Value>(&vm.read_pointer(args.nth(2))).unwrap();
+                let args_iter: &Vec<Value> = args_value
+                    .as_array()
+                    .unwrap();
+                let _storage = vm.read_pointer(args.nth(3));
 
                 let module = ElipticoinAPI::new_module(&code);
                 let mut inner_vm = VM::new(&vm.db, &vm.env, &module);
+                let mut args = Vec::new();
+                for arg in args_iter {
+                    if arg.is_number() {
+                        args.push(RuntimeValue::I32(arg.as_u64().unwrap() as i32));
+                    } else {
+                        let arg_pointer = inner_vm.write_pointer(to_vec(&arg).unwrap());
+                        args.push(RuntimeValue::I32(arg_pointer as i32));
+                    }
+                }
 
-                let pointer = inner_vm.call(str::from_utf8(&method).unwrap(), &[RuntimeValue::I32(params)]);
+                let result_ptr = inner_vm.call(str::from_utf8(&method).unwrap(), &args);
 
-                let result = inner_vm.read_pointer(pointer).clone();
-                Ok(Some(vm.write_pointer(vec![result[4] as u8]).into()))
+                let result = inner_vm.read_pointer(result_ptr).clone();
+                Ok(Some(vm.write_pointer(result.to_vec()).into()))
             }
             RUST_BEGIN_UNWIND_FUNC_INDEX => {
                 Ok(None)
