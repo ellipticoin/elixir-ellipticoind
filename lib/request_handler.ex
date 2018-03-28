@@ -48,6 +48,7 @@ defmodule RequestHandler do
         rpc::binary
       >> = message
 
+      IO.inspect Cbor.decode(rpc)
       if Crypto.valid_signature?(signature, message, sender) do
         case GenServer.call(VM, %{rpc: rpc, sender: sender, nonce: nonce}) do
           {:error, code, message} -> {:error, 400 + code, message}
