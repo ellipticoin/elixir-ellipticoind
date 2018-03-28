@@ -6,12 +6,13 @@ defmodule Mix.Tasks.Benchmark do
   @shortdoc "Runs benchmarks"
   def run(_) do
     Application.ensure_all_started(:blacksmith)
-    constructor()
+    constructor(@sender, 1000000000)
     Benchee.run(%{
       "base_token_transfer"    => fn -> transfer(1, @receiver) end,
     }, time: 1)
+
     {:ok, balance}  = balance(@receiver)
-    IO.puts "Reciever's balance after benchmark #{Cbor.decode(balance)}"
+    IO.puts "Receiver's balance after benchmark #{Cbor.decode(balance)}"
   end
 
   def balance(address) do
@@ -36,13 +37,13 @@ defmodule Mix.Tasks.Benchmark do
     })
   end
 
-  def constructor do
+  def constructor(sender, amount) do
     GenServer.call(VM, %{
       rpc: Cbor.encode(%{
         method: :constructor,
-        params: [100],
+        params: [amount],
       }),
-      sender: @sender,
+      sender: sender,
       nonce: 0
     })
   end

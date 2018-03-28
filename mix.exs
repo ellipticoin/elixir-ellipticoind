@@ -24,7 +24,7 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith, []},
-      applications: [:cowboy, :ranch]]
+      applications: [:cowboy, :ranch, :redix]]
   end
 
   defp deps do
@@ -32,7 +32,8 @@ defmodule Blacksmith.Mixfile do
       {:distillery, "~> 1.5", runtime: false},
       {:rustler, "0.16.0"},
       {:cowboy, "~> 2.2.0"},
-      {:cbor, "~> 0.1.0"},
+      {:redix, ">= 0.7.0"},
+      {:cbor, [path: "../elixir-cbor"]},
       {:libsodium, "~> 0.0.10"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:benchee, "~> 0.11", only: [:dev, :test]},

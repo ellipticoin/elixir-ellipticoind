@@ -1,5 +1,3 @@
-extern crate rocksdb;
-use self::rocksdb::DB;
 use helpers::*;
 use wasmi::*;
 use std::collections::HashMap;
@@ -7,6 +5,7 @@ use wasmi::RuntimeValue;
 use memory_units::Pages;
 use std::mem::transmute;
 use elipticoin_api::*;
+use ::DB;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
@@ -34,7 +33,7 @@ impl<'a> VM<'a> {
         let length_slice = self.memory().get(ptr, 4).unwrap();
         let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
         length_u8.clone_from_slice(&length_slice);
-        let length: u32 = unsafe {transmute(length_u8)};
+        let length: u32 = unsafe {(transmute::<[u8; 4], u32>(length_u8)).to_be()};
         self.memory().get(ptr + 4, length as usize).unwrap()
     }
 

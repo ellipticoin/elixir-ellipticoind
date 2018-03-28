@@ -1,4 +1,3 @@
-extern crate rocksdb;
 use vm::*;
 use wasmi::{Error as InterpreterError};
 use serde_cbor::{from_slice, to_vec, Value};
@@ -38,7 +37,6 @@ impl ElipticoinAPI {
         ) -> Result<Option<RuntimeValue>, Trap> {
         match index {
             SENDER_FUNC_INDEX => {
-                // println!("sender {:?}", vm.env.get("sender"));
                 if let Some(sender) = vm.env.get("sender") {
                     Ok(Some(vm.write_pointer(sender.to_vec()).into()))
                 } else {
@@ -47,22 +45,14 @@ impl ElipticoinAPI {
             }
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                // println!("read {:?}", key);
 
-                let value: Vec<u8> = match vm.db.get(key.as_slice()) {
-                    Ok(Some(value)) => value.to_vec(),
-                    Ok(None) => vec![],
-                    Err(_e) => vec![],
-                };
-
+                let value: Vec<u8> = vm.db.read(key.as_slice());
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                // println!("write {:?} {:?}", key, value);
-                vm.db.put(key.as_slice(), value.as_slice())
-                    .expect("failed to write");
+                vm.db.write(key.as_slice(), value.as_slice());
 
                 Ok(None)
             }
@@ -82,7 +72,7 @@ impl ElipticoinAPI {
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = ElipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(&vm.db, &vm.env, &module);
+                let mut inner_vm = VM::new(vm.db, &vm.env, &module);
                 let mut args = Vec::new();
                 for arg in args_iter {
                     if arg.is_number() {
