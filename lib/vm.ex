@@ -44,18 +44,19 @@ defmodule VM do
 
     case rpc do
       <<
-        162,
-        102,
-        "params",
+        162,         # Start CBOR Hash with length 2
+        102,         # Start CBOR string with length 5
+        "params",    # Params string
         130,
         88,
         32,
-        recipient::binary-size(32),
-        amount,
-        102,
-        "method",
-        104,
-        "transfer">> ->
+        recipient::binary-size(32), # The transaction recipient
+        amount,      # The transaction amount
+        102,         # Start CBOR string of length 6
+        "method",    # method string
+        104,         # Start CBOR string with length 8
+        "transfer",  # "transfer" string
+      >> ->
           run_transfer(state, sender, recipient, amount)
       _ ->
         run_vm(state, db, env, base_token_contract, rpc)
