@@ -1,16 +1,32 @@
 defmodule RequestHandler do
   def init(request, options) do
-    if (:cowboy_req.method(request) == "POST") do
-      reply = case run(read_body(request)) do
-        {:ok, result} ->
-          success(result, request)
-        {:error, code, message} ->
-          error(code, message, request)
-      end
+    method = :cowboy_req.method(request)
+    body = read_body(request)
 
+    reply = case method do
+      "POST" ->
+        case run(body) do
+          {:ok, result} ->
+            success(result, request)
+          {:error, code, message} ->
+            error(code, message, request)
+        end
 
-      {:ok, reply, options}
+      "PUT" ->
+        reply = deploy(body)
+        {:ok, reply, options}
+      _ ->
+        {:error, 501, "Not Implemented"}
     end
+
+    {:ok, reply, options}
+  end
+
+  def deploy(<<
+    signature::binary-size(64),
+    message::binary
+    >>) do
+      GenServer.call(VM, {:deploy, %{}})
   end
 
   def read_body(request) do
@@ -50,13 +66,13 @@ defmodule RequestHandler do
       >> = message
 
       if Crypto.valid_signature?(signature, message, sender) do
-        case GenServer.call(VM, %{
+        case GenServer.call(VM, {:call, %{
           address: address,
           contract_id: contract_id,
           rpc: rpc,
           sender: sender,
           nonce: nonce,
-        }) do
+        }}) do
           {:error, code, message} -> {:error, 400 + code, message}
           response -> response
         end

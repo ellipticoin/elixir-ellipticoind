@@ -29,14 +29,18 @@ defmodule VM do
     })}
   end
 
-  def handle_call(
+  def handle_call({:deploy, %{}}, _from, state=%{}) do
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:call,
     %{
       rpc: rpc,
       sender: sender,
       nonce: _nonce,
       address: address,
       contract_id: contract_id,
-    },
+    }},
     _from,
     state=%{
       db: db,
@@ -51,19 +55,14 @@ defmodule VM do
 
     case rpc do
       <<
-        162,         # Start CBOR Hash with length 2
-        102,         # Start CBOR string with length 5
-        "params",    # Params string
-        130,
-        88,
+        130,          # Start CBOR Array length 2
+        104,          # Start CBOR String length 8
+        "transfer",
+        130,          # Start CBOR Array length 2
+        88,           # Start CBOR Binary size 32
         32,
-        recipient::binary-size(32), # The transaction recipient
-        amount,      # The transaction amount
-        102,         # Start CBOR string of length 6
-        "method",    # method string
-        104,         # Start CBOR string with length 8
-        "transfer",  # "transfer" string
-      >> ->
+        recipient::binary-size(32),
+        amount>> ->
           run_transfer(state, sender, recipient, amount)
       _ ->
         run_vm(state, db, env, address, contract_id, rpc)

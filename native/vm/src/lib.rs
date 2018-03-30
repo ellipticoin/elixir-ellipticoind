@@ -149,15 +149,13 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let address: Binary = try!(args[2].decode());
     let contract_id: Binary = try!(args[3].decode());
     let rpc_binary: Binary = try!(args[4].decode());
-    let rpc: BTreeMap<String, Value> = from_slice(rpc_binary.as_slice()).unwrap();
+    let rpc: Vec<Value> = from_slice(rpc_binary.as_slice()).unwrap();
 
 
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
-    let ref func = rpc.get("method").unwrap().as_string().unwrap();
-    let args_iter = rpc
-        .get("params")
-        .unwrap()
+    let ref func = rpc[0].as_string().unwrap();
+    let args_iter = rpc[1]
         .as_array()
         .unwrap();
 
