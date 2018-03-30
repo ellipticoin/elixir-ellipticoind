@@ -2,8 +2,7 @@ defmodule VM do
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm
 
-  def run(_db, _env, _code, _rpc), do: exit(:nif_not_loaded)
-  def transfer(_db, _sender, _recipeint, _amount), do: exit(:nif_not_loaded)
+  def run(_db, _env, _contract_id, _address, _rpc), do: exit(:nif_not_loaded)
   def open_db(_backend, _options), do: exit(:nif_not_loaded)
 
   def start_link(opts) do
@@ -11,17 +10,21 @@ defmodule VM do
   end
 
   def init(state) do
-    # {:ok, db} = VM.open_db(:rocksdb, "tmp/blockchain.db")
     {:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
     {:ok, redis} = Redix.start_link()
 
-    base_token_contract = File.read!(Application.get_env(:blacksmith, :base_contracts_path) <> "/base_token.wasm")
+    set_contract_code(
+      redis,
+      Constants.system_address(),
+      Constants.base_token_name(),
+      Constants.base_token_code()
+    )
 
     {:ok, Map.merge(state, %{
       db: db,
       redis: redis,
       contracts: %{
-        base_token: base_token_contract,
+        base_token: Constants.base_token_code(),
       }
     })}
   end
@@ -31,11 +34,15 @@ defmodule VM do
       rpc: rpc,
       sender: sender,
       nonce: _nonce,
+      address: address,
+      contract_id: contract_id,
     },
     _from,
     state=%{
       db: db,
-      contracts: %{base_token: base_token_contract}
+      contracts: %{
+        base_token: base_token_code,
+      }
     }
   ) do
     env = %{
@@ -59,8 +66,23 @@ defmodule VM do
       >> ->
           run_transfer(state, sender, recipient, amount)
       _ ->
-        run_vm(state, db, env, base_token_contract, rpc)
+        run_vm(state, db, env, address, contract_id, rpc)
     end
+  end
+
+  def set_contract_code(redis, address, contract_name, contract_code) do
+    key = address <> Helpers.pad_bytes_right(contract_name)
+
+    redis |>
+      set_state(key, contract_code)
+  end
+
+  def set_state(redis, key, value) do
+    Redix.command(redis, [
+      "SET",
+      key,
+      value
+    ])
   end
 
   def run_transfer(state, sender, recipient, amount) do
@@ -86,8 +108,8 @@ defmodule VM do
 
   end
 
-  def run_vm(state, db, env, base_token_contract, rpc) do
-    case run(db, env, base_token_contract, rpc) do
+  def run_vm(state, db, env, address, contract_id, rpc) do
+    case run(db, env, address, contract_id, rpc) do
       {:ok, result} -> format_result(state, result)
       _ -> {:reply, {:error, 0, "VM panic"}, state}
     end

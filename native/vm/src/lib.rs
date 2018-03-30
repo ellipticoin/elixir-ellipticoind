@@ -1,6 +1,5 @@
 #![feature(
     custom_attribute,
-    underscore_lifetimes,
 )]
 #[macro_use] extern crate rustler;
 #[macro_use] extern crate lazy_static;
@@ -28,7 +27,6 @@ use std::sync::{RwLock,Arc};
 use rustler::{Env, Term, Encoder, NifResult};
 use rustler::types::binary::{ Binary, OwnedBinary };
 use rustler::types::map::{ MapIterator };
-use rustler::types::atom::{ Atom };
 use rustler::resource::ResourceArc;
 
 
@@ -42,8 +40,7 @@ rustler_export_nifs! {
     "Elixir.VM",
     [
         ("open_db", 2, open_db),
-        ("run", 4, run),
-        ("transfer", 4, transfer),
+        ("run", 5, run),
     ],
     Some(on_load)
 }
@@ -65,17 +62,6 @@ impl<'a> DB for std::sync::RwLockWriteGuard<'a, rocksdb::DB> {
             Err(e) => panic!(e),
         }
     }
-}
-
-fn u8_vec_to_u64(x: Vec<u8>) -> u64 {
-    (x[7] as u64) << 56 |
-        ((x[6] as u64) & 0xff) << 48 |
-        ((x[5] as u64) & 0xff) << 40 |
-        ((x[4] as u64) & 0xff) << 32 |
-        ((x[3] as u64) & 0xff) << 24 |
-        ((x[2] as u64) & 0xff) << 16 |
-        ((x[1] as u64) & 0xff) << 8 |
-        ((x[0] as u64) & 0xff)
 }
 
 impl<'a> DB for std::sync::RwLockWriteGuard<'a, redis::Client> {
@@ -138,7 +124,6 @@ fn open_rocksdb<'a>(env: Env<'a>, path: &'a str) -> Term<'a> {
 
 fn open_redis<'a>(env: Env<'a>, path: &'a str) -> Term<'a> {
     let client = redis::Client::open(path).expect("failed to connect to redis");
-    let db = client.get_connection().expect("Failed to get redis connection");
     (atoms::ok(), ResourceArc::new(RedisHandle{
         db: Arc::new(RwLock::new(client)),
     })).encode(env)
@@ -161,9 +146,14 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let db_arc: ResourceArc<RedisHandle> = args[0].decode()?;
     let ref db = db_arc.deref().db.write().unwrap();
     let env_iter: MapIterator = try!(args[1].decode());
-    let code: Binary = try!(args[2].decode());
-    let rpc_binary: Binary = try!(args[3].decode());
+    let address: Binary = try!(args[2].decode());
+    let contract_id: Binary = try!(args[3].decode());
+    let rpc_binary: Binary = try!(args[4].decode());
     let rpc: BTreeMap<String, Value> = from_slice(rpc_binary.as_slice()).unwrap();
+
+
+    let con = db.get_connection().unwrap();
+    let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
     let ref func = rpc.get("method").unwrap().as_string().unwrap();
     let args_iter = rpc
         .get("params")
@@ -200,23 +190,4 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let mut binary = OwnedBinary::new(output.len()).unwrap();
     binary.as_mut_slice().write(&output).unwrap();
     Ok((atoms::ok(), binary.release(nif_env)).encode(nif_env))
-}
-
-fn transfer<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let db_arc: ResourceArc<RedisHandle> = args[0].decode()?;
-    let ref db = db_arc.deref().db.write().unwrap();
-    let sender: Binary = try!(args[1].decode());
-    let recipient: Binary = try!(args[2].decode());
-    let amount: u32 = try!(args[3].decode());
-    let con = db.get_connection().unwrap();
-    redis::cmd("BITFIELD")
-        .arg(recipient.to_vec())
-        .arg("INCRBY")
-        .arg("i64")
-        .arg(0)
-        .arg(1)
-        .execute(&con);
-    //
-    let con = db.get_connection().unwrap();
-    Ok((atoms::ok()).encode(nif_env))
 }

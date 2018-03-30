@@ -44,12 +44,19 @@ defmodule RequestHandler do
       <<
         sender::binary-size(32),
         nonce::binary-size(4),
-        _contract::binary-size(32),
+        address::binary-size(32),
+        contract_id::binary-size(32),
         rpc::binary
       >> = message
 
       if Crypto.valid_signature?(signature, message, sender) do
-        case GenServer.call(VM, %{rpc: rpc, sender: sender, nonce: nonce}) do
+        case GenServer.call(VM, %{
+          address: address,
+          contract_id: contract_id,
+          rpc: rpc,
+          sender: sender,
+          nonce: nonce,
+        }) do
           {:error, code, message} -> {:error, 400 + code, message}
           response -> response
         end

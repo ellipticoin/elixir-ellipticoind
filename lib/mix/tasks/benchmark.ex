@@ -16,33 +16,31 @@ defmodule Mix.Tasks.Benchmark do
   end
 
   def balance(address) do
-    GenServer.call(VM, %{
-      rpc: Cbor.encode(%{
-        method: :balance_of,
-        params: [address],
-      }),
-      sender: @sender,
-      nonce: 0
+    call(%{
+      method: :balance_of,
+      params: [address],
     })
   end
 
   def transfer(amount, recepient) do
-    GenServer.call(VM, %{
-      rpc: Cbor.encode(%{
-        method: :transfer,
-        params: [recepient, amount],
-      }),
-      sender: @sender,
-      nonce: 0
-    })
+    call(%{
+      method: :transfer,
+      params: [recepient, amount],
+    }, recepient)
   end
 
   def constructor(sender, amount) do
-    GenServer.call(VM, %{
-      rpc: Cbor.encode(%{
+      call(%{
         method: :constructor,
         params: [amount],
-      }),
+      }, sender)
+  end
+
+  def call(rpc, sender \\ @sender) do
+    GenServer.call(VM, %{
+      rpc: Cbor.encode(rpc),
+      address: Constants.system_address(),
+      contract_id: Helpers.pad_bytes_right(Constants.base_token_name()),
       sender: sender,
       nonce: 0
     })
