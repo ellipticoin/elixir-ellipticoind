@@ -62,26 +62,14 @@ defmodule Integration.BaseTokenTest do
 
   test "deploy a contract" do
     nonce = 0
-    contract_id = Helpers.pad_bytes_right("Adder")
+    contract_name = "Adder"
     contract_code = @adder_contract_code
     address =  Crypto.public_key_from_private_key(@sender_private_key)
 
-    message = address <>
-      <<nonce::size(32)>> <>
-        address <>
-          contract_id <>
-            contract_code
+    path = Base.encode16(address, case: :lower) <> "/"<> contract_name
+    message = <<nonce::size(32)>> <> contract_code
 
-    signature = Crypto.sign(message, @sender_private_key)
-
-    HTTPoison.put(
-      @host,
-      signature <> message,
-      %{
-        Authorization: "Signature " <> address <>
-          " " <> signature 
-      }
-    )
+    put_signed(path, message, @sender_private_key)
 
     {:ok, response} = call(%{
       private_key: @sender_private_key,
@@ -110,28 +98,39 @@ defmodule Integration.BaseTokenTest do
       contract_name: contract_name,
     } = Enum.into(options, defaults)
 
-    rpc = Cbor.encode([
-      method,
-      params,
-    ])
-    sender_address =  Crypto.public_key_from_private_key(private_key)
-    contract_id = Helpers.pad_bytes_right(contract_name)
+    rpc = Cbor.encode([method, params])
+    path = Base.encode16(address, case: :lower) <> "/"<> contract_name
+    message = <<nonce::size(32)>> <> rpc
 
-    message = sender_address <>
-      <<nonce::size(32)>> <>
-      address <>
-      contract_id <>
-      rpc
+    post_signed(path, message, private_key)
+  end
 
+  def post_signed(path, message, private_key) do
+    public_key =  Crypto.public_key_from_private_key(private_key)
     signature = Crypto.sign(message, private_key)
 
     HTTPoison.post(
-      @host,
-      signature <> message,
+      @host <> path,
+      message,
+      headers(public_key, signature)
+    )
+  end
+
+  def put_signed(path, message, private_key) do
+    public_key =  Crypto.public_key_from_private_key(private_key)
+    signature = Crypto.sign(message, private_key)
+
+    HTTPoison.put(
+      @host <> path,
+      message,
+      headers(public_key, signature)
+    )
+  end
+
+  def headers(public_key, signature) do
       %{
-        Authorization: "Signature " <> sender_address <>
+        Authorization: "Signature " <> public_key <>
           " " <> signature 
       }
-    )
   end
 end

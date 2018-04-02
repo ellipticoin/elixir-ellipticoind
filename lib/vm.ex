@@ -28,14 +28,14 @@ defmodule VM do
   def handle_call({:deploy, %{
     sender: sender,
     address: address,
-    contract_id: contract_id,
+    contract_name: contract_name,
     code: code,
   }}, _from, state=%{}) do
     redis = Map.get(state, :redis)
     set_contract_code(
       redis,
       address,
-      contract_id,
+      Helpers.pad_bytes_right(contract_name),
       code
     )
     {:reply, :ok, state}
@@ -47,7 +47,7 @@ defmodule VM do
       sender: sender,
       nonce: _nonce,
       address: address,
-      contract_id: contract_id,
+      contract_name: contract_name,
     }},
     _from,
     state=%{
@@ -57,7 +57,7 @@ defmodule VM do
     env = %{
       sender: sender,
       address: address,
-      contract_id: contract_id,
+      contract_id: Helpers.pad_bytes_right(contract_name),
     }
 
     case rpc do
@@ -72,7 +72,14 @@ defmodule VM do
         amount>> ->
           run_transfer(state, sender, recipient, amount)
       _ ->
-        run_vm(state, db, env, address, contract_id, rpc)
+        run_vm(
+          state,
+          db,
+          env,
+          address,
+          Helpers.pad_bytes_right(contract_name),
+          rpc
+        )
     end
   end
 

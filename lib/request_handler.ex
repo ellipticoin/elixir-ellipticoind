@@ -7,7 +7,7 @@ defmodule RequestHandler do
     reply = if authorized?(request, body) do
         case method do
         "POST" ->
-          case run(body) do
+          case run(request, body) do
             {:ok, result} ->
               success(result, request)
             {:error, code, message} ->
@@ -15,7 +15,7 @@ defmodule RequestHandler do
           end
 
         "PUT" ->
-          reply = deploy(body)
+          reply = deploy(request, body)
           {:ok, reply, options}
         _ ->
           {:error, 501, "Not Implemented"}
@@ -28,10 +28,6 @@ defmodule RequestHandler do
   end
 
   def authorized?(request, body) do
-    <<
-      signature::binary-size(64),
-      message::binary
-    >> = body
     case :cowboy_req.header("authorization", request) do
       <<
         "Signature ",
@@ -39,27 +35,22 @@ defmodule RequestHandler do
         " ",
         signature::binary-size(64)
       >> ->
-        Crypto.valid_signature?(signature, message, sender)
+        Crypto.valid_signature?(signature, body, sender)
       _ ->
-        true
+        false
     end
   end
 
-  def deploy(<<
-    signature::binary-size(64),
-    message::binary
-    >>) do
-      <<
-        sender::binary-size(32),
-        nonce::binary-size(4),
-        address::binary-size(32),
-        contract_id::binary-size(32),
-        code::binary
-      >> = message
-      GenServer.call(VM, {:deploy, %{
-        sender: sender,
+  def deploy(request, <<nonce::binary-size(4), code::binary>>) do
+      %{
         address: address,
-        contract_id: contract_id,
+        contract_name: contract_name
+      } = :cowboy_req.bindings(request)
+
+      GenServer.call(VM, {:deploy, %{
+        sender: sender(request),
+        address: Base.decode16!(address, case: :lower),
+        contract_name: contract_name,
         code: code,
       }})
   end
@@ -87,32 +78,34 @@ defmodule RequestHandler do
     )
   end
 
-  def run(<<
-    signature::binary-size(64),
-    message::binary
-    >>) do
-
-      <<
-        sender::binary-size(32),
-        nonce::binary-size(4),
-        address::binary-size(32),
-        contract_id::binary-size(32),
-        rpc::binary
-      >> = message
-
-      if Crypto.valid_signature?(signature, message, sender) do
-        case GenServer.call(VM, {:call, %{
+  def run(request, <<
+      nonce::binary-size(4),
+      rpc::binary
+      >>) do
+        %{
           address: address,
-          contract_id: contract_id,
-          rpc: rpc,
-          sender: sender,
-          nonce: nonce,
-        }}) do
-          {:error, code, message} -> {:error, 400 + code, message}
-          response -> response
-        end
-      else
-        {:error, 401, "Invalid signature"}
+          contract_name: contract_name
+        } = :cowboy_req.bindings(request)
+      case GenServer.call(VM, {:call, %{
+        address: Base.decode16!(address, case: :lower),
+        contract_name: contract_name,
+        sender: sender(request),
+        rpc: rpc,
+        nonce: nonce,
+      }}) do
+        {:error, code, message} -> {:error, 500, message}
+        response -> response
       end
+  end
+
+  def sender(request) do
+    <<
+    "Signature ",
+    sender::binary-size(32),
+      " ",
+    _signature::binary-size(64)
+    >> = :cowboy_req.header("authorization", request)
+
+    sender
   end
 end
