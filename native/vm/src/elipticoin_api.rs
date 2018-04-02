@@ -45,14 +45,13 @@ impl ElipticoinAPI {
             }
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-
-                let value: Vec<u8> = vm.db.read(key.as_slice());
+                let value: Vec<u8> = vm.read(key);
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.db.write(key.as_slice(), value.as_slice());
+                vm.write(key, value);
 
                 Ok(None)
             }

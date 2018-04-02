@@ -29,6 +29,24 @@ impl<'a> VM<'a> {
         vec_pointer
     }
 
+    pub fn read(&mut self, key: Vec<u8>) -> Vec<u8> {
+        let contracts_address = self.env.get("address").unwrap().to_vec();
+        let contract_id = self.env.get("contract_id").unwrap().to_vec();
+
+        let key = [contracts_address, contract_id, key].concat();
+        self.db.read(key.as_slice())
+
+    }
+
+
+    pub fn write(&mut self, key: Vec<u8>, value: Vec<u8>) {
+        let contracts_address = self.env.get("address").unwrap().to_vec();
+        let contract_id = self.env.get("contract_id").unwrap().to_vec();
+
+        let key = [contracts_address, contract_id, key].concat();
+        self.db.write(key.as_slice(), value.as_slice());
+    }
+
     pub fn read_pointer(&mut self, ptr: u32) -> Vec<u8>{
         let length_slice = self.memory().get(ptr, 4).unwrap();
         let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];

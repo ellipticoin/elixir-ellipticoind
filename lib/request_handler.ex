@@ -33,7 +33,6 @@ defmodule RequestHandler do
         contract_id::binary-size(32),
         code::binary
       >> = message
-      IO.inspect code == File.read!("test/support/adder.wasm")
       GenServer.call(VM, {:deploy, %{
         sender: sender,
         address: address,
