@@ -61,24 +61,41 @@ defmodule Integration.BaseTokenTest do
   end
 
   test "deploy a contract" do
-    public_key =  Crypto.public_key_from_private_key(@sender_private_key)
-    message = public_key <>
-      <<0::size(32)>> <>
-      Helpers.pad_bytes_right("Echo")
+    nonce = 0
+    contract_id = Helpers.pad_bytes_right("Adder")
+    contract_code = @adder_contract_code
+    address =  Crypto.public_key_from_private_key(@sender_private_key)
+
+    message = address <>
+      <<nonce::size(32)>> <>
+        address <>
+          contract_id <>
+            contract_code
 
     signature = Crypto.sign(message, @sender_private_key)
 
     HTTPoison.put(
       @host,
-      signature <> message <> @adder_contract_code
+      signature <> message
     )
+
+    {:ok, response} = call(%{
+      private_key: @sender_private_key,
+      contract_name: "Adder",
+      address: address,
+      nonce: 1,
+      method: :add,
+      params: [1, 2],
+    })
+
+    assert Cbor.decode(response.body) == 3
   end
 
 
   def call(options \\ []) do
     defaults = %{
       address: Constants.system_address(),
-      contract_name: Helpers.pad_bytes_right(Constants.base_token_name()),
+      contract_name: Constants.base_token_name(),
     }
     %{
       private_key: private_key,
@@ -89,16 +106,17 @@ defmodule Integration.BaseTokenTest do
       contract_name: contract_name,
     } = Enum.into(options, defaults)
 
-
     rpc = Cbor.encode([
       method,
       params,
     ])
-    public_key =  Crypto.public_key_from_private_key(private_key)
-    message = public_key <>
+    sender_address =  Crypto.public_key_from_private_key(private_key)
+    contract_id = Helpers.pad_bytes_right(contract_name)
+
+    message = sender_address <>
       <<nonce::size(32)>> <>
-      Constants.system_address() <>
-      Helpers.pad_bytes_right(Constants.base_token_name()) <>
+      address <>
+      contract_id <>
       rpc
 
     signature = Crypto.sign(message, private_key)

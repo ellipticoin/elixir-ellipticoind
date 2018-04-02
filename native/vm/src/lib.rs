@@ -154,6 +154,8 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
+    // println!("Code: {:?}", code);
+    // println!("^--^");
     let ref func = rpc[0].as_string().unwrap();
     let args_iter = rpc[1]
         .as_array()

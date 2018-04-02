@@ -12,7 +12,6 @@ defmodule VM do
   def init(state) do
     {:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
     {:ok, redis} = Redix.start_link()
-
     set_contract_code(
       redis,
       Constants.system_address(),
@@ -23,13 +22,22 @@ defmodule VM do
     {:ok, Map.merge(state, %{
       db: db,
       redis: redis,
-      contracts: %{
-        base_token: Constants.base_token_code(),
-      }
     })}
   end
 
-  def handle_call({:deploy, %{}}, _from, state=%{}) do
+  def handle_call({:deploy, %{
+    sender: sender,
+    address: address,
+    contract_id: contract_id,
+    code: code,
+  }}, _from, state=%{}) do
+    redis = Map.get(state, :redis)
+    set_contract_code(
+      redis,
+      address,
+      contract_id,
+      code
+    )
     {:reply, :ok, state}
   end
 
@@ -44,13 +52,12 @@ defmodule VM do
     _from,
     state=%{
       db: db,
-      contracts: %{
-        base_token: base_token_code,
-      }
     }
   ) do
     env = %{
-      sender: sender
+      sender: sender,
+      address: address,
+      contract_id: contract_id,
     }
 
     case rpc do

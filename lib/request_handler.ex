@@ -26,7 +26,20 @@ defmodule RequestHandler do
     signature::binary-size(64),
     message::binary
     >>) do
-      GenServer.call(VM, {:deploy, %{}})
+      <<
+        sender::binary-size(32),
+        nonce::binary-size(4),
+        address::binary-size(32),
+        contract_id::binary-size(32),
+        code::binary
+      >> = message
+      IO.inspect code == File.read!("test/support/adder.wasm")
+      GenServer.call(VM, {:deploy, %{
+        sender: sender,
+        address: address,
+        contract_id: contract_id,
+        code: code,
+      }})
   end
 
   def read_body(request) do
