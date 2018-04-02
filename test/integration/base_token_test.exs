@@ -76,7 +76,11 @@ defmodule Integration.BaseTokenTest do
 
     HTTPoison.put(
       @host,
-      signature <> message
+      signature <> message,
+      %{
+        Authorization: "Signature " <> address <>
+          " " <> signature 
+      }
     )
 
     {:ok, response} = call(%{
@@ -123,7 +127,11 @@ defmodule Integration.BaseTokenTest do
 
     HTTPoison.post(
       @host,
-      signature <> message
+      signature <> message,
+      %{
+        Authorization: "Signature " <> sender_address <>
+          " " <> signature 
+      }
     )
   end
 end

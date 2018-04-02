@@ -3,23 +3,46 @@ defmodule RequestHandler do
     method = :cowboy_req.method(request)
     body = read_body(request)
 
-    reply = case method do
-      "POST" ->
-        case run(body) do
-          {:ok, result} ->
-            success(result, request)
-          {:error, code, message} ->
-            error(code, message, request)
-        end
 
-      "PUT" ->
-        reply = deploy(body)
-        {:ok, reply, options}
-      _ ->
-        {:error, 501, "Not Implemented"}
-    end
+    reply = if authorized?(request, body) do
+        case method do
+        "POST" ->
+          case run(body) do
+            {:ok, result} ->
+              success(result, request)
+            {:error, code, message} ->
+              error(code, message, request)
+          end
+
+        "PUT" ->
+          reply = deploy(body)
+          {:ok, reply, options}
+        _ ->
+          {:error, 501, "Not Implemented"}
+        end
+      else
+        {:error, 401, "Invalid signature"}
+      end
 
     {:ok, reply, options}
+  end
+
+  def authorized?(request, body) do
+    <<
+      signature::binary-size(64),
+      message::binary
+    >> = body
+    case :cowboy_req.header("authorization", request) do
+      <<
+        "Signature ",
+        sender::binary-size(32),
+        " ",
+        signature::binary-size(64)
+      >> ->
+        Crypto.valid_signature?(signature, message, sender)
+      _ ->
+        true
+    end
   end
 
   def deploy(<<
