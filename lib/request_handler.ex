@@ -48,10 +48,11 @@ defmodule RequestHandler do
 
   def deploy(request) do
       %{
-        contract_name: contract_name
+        contract_name: contract_name,
+        nonce: _nonce,
       } = :cowboy_req.bindings(request)
 
-      <<_nonce::binary-size(4), code::binary>> = Base.decode16!(:cowboy_req.qs(request), case: :lower)
+      code = Base.decode16!(:cowboy_req.qs(request), case: :lower)
       GenServer.call(VM, {:deploy, %{
         sender: sender(request),
         address: sender(request),
@@ -86,20 +87,18 @@ defmodule RequestHandler do
   def run(request) do
         %{
           address: address,
-          contract_name: contract_name
+          contract_name: contract_name,
+          nonce: nonce,
         } = :cowboy_req.bindings(request)
-        <<
-          nonce::binary-size(4),
-          rpc::binary
-        >> = :cowboy_req.qs(request)
-          |> Base.decode16!(case: :lower)
+          rpc = :cowboy_req.qs(request)
+            |> Base.decode16!(case: :lower)
 
       case GenServer.call(VM, {:call, %{
         address: Base.decode16!(address, case: :lower),
         contract_name: contract_name,
         sender: sender(request),
         rpc: rpc,
-        nonce: nonce,
+        nonce: Base.decode16!(nonce, case: :lower),
       }}) do
         {:error, _code, message} -> {:error, 500, message}
         response -> response

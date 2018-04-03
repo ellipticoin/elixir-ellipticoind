@@ -61,10 +61,11 @@ defmodule Integration.BaseTokenTest do
   test "deploy a contract" do
     nonce = 0
     contract_name = "Adder"
+    nonce = Base.encode16(<<nonce::size(32)>>)
 
-    message = <<nonce::size(32)>> <> @adder_contract_code
+    path = Enum.join([nonce, contract_name], "/")
 
-    put_signed(contract_name, message, @sender_private_key)
+    put_signed(path, @adder_contract_code, @sender_private_key)
 
     {:ok, response} = call(%{
       private_key: @sender_private_key,
@@ -93,11 +94,12 @@ defmodule Integration.BaseTokenTest do
       contract_name: contract_name,
     } = Enum.into(options, defaults)
 
+    nonce = Base.encode16(<<nonce::size(32)>>)
+    address  = Base.encode16(address, case: :lower)
+    path = Enum.join([nonce, address, contract_name], "/")
     rpc = Cbor.encode([method, params])
-    path = Base.encode16(address, case: :lower) <> "/"<> contract_name
-    message = <<nonce::size(32)>> <> rpc
 
-    post_signed(path, message, private_key)
+    post_signed(path, rpc, private_key)
   end
 
   def post_signed(path, message, private_key) do
