@@ -37,7 +37,7 @@ defmodule Blacksmith.Mixfile do
       {:libsodium, "~> 0.0.10"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:benchee, "~> 0.11", only: [:dev, :test]},
-      {:httpoison, "~> 1.0", only: [:dev, :test]},
+      {:httpoison, "~> 1.1", only: [:dev, :test]},
     ]
   end
 end

@@ -1,21 +1,17 @@
 defmodule RequestHandler do
   def init(request, options) do
-    method = :cowboy_req.method(request)
-    body = read_body(request)
-
-
-    reply = if authorized?(request, body) do
-        case method do
+    reply = if authorized?(request) do
+        case :cowboy_req.method(request) do
         "POST" ->
-          case run(request, body) do
+          case run(request) do
             {:ok, result} ->
-              success(result, request)
+              success_response(result, request)
             {:error, code, message} ->
-              error(code, message, request)
+              error_response(code, message, request)
           end
 
         "PUT" ->
-          reply = deploy(request, body)
+          reply = deploy(request)
           {:ok, reply, options}
         _ ->
           {:error, 501, "Not Implemented"}
@@ -27,29 +23,38 @@ defmodule RequestHandler do
     {:ok, reply, options}
   end
 
-  def authorized?(request, body) do
-    case :cowboy_req.header("authorization", request) do
-      <<
-        "Signature ",
-        sender::binary-size(32),
-        " ",
-        signature::binary-size(64)
-      >> ->
-        Crypto.valid_signature?(signature, body, sender)
-      _ ->
-        false
+  def authorized?(request) do
+    method = :cowboy_req.method(request)
+    message = Base.decode16!(:cowboy_req.qs(request), case: :lower)
+
+    "/" <> path = :cowboy_req.path(request)
+
+    if method == "POST" do
+      case :cowboy_req.header("authorization", request) do
+        <<
+          "Signature ",
+          sender::binary-size(32),
+          " ",
+          signature::binary-size(64)
+        >> ->
+          Crypto.valid_signature?(signature, path <> message, sender)
+        _ ->
+          false
+      end
+    else
+      true
     end
   end
 
-  def deploy(request, <<nonce::binary-size(4), code::binary>>) do
+  def deploy(request) do
       %{
-        address: address,
         contract_name: contract_name
       } = :cowboy_req.bindings(request)
 
+      <<_nonce::binary-size(4), code::binary>> = Base.decode16!(:cowboy_req.qs(request), case: :lower)
       GenServer.call(VM, {:deploy, %{
         sender: sender(request),
-        address: Base.decode16!(address, case: :lower),
+        address: sender(request),
         contract_name: contract_name,
         code: code,
       }})
@@ -60,7 +65,7 @@ defmodule RequestHandler do
     body
   end
 
-  def success(payload, request) do
+  def success_response(payload, request) do
     :cowboy_req.reply(
       200,
       %{"Content-Type" => "application/cbor"},
@@ -69,7 +74,7 @@ defmodule RequestHandler do
     )
   end
 
-  def error(code, message, request) do
+  def error_response(code, message, request) do
     :cowboy_req.reply(
       code,
       %{"Content-Type" => "text/plain"},
@@ -78,14 +83,17 @@ defmodule RequestHandler do
     )
   end
 
-  def run(request, <<
-      nonce::binary-size(4),
-      rpc::binary
-      >>) do
+  def run(request) do
         %{
           address: address,
           contract_name: contract_name
         } = :cowboy_req.bindings(request)
+        <<
+          nonce::binary-size(4),
+          rpc::binary
+        >> = :cowboy_req.qs(request)
+          |> Base.decode16!(case: :lower)
+
       case GenServer.call(VM, {:call, %{
         address: Base.decode16!(address, case: :lower),
         contract_name: contract_name,
@@ -93,7 +101,7 @@ defmodule RequestHandler do
         rpc: rpc,
         nonce: nonce,
       }}) do
-        {:error, code, message} -> {:error, 500, message}
+        {:error, _code, message} -> {:error, 500, message}
         response -> response
       end
   end

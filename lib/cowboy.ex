@@ -17,6 +17,7 @@ defmodule Cowboy do
     :cowboy_router.compile([
       { :_,
         [
+          {"/:contract_name", RequestHandler, []},
           {"/:address/:contract_name", RequestHandler, []}
         ]
       }
