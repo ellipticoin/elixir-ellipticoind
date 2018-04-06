@@ -24,20 +24,21 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith, []},
-      applications: [:cowboy, :ranch, :redix]]
+      applications: [:cowboy, :ranch, :redix, :plug]]
   end
 
   defp deps do
     [
-      {:distillery, "~> 1.5", runtime: false},
-      {:rustler, "0.16.0"},
-      {:cowboy, "~> 2.2.0"},
-      {:redix, ">= 0.7.0"},
-      {:cbor, [path: "../elixir-cbor"]},
-      {:libsodium, "~> 0.0.10"},
-      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:benchee, "~> 0.11", only: [:dev, :test]},
+      {:cbor, [path: "../elixir-cbor"]},
+      {:cowboy, "~> 1.0"},
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
+      {:distillery, "~> 1.5", runtime: false},
       {:httpoison, "~> 1.1", only: [:dev, :test]},
+      {:libsodium, "~> 0.0.10"},
+      {:plug, "~> 1.0"},
+      {:redix, ">= 0.7.0"},
+      {:rustler, "0.16.0"},
     ]
   end
 end

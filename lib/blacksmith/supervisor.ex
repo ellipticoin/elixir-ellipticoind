@@ -7,7 +7,6 @@ defmodule Blacksmith.Supervisor do
 
   def init(:ok) do
     children = [
-      Cowboy,
       {VM, name: VM},
     ]
 

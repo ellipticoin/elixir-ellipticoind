@@ -9,14 +9,14 @@ defmodule Integration.BaseTokenTest do
   use ExUnit.Case
 
   test "send tokens" do
-    call(%{
+    post(%{
       private_key: @sender_private_key,
       nonce: 0,
       method: :constructor,
       params: [100],
     })
 
-    {:ok, response} = call(%{
+    {:ok, response} = post(%{
       private_key: @sender_private_key,
       nonce: 1,
       method: :balance_of,
@@ -25,14 +25,14 @@ defmodule Integration.BaseTokenTest do
 
     assert Cbor.decode(response.body) == 100
 
-    call(%{
+    post(%{
       private_key: @sender_private_key,
       nonce: 2,
       method: :transfer,
       params: [@receiver, 50],
     })
 
-    {:ok, response} = call(%{
+    {:ok, response} = post(%{
       private_key: @sender_private_key,
       nonce: 3,
       method: :balance_of,
@@ -41,14 +41,14 @@ defmodule Integration.BaseTokenTest do
 
     assert Cbor.decode(response.body) == 50
 
-    call(%{
+    post(%{
       private_key: @receiver_private_key,
       nonce: 4,
       method: :transfer,
       params: [@sender, 25],
     })
 
-    {:ok, response} = call(%{
+    {:ok, response} = post(%{
       private_key: @sender_private_key,
       nonce: 5,
       method: :balance_of,
@@ -63,11 +63,11 @@ defmodule Integration.BaseTokenTest do
     contract_name = "Adder"
     nonce = Base.encode16(<<nonce::size(32)>>)
 
-    path = Enum.join([nonce, contract_name], "/")
+    path = Enum.join([nonce, @sender, contract_name], "/")
 
     put_signed(path, @adder_contract_code, @sender_private_key)
 
-    {:ok, response} = call(%{
+    {:ok, response} = post(%{
       private_key: @sender_private_key,
       contract_name: "Adder",
       address: @sender,
@@ -80,7 +80,26 @@ defmodule Integration.BaseTokenTest do
   end
 
 
-  def call(options \\ []) do
+  def get(options \\ []) do
+    defaults = %{
+      address: Constants.system_address(),
+      contract_name: Constants.base_token_name(),
+    }
+    %{
+      method: method,
+      params: params,
+      address: address,
+      contract_name: contract_name,
+    } = Enum.into(options, defaults)
+
+    address  = Base.encode16(address, case: :lower)
+    path = Enum.join([address, contract_name], "/")
+    rpc = Cbor.encode([method, params])
+
+    http_get(path, rpc)
+  end
+
+  def post(options \\ []) do
     defaults = %{
       address: Constants.system_address(),
       contract_name: Constants.base_token_name(),
@@ -99,16 +118,20 @@ defmodule Integration.BaseTokenTest do
     path = Enum.join([nonce, address, contract_name], "/")
     rpc = Cbor.encode([method, params])
 
-    post_signed(path, rpc, private_key)
+    http_post_signed(path, rpc, private_key)
   end
 
-  def post_signed(path, message, private_key) do
+  def http_get(path, message) do
+    HTTPoison.get(@host <> path <> "?" <> message)
+  end
+
+  def http_post_signed(path, message, private_key) do
     public_key =  Crypto.public_key_from_private_key(private_key)
     signature = Crypto.sign(path <> message, private_key)
 
     HTTPoison.post(
-      @host <> path <> "?" <> Base.encode16(message, case: :lower),
-      <<>>,
+      @host <> path,
+      message,
       headers(public_key, signature)
     )
   end
@@ -118,15 +141,15 @@ defmodule Integration.BaseTokenTest do
     signature = Crypto.sign(message, private_key)
 
     HTTPoison.put(
-      @host <> path <> "?" <> Base.encode16(message, case: :lower),
-      <<>>,
+      @host <> path,
+      message,
       headers(public_key, signature)
     )
   end
 
   def headers(public_key, signature) do
       %{
-        Authorization: "Signature " <> public_key <> " " <> signature 
+        Authorization: "Signature "<> Base.encode16(public_key, case: :lower) <> " " <> Base.encode16(signature, case: :lower)
       }
   end
 end

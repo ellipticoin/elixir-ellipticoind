@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Benchmark do
     GenServer.call(VM, {:call, %{
       rpc: Cbor.encode(rpc),
       address: Constants.system_address(),
-      contract_id: Helpers.pad_bytes_right(Constants.base_token_name()),
+      contract_name: Constants.base_token_name(),
       sender: sender,
       nonce: 0
     }})
