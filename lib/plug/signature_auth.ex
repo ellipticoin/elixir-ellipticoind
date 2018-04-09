@@ -24,14 +24,19 @@ defmodule Blacksmith.Plug.SignatureAuth do
       "Signature",
       public_key_hex,
       signature_hex,
+      nonce_hex
     ] = String.split(authorization, " ")
+
     public_key = Base.decode16!(public_key_hex, case: :lower)
     signature = Base.decode16!(signature_hex, case: :lower)
+    nonce = Base.decode16!(nonce_hex, case: :lower)
+
     {:ok, body, _conn} = Plug.Conn.read_body(conn)
     "/" <> path = conn.request_path
 
-    conn = conn |>
-      Plug.Conn.put_req_header("public_key", public_key)
+    conn = conn
+      |> Plug.Conn.put_req_header("public_key", public_key)
+      |> Plug.Conn.put_req_header("nonce", nonce)
 
     if !Crypto.valid_signature?(signature, path <> body, public_key)
     do

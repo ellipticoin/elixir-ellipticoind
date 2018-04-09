@@ -7,7 +7,7 @@ defmodule Router do
   plug :match
   plug :dispatch
 
-  put "/:nonce/:address/:contract_name" do
+  put "/:address/:contract_name" do
     conn
       |> parse_request()
       |> deploy()
@@ -22,7 +22,7 @@ defmodule Router do
       |> send_resp(conn)
   end
 
-  post "/:nonce/:address/:contract_name" do
+  post "/:address/:contract_name" do
     conn
       |> parse_request()
       |> run()
@@ -32,7 +32,7 @@ defmodule Router do
   def send_resp(resp, conn) do
     case resp do
       {:ok, response } -> send_resp(conn, 200, response)
-      {:err, response } -> send_resp(conn, 500, response)
+      {:error, error_code, response } -> send_resp(conn, 500, response)
     end
 
   end
@@ -70,6 +70,7 @@ defmodule Router do
         "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
         "rpc" => body,
         "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
+        "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
       }
     )
   end
@@ -83,6 +84,7 @@ defmodule Router do
         "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
         "code" => body,
         "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
+        "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
       }
     )
   end

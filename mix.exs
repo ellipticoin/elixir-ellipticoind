@@ -30,7 +30,7 @@ defmodule Blacksmith.Mixfile do
   defp deps do
     [
       {:benchee, "~> 0.11", only: [:dev, :test]},
-      {:cbor, [path: "../elixir-cbor"]},
+      {:cbor, "~> 0.1"},
       {:cowboy, "~> 1.0"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5", runtime: false},

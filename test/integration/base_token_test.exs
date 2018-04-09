@@ -60,15 +60,13 @@ defmodule Integration.BaseTokenTest do
   test "deploy a contract" do
     nonce = 0
     contract_name = "Adder"
-    nonce = Base.encode16(<<nonce::size(32)>>)
 
     path = Enum.join([
-      nonce,
       Base.encode16(@sender, case: :lower),
       contract_name,
     ], "/")
 
-    put_signed(path, @adder_contract_code, @sender_private_key)
+    put_signed(path, @adder_contract_code, @sender_private_key, nonce)
 
     {:ok, response} = post(%{
       private_key: @sender_private_key,
@@ -116,43 +114,45 @@ defmodule Integration.BaseTokenTest do
       contract_name: contract_name,
     } = Enum.into(options, defaults)
 
-    nonce = Base.encode16(<<nonce::size(32)>>)
     address  = Base.encode16(address, case: :lower)
-    path = Enum.join([nonce, address, contract_name], "/")
+    path = Enum.join([address, contract_name], "/")
     rpc = Cbor.encode([method, params])
 
-    http_post_signed(path, rpc, @sender_private_key)
+    http_post_signed(path, rpc, @sender_private_key, nonce)
   end
 
   def http_get(path, message) do
     HTTPoison.get(@host <> path <> "?" <> Base.encode16(message, case: :lower))
   end
 
-  def http_post_signed(path, message, private_key) do
+  def http_post_signed(path, message, private_key, nonce) do
     public_key =  Crypto.public_key_from_private_key(private_key)
     signature = Crypto.sign(path <> message, private_key)
 
     HTTPoison.post(
       @host <> path,
       message,
-      headers(public_key, signature)
+      headers(public_key, signature, nonce)
     )
   end
 
-  def put_signed(path, message, private_key) do
+  def put_signed(path, message, private_key, nonce) do
     public_key =  Crypto.public_key_from_private_key(private_key)
     signature = Crypto.sign(path <> message, private_key)
 
     HTTPoison.put(
       @host <> path,
       message,
-      headers(public_key, signature)
+      headers(public_key, signature, nonce)
     )
   end
 
-  def headers(public_key, signature) do
+  def headers(public_key, signature, nonce) do
       %{
-        Authorization: "Signature "<> Base.encode16(public_key, case: :lower) <> " " <> Base.encode16(signature, case: :lower)
+        Authorization: "Signature "<>
+        Base.encode16(public_key, case: :lower) <> " " <>
+        Base.encode16(signature, case: :lower) <> " " <>
+        Base.encode16(<<nonce::size(32)>>, case: :lower)
       }
   end
 end
