@@ -8,30 +8,42 @@ defmodule Router do
   plug :dispatch
 
   put "/:nonce/:address/:contract_name" do
-    deploy(parse_post_request(conn))
+    conn
+      |> parse_request()
+      |> deploy()
+
     send_resp(conn, 200, "")
   end
 
   get "/:address/:contract_name" do
-    case run(parse_request(conn)) do
-      {:ok, response } -> send_resp(conn, 200, response)
-      {:err, response } -> send_resp(conn, 500, response)
-    end
+    conn
+      |> parse_request()
+      |> run()
+      |> send_resp(conn)
   end
 
   post "/:nonce/:address/:contract_name" do
-    case run(parse_request(conn)) do
+    conn
+      |> parse_request()
+      |> run()
+      |> send_resp(conn)
+  end
+
+  def send_resp(resp, conn) do
+    case resp do
       {:ok, response } -> send_resp(conn, 200, response)
       {:err, response } -> send_resp(conn, 500, response)
     end
-  end
 
+  end
   def parse_request(conn) do
     case conn.method do
       "GET" ->
         parse_get_request(conn)
       "POST" ->
         parse_post_request(conn)
+      "PUT" ->
+        parse_put_request(conn)
       _ -> throw Plug.BadRequestError
     end
   end
@@ -60,48 +72,34 @@ defmodule Router do
         "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
       }
     )
-
   end
 
-  def run(%{
-    "address" => address,
-    "contract_name" => contract_name,
-    "nonce" => nonce,
-    "rpc" => rpc,
-    "sender" => sender,
-  }) do
-      case GenServer.call(VM, {:call, %{
-        address: address,
-        contract_name: contract_name,
-        sender: sender,
-        rpc: rpc,
-        nonce: nonce,
-      }}) do
-        {:error, _code, message} -> {:error, 500, message}
-        response -> response
-      end
+  def parse_put_request(conn) do
+    {:ok, body, _conn} = Plug.Conn.read_body(conn)
+
+    Map.merge(
+      conn.path_params,
+      %{
+        "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
+        "code" => body,
+        "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
+      }
+    )
   end
 
-  def deploy(%{
-    "address" => address,
-    "contract_name" => contract_name,
-    "nonce" => _nonce,
-    "rpc" => rpc,
-    "sender" => sender,
-  }) do
-      GenServer.call(VM, {:deploy, %{
-        sender: sender,
-        address: address,
-        contract_name: contract_name,
-        code: rpc,
-      }})
+  def run(options) do
+    GenServer.call(VM, {:call, options})
   end
 
-  def handle_errors(conn, %{kind: _kind, reason: _reason, stack: _stack}) do
-    send_resp(conn, conn.status, "")
+  def deploy(options) do
+    GenServer.call(VM, {:deploy, options})
   end
 
   match _ do
     send_resp(conn, 404, "Not Found")
+  end
+
+  def handle_errors(conn, %{kind: _kind, reason: _reason, stack: _stack}) do
+    send_resp(conn, conn.status, "")
   end
 end

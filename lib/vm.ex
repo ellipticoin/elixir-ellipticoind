@@ -26,10 +26,10 @@ defmodule VM do
   end
 
   def handle_call({:deploy, %{
-    sender: sender,
-    address: address,
-    contract_name: contract_name,
-    code: code,
+    "sender" => sender,
+    "address" => address,
+    "contract_name" => contract_name,
+    "code" => code,
   }}, _from, state=%{}) do
     redis = Map.get(state, :redis)
     set_contract_code(
@@ -43,11 +43,11 @@ defmodule VM do
 
   def handle_call({:call,
     %{
-      rpc: rpc,
-      sender: sender,
-      nonce: _nonce,
-      address: address,
-      contract_name: contract_name,
+      "rpc" => rpc,
+      "sender" => sender,
+      "nonce" => _nonce,
+      "address" => address,
+      "contract_name" => contract_name,
     }},
     _from,
     state=%{
