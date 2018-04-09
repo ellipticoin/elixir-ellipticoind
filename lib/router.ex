@@ -1,17 +1,18 @@
 defmodule Router do
+  alias Blacksmith.Plug.SignatureAuth
   use Plug.Router
+  plug(SignatureAuth, only_methods: ["POST", "PUT"])
+  use Plug.ErrorHandler
 
   plug :match
   plug :dispatch
 
   put "/:nonce/:address/:contract_name" do
-    params = parse_request(conn)
-    deploy(params)
+    deploy(parse_request(conn))
     send_resp(conn, 200, "")
   end
 
   post "/:nonce/:address/:contract_name" do
-    params = parse_request(conn)
     case run(parse_request(conn)) do
       {:ok, response } -> send_resp(conn, 200, response)
       {:err, response } -> send_resp(conn, 500, response)
@@ -21,17 +22,11 @@ defmodule Router do
   def parse_request(conn) do
     {:ok, body, _conn} = Plug.Conn.read_body(conn)
 
-    [authorization] = get_req_header(conn, "authorization")
-    ["Signature", public_key, signature] = String.split(authorization, " ")
-
     Map.merge(
       conn.path_params,
       %{
         "body" => body,
-        "signature" => %{
-          "public_key" => Base.decode16!(public_key, case: :lower),
-          "signature" => Base.decode16!(signature, case: :lower),
-        }
+        "public_key" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
       }
     )
 
@@ -41,12 +36,12 @@ defmodule Router do
     "contract_name" => contract_name,
     "nonce" => nonce,
     "body" => body,
-    "signature" => signature,
+    "public_key" => public_key,
   }) do
       case GenServer.call(VM, {:call, %{
         address: Base.decode16!(address, case: :lower),
         contract_name: contract_name,
-        sender: signature["public_key"],
+        sender: public_key,
         rpc: body,
         nonce: Base.decode16!(nonce, case: :lower),
       }}) do
@@ -58,27 +53,20 @@ defmodule Router do
   def deploy(%{
     "address" => address,
     "contract_name" => contract_name,
-    "nonce" => nonce,
+    "nonce" => _nonce,
     "body" => body,
-    "signature" => signature,
+    "public_key" => public_key,
   }) do
       GenServer.call(VM, {:deploy, %{
-        sender: signature["public_key"],
+        sender: public_key,
         address: address,
         contract_name: contract_name,
         code: body,
       }})
   end
 
-  def sender(request) do
-    <<
-    "Signature ",
-    sender::binary-size(64),
-      " ",
-    _signature::binary-size(128)
-    >> = :cowboy_req.header("authorization", request)
-
-    sender
+  def handle_errors(conn, %{kind: _kind, reason: _reason, stack: _stack}) do
+    send_resp(conn, conn.status, "")
   end
 
   match _ do

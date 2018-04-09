@@ -63,7 +63,11 @@ defmodule Integration.BaseTokenTest do
     contract_name = "Adder"
     nonce = Base.encode16(<<nonce::size(32)>>)
 
-    path = Enum.join([nonce, @sender, contract_name], "/")
+    path = Enum.join([
+      nonce,
+      Base.encode16(@sender),
+      contract_name,
+    ], "/")
 
     put_signed(path, @adder_contract_code, @sender_private_key)
 
@@ -138,7 +142,7 @@ defmodule Integration.BaseTokenTest do
 
   def put_signed(path, message, private_key) do
     public_key =  Crypto.public_key_from_private_key(private_key)
-    signature = Crypto.sign(message, private_key)
+    signature = Crypto.sign(path <> message, private_key)
 
     HTTPoison.put(
       @host <> path,
