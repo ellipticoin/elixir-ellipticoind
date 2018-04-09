@@ -12,6 +12,8 @@ defmodule Blacksmith.Plug.SignatureAuth do
   def call(conn, options) do
     if auth_required?(conn, options) do
       verify_signature(conn)
+    else
+      conn
     end
   end
 

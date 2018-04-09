@@ -16,9 +16,8 @@ defmodule Integration.BaseTokenTest do
       params: [100],
     })
 
-    {:ok, response} = post(%{
+    {:ok, response} = get(%{
       private_key: @sender_private_key,
-      nonce: 1,
       method: :balance_of,
       params: [@sender],
     })
@@ -32,7 +31,7 @@ defmodule Integration.BaseTokenTest do
       params: [@receiver, 50],
     })
 
-    {:ok, response} = post(%{
+    {:ok, response} = get(%{
       private_key: @sender_private_key,
       nonce: 3,
       method: :balance_of,
@@ -65,7 +64,7 @@ defmodule Integration.BaseTokenTest do
 
     path = Enum.join([
       nonce,
-      Base.encode16(@sender),
+      Base.encode16(@sender, case: :lower),
       contract_name,
     ], "/")
 
@@ -122,11 +121,11 @@ defmodule Integration.BaseTokenTest do
     path = Enum.join([nonce, address, contract_name], "/")
     rpc = Cbor.encode([method, params])
 
-    http_post_signed(path, rpc, private_key)
+    http_post_signed(path, rpc, @sender_private_key)
   end
 
   def http_get(path, message) do
-    HTTPoison.get(@host <> path <> "?" <> message)
+    HTTPoison.get(@host <> path <> "?" <> Base.encode16(message, case: :lower))
   end
 
   def http_post_signed(path, message, private_key) do
