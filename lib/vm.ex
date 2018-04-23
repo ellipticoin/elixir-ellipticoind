@@ -1,8 +1,11 @@
 defmodule VM do
+  @system_address Constants.system_address()
+  @base_token_name Constants.base_token_name()
+  alias NativeContracts.BaseToken
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm
 
-  def run(_db, _env, _contract_id, _address, _rpc), do: exit(:nif_not_loaded)
+  def run(_db, _env, _contract_id, _address, _method, _params), do: exit(:nif_not_loaded)
   def open_db(_backend, _options), do: exit(:nif_not_loaded)
 
   def start_link(opts) do
@@ -26,10 +29,10 @@ defmodule VM do
   end
 
   def handle_call({:deploy, %{
-    "sender" => sender,
-    "address" => address,
-    "contract_name" => contract_name,
-    "code" => code,
+    sender: sender,
+    address: address,
+    contract_name: contract_name,
+    code: code,
   }}, _from, state=%{}) do
     redis = Map.get(state, :redis)
     set_contract_code(
@@ -43,11 +46,12 @@ defmodule VM do
 
   def handle_call({:call,
     %{
-      "rpc" => rpc,
-      "sender" => sender,
-      "nonce" => _nonce,
-      "address" => address,
-      "contract_name" => contract_name,
+      method: method,
+      params: params,
+      sender: sender,
+      nonce: _nonce,
+      address: address,
+      contract_name: contract_name,
     }},
     _from,
     state=%{
@@ -60,17 +64,9 @@ defmodule VM do
       contract_id: Helpers.pad_bytes_right(contract_name),
     }
 
-    case rpc do
-      <<
-        130,          # Start CBOR Array length 2
-        104,          # Start CBOR String length 8
-        "transfer",
-        130,          # Start CBOR Array length 2
-        88,           # Start CBOR Binary size 32
-        32,
-        recipient::binary-size(32),
-        amount>> ->
-          run_transfer(state, sender, recipient, amount)
+    case {address, contract_name, method, params} do
+      {address, @base_token_name, :transfer, [recipient, amount]} ->
+        BaseToken.transfer(state, env, recipient, amount)
       _ ->
         run_vm(
           state,
@@ -78,7 +74,8 @@ defmodule VM do
           env,
           address,
           Helpers.pad_bytes_right(contract_name),
-          rpc
+          method,
+          params
         )
     end
   end
@@ -98,31 +95,8 @@ defmodule VM do
     ])
   end
 
-  def run_transfer(state, sender, recipient, amount) do
-    redis = Map.get(state, :redis)
-    Redix.command(redis, [
-      "BITFIELD",
-      recipient,
-      "INCRBY",
-      "i64",
-      0,
-      1
-    ])
-
-    Redix.command(redis, [
-      "BITFIELD",
-      sender,
-      "INCRBY",
-      "i64",
-      0,
-      -1
-    ])
-    {:reply, {:ok, ""}, state}
-
-  end
-
-  def run_vm(state, db, env, address, contract_id, rpc) do
-    case run(db, env, address, contract_id, rpc) do
+  def run_vm(state, db, env, address, contract_id, method, params) do
+    case run(db, env, address, contract_id, method, params) do
       {:ok, result} -> format_result(state, result)
       _ -> {:reply, {:error, 0, "VM panic"}, state}
     end
@@ -139,5 +113,8 @@ defmodule VM do
         else
           {:reply, {:error, error_code, Atom.to_string(Cbor.decode(result))}, state}
         end
+  end
+  def format_result(state, <<>>) do
+    {:reply, {:error, 1, :vm_error}, state}
   end
 end

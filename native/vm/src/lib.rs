@@ -27,7 +27,10 @@ use std::sync::{RwLock,Arc};
 use rustler::{Env, Term, Encoder, NifResult};
 use rustler::types::binary::{ Binary, OwnedBinary };
 use rustler::types::map::{ MapIterator };
+use rustler::types::list::{ ListIterator };
+use rustler::types::atom::{ Atom };
 use rustler::resource::ResourceArc;
+use rustler::dynamic::get_type;
 
 
 mod atoms {
@@ -40,7 +43,7 @@ rustler_export_nifs! {
     "Elixir.VM",
     [
         ("open_db", 2, open_db),
-        ("run", 5, run),
+        ("run", 6, run),
     ],
     Some(on_load)
 }
@@ -114,14 +117,6 @@ fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     true
 }
 
-fn open_rocksdb<'a>(env: Env<'a>, path: &'a str) -> Term<'a> {
-    let db: rocksdb::DB = rocksdb::DB::open_default(path).unwrap();
-
-    (atoms::ok(), ResourceArc::new(RocksDBHandle{
-        db: Arc::new(RwLock::new(db)),
-    })).encode(env)
-}
-
 fn open_redis<'a>(env: Env<'a>, path: &'a str) -> Term<'a> {
     let client = redis::Client::open(path).expect("failed to connect to redis");
     (atoms::ok(), ResourceArc::new(RedisHandle{
@@ -134,7 +129,6 @@ fn open_db<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let options: &str = try!(args[1].decode());
 
     let resp = match backend {
-        // "rocksdb" => open_rocksdb(env, options),
         "redis" => open_redis(env, options),
         _ => panic!("unknown backend")
     };
@@ -148,18 +142,16 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let env_iter: MapIterator = try!(args[1].decode());
     let address: Binary = try!(args[2].decode());
     let contract_id: Binary = try!(args[3].decode());
-    let rpc_binary: Binary = try!(args[4].decode());
-    let rpc: Vec<Value> = from_slice(rpc_binary.as_slice()).unwrap();
+    let method = try!(try!(args[4].decode::<Term>()).atom_to_string());
+    let params_iter: ListIterator = try!(args[5].decode());
+    
 
+    // let rpc_binary: Binary = try!(args[4].decode());
+    // let rpc: Vec<Value> = from_slice(rpc_binary.as_slice()).unwrap();
+    //
 
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
-    // print!("Code: {:?}", code);
-    let ref func = rpc[0].as_string().unwrap();
-    let args_iter = rpc[1]
-        .as_array()
-        .unwrap();
-
     let mut env = HashMap::new();
     for (key, value) in env_iter {
         env.insert(
@@ -171,19 +163,21 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let module = ElipticoinAPI::new_module(&code);
     let mut vm = VM::new(db, &env, &module);
 
-    let mut args = Vec::new();
+    let mut params = Vec::new();
 
-    for arg in args_iter {
-        if arg.is_number() {
-            args.push(RuntimeValue::I32(arg.as_u64().unwrap() as i32));
+    for param in params_iter {
+        if param.is_number() {
+            let param_u32: u32 = try!(param.decode());
+            params.push(RuntimeValue::I32(param_u32 as i32));
         } else {
-            let arg_pointer = vm.write_pointer(to_vec(arg).unwrap());
-            args.push(RuntimeValue::I32(arg_pointer as i32));
+            let param_binary: Binary = try!(param.decode());
+            let param = to_vec(&Value::Bytes(param_binary.to_vec())).unwrap();
+            let arg_pointer = vm.write_pointer(param);
+            params.push(RuntimeValue::I32(arg_pointer as i32));
         }
     }
 
-
-    let pointer = vm.call(&func, &args);
+    let pointer = vm.call(&method, &params);
     let output = vm.read_pointer(pointer);
 
     let mut binary = OwnedBinary::new(output.len()).unwrap();

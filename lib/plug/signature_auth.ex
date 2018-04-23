@@ -31,14 +31,18 @@ defmodule Blacksmith.Plug.SignatureAuth do
     signature = Base.decode16!(signature_hex, case: :lower)
     nonce = Base.decode16!(nonce_hex, case: :lower)
 
-    body = conn.private[:raw_body]
-    "/" <> path = conn.request_path
+    {:ok, body} = Enum.fetch(conn.assigns.raw_body, 0)
+    path = conn.request_path
 
-    conn = conn
-      |> Plug.Conn.put_req_header("public_key", public_key)
-      |> Plug.Conn.put_req_header("nonce", nonce)
+    conn = Map.put(conn, :assigns, conn.assigns
+      |> Map.put(:public_key, public_key)
+      |> Map.put(:nonce, nonce))
 
-    if !Crypto.valid_signature?(signature, path <> body, public_key)
+    if !Crypto.valid_signature?(
+      signature,
+      conn.request_path <> body <> nonce,
+      public_key
+    )
     do
       throw UnauthorizedError
     end

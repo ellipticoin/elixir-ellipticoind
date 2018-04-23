@@ -221,11 +221,6 @@ dependencies = [
 
 [[package]]
 name = "lazy_static"
-version = "0.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "lazy_static"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
@@ -506,10 +501,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "rustler"
 version = "0.16.1-alpha.0"
-source = "git+https://github.com/hansihe/rustler.git#577e8a8e5f747268fbb2f7fcbaf6b5be32f6ad4b"
+source = "git+https://github.com/masonforest/rustler?branch=add-is-number#0971976e64e24c61123c63c413d61476c8f6a615"
 dependencies = [
  "erlang_nif-sys 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "lazy_static 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -733,7 +728,7 @@ dependencies = [
  "lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rocksdb 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustler 0.16.1-alpha.0 (git+https://github.com/hansihe/rustler.git)",
+ "rustler 0.16.1-alpha.0 (git+https://github.com/masonforest/rustler?branch=add-is-number)",
  "rustler_codegen 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_cbor 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmi 0.0.0 (git+https://github.com/pepyakin/wasmi.git)",
@@ -810,7 +805,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum heck 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ea04fa3ead4e05e51a7c806fc07271fdbde4e246a6c6d1efd52e72230b771b82"
 "checksum idna 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "014b298351066f1512874135335d62a789ffe78a9974f94b43ed5621951eaf7d"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
-"checksum lazy_static 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)" = "cf186d1a8aa5f5bee5fd662bc9c1b949e0259e1bcc379d1f006847b0080c7417"
 "checksum lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "76f033c7ad61445c5b347c7382dd1237847eb1bce590fe50365dcb33d546be73"
 "checksum lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c8f31047daa365f19be14b47c29df4f7c3b581832407daabe6ae77397619237d"
 "checksum libc 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)" = "1e5d97d6708edaa407429faa671b942dc0f2727222fb6b6539bf1db936e4b121"
@@ -847,7 +841,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum regex-syntax 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)" = "bd90079345f4a4c3409214734ae220fd773c6f2e8a543d07370c6c1c369cfbfb"
 "checksum rocksdb 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)" = "41eb461abed4e4f2b3f9a852b38f9cb2ef25ae866a3e8fa827fbe4a7d8dc42c3"
 "checksum rustc-serialize 0.3.24 (registry+https://github.com/rust-lang/crates.io-index)" = "dcf128d1287d2ea9d80910b5f1120d0b8eede3fbf1abe91c40d39ea7d51e6fda"
-"checksum rustler 0.16.1-alpha.0 (git+https://github.com/hansihe/rustler.git)" = "<none>"
+"checksum rustler 0.16.1-alpha.0 (git+https://github.com/masonforest/rustler?branch=add-is-number)" = "<none>"
 "checksum rustler_codegen 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0b94e2cb016a43a5e269a5cf76523d00278347f985cf7fbf6062ef026236144d"
 "checksum scopeguard 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "94258f53601af11e6a49f722422f6e3425c52b06245a5cf9bc09908b174f5e27"
 "checksum serde 1.0.36 (registry+https://github.com/rust-lang/crates.io-index)" = "c70142ae874a42c70e03c63c6a49abe2ea0079b090bf6e136e99252fc1974bd6"

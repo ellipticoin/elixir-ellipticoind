@@ -8,41 +8,42 @@ defmodule Mix.Tasks.Benchmark do
     Application.ensure_all_started(:blacksmith)
     constructor(@sender, 1000000000)
     Benchee.run(%{
-      "base_token_transfer"    => fn -> transfer(1, @receiver) end,
+      "base_token_transfer" => fn -> transfer(1, @receiver) end,
     }, time: 1)
 
     {:ok, balance}  = balance(@receiver)
-    IO.puts "Receiver's balance after benchmark #{Cbor.decode(balance)}"
+    IO.puts "Receiver's balance after benchmark #{Cbor.decode!(balance)}"
   end
 
   def balance(address) do
-    call([
-      :balance_of,
-      [address],
-    ])
+    call(%{
+      method: :balance_of,
+      params: [address],
+    })
   end
 
   def transfer(amount, recepient) do
-    call([
-      :transfer,
-      [recepient, amount],
-    ], recepient)
+    call(%{
+      method: :transfer,
+      params: [recepient, amount],
+    }, recepient)
   end
 
   def constructor(sender, amount) do
-      call([
-        :constructor,
-        [amount],
-      ])
+      call(%{
+        method: :constructor,
+        params: [amount],
+      })
   end
 
   def call(rpc, sender \\ @sender) do
     GenServer.call(VM, {:call, %{
-      rpc: Cbor.encode(rpc),
       address: Constants.system_address(),
       contract_name: Constants.base_token_name(),
       sender: sender,
-      nonce: 0
-    }})
+      nonce: 0,
+    }
+    |> Map.merge(rpc)
+    })
   end
 end

@@ -1,34 +1,38 @@
 defmodule Router do
-  alias Blacksmith.Plug.RawBody
+  alias Blacksmith.Plug.CBOR
   alias Blacksmith.Plug.SignatureAuth
   use Plug.Router
-  plug(RawBody)
+  plug Plug.Parsers,
+    parsers: [CBOR],
+    body_reader: {CacheBodyReader, :read_body, []},
+    cbor_decoder: Cbor
   plug(SignatureAuth, only_methods: ["POST", "PUT"])
   use Plug.ErrorHandler
 
   plug :match
   plug :dispatch
 
+  get "/:address/:contract_name" do
+    conn
+      |> parse_get_request()
+      |> run()
+      |> send_resp(conn)
+  end
+
   put "/:address/:contract_name" do
     conn
-      |> parse_request()
+      |> parse_post_or_put_request()
       |> deploy()
 
     send_resp(conn, 200, "")
   end
 
-  get "/:address/:contract_name" do
-    conn
-      |> parse_request()
-      |> run()
-      |> send_resp(conn)
-  end
 
   post "/:address/:contract_name" do
     conn
-      |> parse_request()
-      |> run()
-      |> send_resp(conn)
+    |> parse_post_or_put_request()
+    |> run()
+    |> send_resp(conn)
   end
 
   def send_resp(resp, conn) do
@@ -36,55 +40,33 @@ defmodule Router do
       {:ok, response } -> send_resp(conn, 200, response)
       {:error, error_code, response } -> send_resp(conn, 500, response)
     end
-
-  end
-  def parse_request(conn) do
-    case conn.method do
-      "GET" ->
-        parse_get_request(conn)
-      "POST" ->
-        parse_post_request(conn)
-      "PUT" ->
-        parse_put_request(conn)
-      _ -> throw Plug.BadRequestError
-    end
   end
 
   def parse_get_request(conn) do
+    {:ok, rpc} = Cbor.decode(Base.decode16!(conn.query_string, case: :lower))
     Map.merge(
-      conn.path_params,
+      conn.path_params
+      |> Map.Helpers.atomize_keys,
       %{
-        "address" => Base.decode16!(conn.path_params["address"], case: :lower),
-        "rpc" => Base.decode16!(conn.query_string, case: :lower),
-        "nonce" => nil,
-        "sender" => <<>>,
-      }
-    )
-
-  end
-
-  def parse_post_request(conn) do
-    Map.merge(
-      conn.path_params,
-      %{
-        "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
-        "rpc" => conn.private[:raw_body],
-        "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
-        "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
+        address: Base.decode16!(conn.path_params["address"], case: :lower),
+        method: rpc[:method],
+        params: rpc[:params],
+        nonce: nil,
+        sender: <<>>,
       }
     )
   end
 
-  def parse_put_request(conn) do
-    Map.merge(
-      conn.path_params,
-      %{
-        "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
-        "code" => conn.private[:raw_body],
-        "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
-        "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
-      }
-    )
+  def parse_post_or_put_request(conn) do
+    conn.params |>
+      Map.Helpers.atomize_keys |>
+      Map.merge(
+        %{
+          address: Base.decode16!(conn.path_params["address"], case: :mixed),
+          sender: conn.assigns.public_key,
+          nonce: conn.assigns.nonce,
+        }
+      )
   end
 
   def run(options) do
