@@ -4,7 +4,7 @@ defmodule Blacksmith do
   def start(_type, _args) do
     children = [
       Blacksmith.Supervisor,
-      Plug.Adapters.Cowboy.child_spec(
+      Plug.Adapters.Cowboy2.child_spec(
         scheme: :http,
         plug: Router,
         options: [

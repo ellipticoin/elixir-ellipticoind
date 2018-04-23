@@ -1,6 +1,8 @@
 defmodule Router do
+  alias Blacksmith.Plug.RawBody
   alias Blacksmith.Plug.SignatureAuth
   use Plug.Router
+  plug(RawBody)
   plug(SignatureAuth, only_methods: ["POST", "PUT"])
   use Plug.ErrorHandler
 
@@ -62,13 +64,11 @@ defmodule Router do
   end
 
   def parse_post_request(conn) do
-    {:ok, body, _conn} = Plug.Conn.read_body(conn)
-
     Map.merge(
       conn.path_params,
       %{
         "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
-        "rpc" => body,
+        "rpc" => conn.private[:raw_body],
         "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
         "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
       }
@@ -76,13 +76,11 @@ defmodule Router do
   end
 
   def parse_put_request(conn) do
-    {:ok, body, _conn} = Plug.Conn.read_body(conn)
-
     Map.merge(
       conn.path_params,
       %{
         "address" => Base.decode16!(conn.path_params["address"], case: :mixed),
-        "code" => body,
+        "code" => conn.private[:raw_body],
         "sender" => Enum.fetch!(Plug.Conn.get_req_header(conn, "public_key"), 0),
         "nonce" => Enum.fetch!(Plug.Conn.get_req_header(conn, "nonce"), 0),
       }

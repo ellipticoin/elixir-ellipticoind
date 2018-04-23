@@ -50,19 +50,19 @@ pub trait DB {
     fn read(&self, key: &[u8]) -> Vec<u8>;
 }
 
-impl<'a> DB for std::sync::RwLockWriteGuard<'a, rocksdb::DB> {
-    fn write(&self, key: &[u8], value: &[u8]) {
-        self.put(key, value).expect("failed to write");
-    }
-
-    fn read(&self, key: &[u8]) -> Vec<u8> {
-        match self.get(key) {
-            Ok(Some(value)) => value.to_vec(),
-            Ok(None) => vec![],
-            Err(e) => panic!(e),
-        }
-    }
-}
+// impl<'a> DB for std::sync::RwLockWriteGuard<'a, rocksdb::DB> {
+//     fn write(&self, key: &[u8], value: &[u8]) {
+//         self.put(key, value).expect("failed to write");
+//     }
+//
+//     fn read(&self, key: &[u8]) -> Vec<u8> {
+//         match self.get(key) {
+//             Ok(Some(value)) => value.to_vec(),
+//             Ok(None) => vec![],
+//             Err(e) => panic!(e),
+//         }
+//     }
+// }
 
 impl<'a> DB for std::sync::RwLockWriteGuard<'a, redis::Client> {
     fn write(&self, key: &[u8], value: &[u8]) {
@@ -134,7 +134,7 @@ fn open_db<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let options: &str = try!(args[1].decode());
 
     let resp = match backend {
-        "rocksdb" => open_rocksdb(env, options),
+        // "rocksdb" => open_rocksdb(env, options),
         "redis" => open_redis(env, options),
         _ => panic!("unknown backend")
     };
@@ -154,6 +154,7 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
+    // print!("Code: {:?}", code);
     let ref func = rpc[0].as_string().unwrap();
     let args_iter = rpc[1]
         .as_array()

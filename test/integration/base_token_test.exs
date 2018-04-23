@@ -80,7 +80,6 @@ defmodule Integration.BaseTokenTest do
     assert Cbor.decode(response.body) == 3
   end
 
-
   def get(options \\ []) do
     defaults = %{
       address: Constants.system_address(),

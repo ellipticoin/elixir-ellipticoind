@@ -31,7 +31,7 @@ defmodule Blacksmith.Plug.SignatureAuth do
     signature = Base.decode16!(signature_hex, case: :lower)
     nonce = Base.decode16!(nonce_hex, case: :lower)
 
-    {:ok, body, _conn} = Plug.Conn.read_body(conn)
+    body = conn.private[:raw_body]
     "/" <> path = conn.request_path
 
     conn = conn
