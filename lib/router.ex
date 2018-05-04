@@ -1,7 +1,11 @@
 defmodule Router do
+  use Plug.Router
+  if Mix.env == :dev do
+    use Plug.Debugger, otp_app: :blacksmith
+  end
+
   alias Blacksmith.Plug.CBOR
   alias Blacksmith.Plug.SignatureAuth
-  use Plug.Router
   plug Plug.Parsers,
     parsers: [CBOR],
     body_reader: {CacheBodyReader, :read_body, []},

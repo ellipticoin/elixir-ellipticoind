@@ -22,6 +22,13 @@ defmodule VM do
       Constants.base_token_code()
     )
 
+    set_contract_code(
+      redis,
+      Constants.system_address(),
+      Constants.human_readable_name_registry_name(),
+      Constants.human_readable_name_registry_code()
+    )
+
     {:ok, Map.merge(state, %{
       db: db,
       redis: redis,
@@ -29,11 +36,13 @@ defmodule VM do
   end
 
   def handle_call({:deploy, %{
+    nonce: nonce,
     sender: sender,
     address: address,
     contract_name: contract_name,
     code: code,
-  }}, _from, state=%{}) do
+    params: params,
+  }}, from, state=%{}) do
     redis = Map.get(state, :redis)
     set_contract_code(
       redis,
@@ -41,7 +50,18 @@ defmodule VM do
       Helpers.pad_bytes_right(contract_name),
       code
     )
-    {:reply, :ok, state}
+    handle_call({
+      :call, %{
+        method: :constructor,
+        params: params,
+        nonce: nonce,
+        sender: sender,
+        address: address,
+        contract_name: contract_name,
+      }},
+      from,
+      state
+    )
   end
 
   def handle_call({:call,
@@ -115,6 +135,6 @@ defmodule VM do
         end
   end
   def format_result(state, <<>>) do
-    {:reply, {:error, 1, :vm_error}, state}
+    {:reply, {:error, 1, "vm_error"}, state}
   end
 end

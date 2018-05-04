@@ -14,7 +14,6 @@ mod vm;
 
 use serde_cbor::{from_slice, to_vec, Value};
 use redis::Commands;
-use std::collections::BTreeMap;
 use std::collections::HashMap;
 use vm::VM;
 use std::io::Write;
@@ -28,9 +27,7 @@ use rustler::{Env, Term, Encoder, NifResult};
 use rustler::types::binary::{ Binary, OwnedBinary };
 use rustler::types::map::{ MapIterator };
 use rustler::types::list::{ ListIterator };
-use rustler::types::atom::{ Atom };
 use rustler::resource::ResourceArc;
-use rustler::dynamic::get_type;
 
 
 mod atoms {
@@ -144,11 +141,7 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let contract_id: Binary = try!(args[3].decode());
     let method = try!(try!(args[4].decode::<Term>()).atom_to_string());
     let params_iter: ListIterator = try!(args[5].decode());
-    
 
-    // let rpc_binary: Binary = try!(args[4].decode());
-    // let rpc: Vec<Value> = from_slice(rpc_binary.as_slice()).unwrap();
-    //
 
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();

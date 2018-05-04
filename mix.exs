@@ -31,12 +31,12 @@ defmodule Blacksmith.Mixfile do
     [
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:cbor, "~> 0.1"},
-      {:cowboy, "~> 2.1"},
+      {:cowboy, "~> 2.3"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5", runtime: false},
       {:httpoison, "~> 1.1", only: [:dev, :test]},
       {:libsodium, "~> 0.0.10"},
-      {:plug, "~> 1.0"},
+      {:plug, "~> 1.5"},
       {:redix, ">= 0.7.0"},
       {:rustler, "0.16.0"},
     ]
