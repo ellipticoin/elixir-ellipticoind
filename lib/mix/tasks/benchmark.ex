@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Benchmark do
   @shortdoc "Runs benchmarks"
   def run(_) do
     Application.ensure_all_started(:blacksmith)
-    constructor(@sender, 1000000000)
+    constructor(@sender, 1000000)
     Benchee.run(%{
       "base_token_transfer" => fn -> transfer(1, @receiver) end,
     }, time: 1)
@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Benchmark do
     call(%{
       method: :transfer,
       params: [recepient, amount],
-    }, recepient)
+    })
   end
 
   def constructor(sender, amount) do

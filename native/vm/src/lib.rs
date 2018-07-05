@@ -12,7 +12,7 @@ mod elipticoin_api;
 mod helpers;
 mod vm;
 
-use serde_cbor::{from_slice, to_vec, Value};
+use serde_cbor::{to_vec, Value};
 use redis::Commands;
 use std::collections::HashMap;
 use vm::VM;

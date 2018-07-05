@@ -8,6 +8,7 @@ defmodule Blacksmith.Supervisor do
   def init(:ok) do
     children = [
       {VM, name: VM},
+      {Clock, name: Clock},
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
