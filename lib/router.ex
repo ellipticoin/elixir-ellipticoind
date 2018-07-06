@@ -10,38 +10,40 @@ defmodule Router do
     parsers: [CBOR],
     body_reader: {CacheBodyReader, :read_body, []},
     cbor_decoder: Cbor
-  plug(SignatureAuth, only_methods: ["POST", "PUT"])
+  plug(
+    SignatureAuth,
+    only_methods: ["POST", "PUT"],
+  )
   use Plug.ErrorHandler
 
   plug :match
   plug :dispatch
 
-  get "/:address/:contract_name" do
+
+  get "/:address/:contract_name/:method" do
     conn
       |> parse_get_request()
-      |> run()
+      |> add_to_pool()
       |> send_resp(conn)
   end
 
   put "/:address/:contract_name" do
     conn
-      |> parse_post_or_put_request()
       |> deploy()
 
     send_resp(conn, 200, "")
   end
 
 
-  post "/:address/:contract_name" do
-    conn
-    |> parse_post_or_put_request()
-    |> run()
-    |> send_resp(conn)
+  post "/transactions" do
+    add_to_pool(conn.assigns.body)
+
+    send_resp(conn, 200, "")
   end
 
   def send_resp(resp, conn) do
     case resp do
-      {:ok, response } -> send_resp(conn, 200, response)
+      {:ok, response } -> send_resp(conn, 200, "")
       {:error, error_code, response } -> send_resp(conn, 500, response)
     end
   end
@@ -61,20 +63,8 @@ defmodule Router do
     )
   end
 
-  def parse_post_or_put_request(conn) do
-    conn.params |>
-      Map.Helpers.atomize_keys |>
-      Map.merge(
-        %{
-          address: Base.decode16!(conn.path_params["address"], case: :mixed),
-          sender: conn.assigns.public_key,
-          nonce: conn.assigns.nonce,
-        }
-      )
-  end
-
-  def run(options) do
-    GenServer.call(VM, {:call, options})
+  def add_to_pool(options) do
+    GenServer.call(TransactionPool, {:add, options})
   end
 
   def deploy(options) do

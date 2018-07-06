@@ -22,25 +22,22 @@ defmodule Blacksmith.Plug.SignatureAuth do
 
     [
       "Signature",
-      public_key_hex,
       signature_hex,
-      nonce_hex
     ] = String.split(authorization, " ")
 
-    public_key = Base.decode16!(public_key_hex, case: :lower)
+    public_key = conn.params.sender
     signature = Base.decode16!(signature_hex, case: :lower)
-    nonce = Base.decode16!(nonce_hex, case: :lower)
 
-    {:ok, body} = Enum.fetch(conn.assigns.raw_body, 0)
+    body = Enum.fetch!(conn.assigns.raw_body, 0)
     path = conn.request_path
 
     conn = Map.put(conn, :assigns, conn.assigns
-      |> Map.put(:public_key, public_key)
-      |> Map.put(:nonce, nonce))
+      |> Map.put(:body, body)
+      |> Map.put(:public_key, public_key))
 
     if !Crypto.valid_signature?(
       signature,
-      conn.request_path <> body <> nonce,
+      body,
       public_key
     )
     do

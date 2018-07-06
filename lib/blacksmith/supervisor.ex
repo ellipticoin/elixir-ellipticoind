@@ -8,6 +8,7 @@ defmodule Blacksmith.Supervisor do
   def init(:ok) do
     children = [
       {VM, name: VM},
+      {TransactionPool, name: TransactionPool},
       {Clock, name: Clock},
     ]
 
