@@ -36,9 +36,12 @@ defmodule Router do
 
 
   post "/transactions" do
-    add_to_pool(conn.assigns.body)
+    TransactionPool.add(conn.assigns.body)
+    result = receive do
+      {:transaction_forged, transaction} -> transaction
+    end
 
-    send_resp(conn, 200, "")
+    send_resp(conn, 200, result)
   end
 
   def send_resp(resp, conn) do
@@ -63,8 +66,8 @@ defmodule Router do
     )
   end
 
-  def add_to_pool(options) do
-    GenServer.call(TransactionPool, {:add, options})
+  def add_to_pool(transaction) do
+    GenServer.call(TransactionPool, {:add, transaction})
   end
 
   def deploy(options) do

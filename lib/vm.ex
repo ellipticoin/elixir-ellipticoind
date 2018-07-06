@@ -64,6 +64,16 @@ defmodule VM do
     )
   end
 
+  def call(transaction) do
+    GenServer.call(
+      __MODULE__,
+      {
+        :call,
+        transaction
+      }
+    )
+  end
+
   def handle_call({:call,
     %{
       method: method,
@@ -103,6 +113,8 @@ defmodule VM do
   def set_contract_code(redis, address, contract_name, contract_code) do
     key = address <> Helpers.pad_bytes_right(contract_name)
 
+    # IO.puts "deploying"
+    # IO.inspect key |> Base.encode16
     redis |>
       set_state(key, contract_code)
   end
@@ -116,6 +128,8 @@ defmodule VM do
   end
 
   def run_vm(state, db, env, address, contract_id, method, params) do
+    # IO.inspect "running"
+    # IO.inspect (address <> contract_id) |> Base.encode16
     case run(db, env, address, contract_id, method, params) do
       {:ok, result} -> format_result(state, result)
       _ -> {:reply, {:error, 0, "VM panic"}, state}

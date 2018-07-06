@@ -13,8 +13,13 @@ defmodule Clock do
     {:ok, state}
   end
 
+  def time_since_last_block() do
+    round(rem(:os.system_time(:milli_seconds) - @epoch, @block_time))
+  end
+
   def handle_info(:tick, state) do
     schedule_tick()
+    TransactionPool.forge_block()
     {:noreply, state}
   end
 

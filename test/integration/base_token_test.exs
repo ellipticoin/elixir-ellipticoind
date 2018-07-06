@@ -152,7 +152,6 @@ defmodule Integration.BaseTokenTest do
       contract_name: contract_name,
     } = Enum.into(options, defaults)
 
-    address  = Base.encode16(address, case: :lower)
     path = "/transactions"
     sender =  Crypto.public_key_from_private_key(private_key)
     transaction = Cbor.encode(%{
@@ -177,7 +176,11 @@ defmodule Integration.BaseTokenTest do
     HTTPoison.post(
       @host <> path,
       message,
-      headers(signature)
+      headers(signature),
+      [
+        timeout: 50_000,
+        recv_timeout: 50_000,
+      ]
     )
   end
 
