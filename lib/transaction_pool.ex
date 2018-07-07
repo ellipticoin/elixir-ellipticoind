@@ -43,22 +43,30 @@ defmodule TransactionPool do
     {:noreply, state}
   end
 
+  def handle_cast(
+    {
+      :forged,
+      transaction
+    },
+    state=%{
+      results: results,
+      processes: processes,
+    }
+  ) do
+    pid = Map.get(processes, transaction)
+    {result, _} = Map.pop(results, transaction)
+    send(pid, {:transaction_forged, result})
+    {:noreply, state}
+  end
+
   def forge_transactions(redis, results) do
-    {:ok, transaction} = Redis.lpop(redis, "transaction_pool")
+    if within_forging_period?() do
+      transaction = get_next_transaction(redis)
 
+      if transaction do
+        result = run_transaction(transaction)
+        results = Map.put(results, transaction, result)
 
-    if transaction do
-      decoded_transaction = Cbor.decode!(transaction)
-
-      if Map.has_key?(decoded_transaction, :code) do
-        {:ok, result} = VM.deploy(decoded_transaction)
-      else
-        {:ok, result} = VM.call(decoded_transaction)
-      end
-
-      results = Map.put(results, transaction, result)
-
-      if within_forging_period?() do
         forge_transactions(redis, results)
       else
         results
@@ -68,13 +76,33 @@ defmodule TransactionPool do
     end
   end
 
+  def run_transaction(transaction) do
+    decoded_transaction = Cbor.decode!(transaction)
+
+    if Map.has_key?(decoded_transaction, :code) do
+      {:ok, result} = VM.deploy(decoded_transaction)
+
+      result
+    else
+      {:ok, result} = VM.call(decoded_transaction)
+
+      result
+    end
+  end
+
+  def get_next_transaction(redis) do
+    {:ok, transaction} = Redis.lpop(redis, "transaction_pool")
+
+    transaction
+  end
+
   def within_forging_period?() do
     Clock.time_since_last_block() < @forging_time_per_block
   end
 
   def handle_call(
     {:add, transaction},
-    {pid, reference},
+    {pid, _reference},
     state=%{
       redis: redis,
     }
@@ -88,23 +116,6 @@ defmodule TransactionPool do
 
   def transaction_forged(transaction) do
     GenServer.cast(__MODULE__, {:forged, transaction})
-  end
-
-  def handle_cast(
-    {
-      :forged,
-      transaction
-    },
-    state=%{
-      redis: redis,
-      results: results,
-      processes: processes,
-    }
-  ) do
-    pid = Map.get(processes, transaction)
-    {result, results} = Map.pop(results, transaction)
-    send(pid, {:transaction_forged, result})
-    {:noreply, state}
   end
 
   def set_contract_code(redis, address, contract_name, contract_code) do

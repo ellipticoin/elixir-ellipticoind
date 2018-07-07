@@ -3,7 +3,6 @@ defmodule Integration.BaseTokenTest do
   @sender  Base.decode16!("509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
   @sender_private_key Base.decode16!("01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
   @receiver  Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
-  @receiver_private_key Base.decode16!("1e598351b3347ca287da6a77de2ca43fb2f7bd85350d54c870f1333add33443a027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
   @adder_contract_code  File.read!("test/support/adder.wasm")
 
   use ExUnit.Case
@@ -137,8 +136,6 @@ defmodule Integration.BaseTokenTest do
   end
 
   def put_signed(path, message, private_key) do
-    public_key =  Crypto.public_key_from_private_key(private_key)
-
     signature = Crypto.sign(
       message,
       private_key
