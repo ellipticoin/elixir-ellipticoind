@@ -20,23 +20,16 @@ defmodule Router do
   plug :dispatch
 
 
-  get "/:address/:contract_name/:method" do
+  get "/:address/:contract_name" do
     conn
       |> parse_get_request()
-      |> add_to_pool()
+      |> VM.run_get()
       |> send_resp(conn)
   end
 
-  put "/:address/:contract_name" do
-    conn
-      |> deploy()
-
-    send_resp(conn, 200, "")
-  end
-
-
-  post "/transactions" do
+  put "/contracts" do
     TransactionPool.add(conn.assigns.body)
+
     result = receive do
       {:transaction_forged, transaction} -> transaction
     end
@@ -44,34 +37,38 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
+
+  post "/transactions" do
+    TransactionPool.add(conn.assigns.body)
+
+    result = receive do
+      {:transaction_forged, transaction} -> transaction
+    end
+
+    send_resp(conn, 200, result)
+  end
+
+
   def send_resp(resp, conn) do
     case resp do
-      {:ok, response } -> send_resp(conn, 200, "")
+      {:ok, result } -> send_resp(conn, 200, result)
       {:error, error_code, response } -> send_resp(conn, 500, response)
     end
   end
 
   def parse_get_request(conn) do
-    {:ok, rpc} = Cbor.decode(Base.decode16!(conn.query_string, case: :lower))
+    params = Cbor.decode!(Base.decode16!(conn.query_params["params"]))
+    address = Base.decode16!(conn.path_params["address"], case: :lower)
+
     Map.merge(
       conn.path_params
       |> Map.Helpers.atomize_keys,
       %{
-        address: Base.decode16!(conn.path_params["address"], case: :lower),
-        method: rpc[:method],
-        params: rpc[:params],
-        nonce: nil,
-        sender: <<>>,
+        address: address,
+        method: String.to_atom(conn.query_params["method"]),
+        params: params,
       }
     )
-  end
-
-  def add_to_pool(transaction) do
-    GenServer.call(TransactionPool, {:add, transaction})
-  end
-
-  def deploy(options) do
-    GenServer.call(VM, {:deploy, options})
   end
 
   match _ do

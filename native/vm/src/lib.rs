@@ -142,7 +142,6 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let method = try!(try!(args[4].decode::<Term>()).atom_to_string());
     let params_iter: ListIterator = try!(args[5].decode());
 
-
     let con = db.get_connection().unwrap();
     let code: Vec<u8> = con.get([address, contract_id].concat().to_vec()).unwrap();
     let mut env = HashMap::new();

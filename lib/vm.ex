@@ -35,10 +35,13 @@ defmodule VM do
     })}
   end
 
+  def deploy(deployment) do
+    GenServer.call(VM, {:deploy, deployment})
+  end
+
   def handle_call({:deploy, %{
     nonce: nonce,
     sender: sender,
-    address: address,
     contract_name: contract_name,
     code: code,
     params: params,
@@ -46,21 +49,32 @@ defmodule VM do
     redis = Map.get(state, :redis)
     set_contract_code(
       redis,
-      address,
+      sender,
       Helpers.pad_bytes_right(contract_name),
       code
     )
     handle_call({
-      :call, %{
+      :call, 
+      %{
         method: :constructor,
         params: params,
         nonce: nonce,
         sender: sender,
-        address: address,
+        address: sender,
         contract_name: contract_name,
       }},
       from,
       state
+    )
+  end
+
+  def run_get(transaction) do
+    GenServer.call(
+      __MODULE__,
+      {
+        :run_get,
+        transaction
+      }
     )
   end
 
@@ -71,6 +85,34 @@ defmodule VM do
         :call,
         transaction
       }
+    )
+  end
+
+  def handle_call({:run_get,
+    transaction = %{
+      method: method,
+      params: params,
+      address: address,
+      contract_name: contract_name,
+    }},
+    _from,
+    state=%{
+      db: db,
+    }
+  ) do
+    env = %{
+      address: address,
+      contract_id: Helpers.pad_bytes_right(contract_name),
+    }
+
+    run_vm(
+      state,
+      db,
+      env,
+      address,
+      Helpers.pad_bytes_right(contract_name),
+      method,
+      params
     )
   end
 
@@ -113,8 +155,6 @@ defmodule VM do
   def set_contract_code(redis, address, contract_name, contract_code) do
     key = address <> Helpers.pad_bytes_right(contract_name)
 
-    # IO.puts "deploying"
-    # IO.inspect key |> Base.encode16
     redis |>
       set_state(key, contract_code)
   end
@@ -128,10 +168,9 @@ defmodule VM do
   end
 
   def run_vm(state, db, env, address, contract_id, method, params) do
-    # IO.inspect "running"
-    # IO.inspect (address <> contract_id) |> Base.encode16
     case run(db, env, address, contract_id, method, params) do
-      {:ok, result} -> format_result(state, result)
+      {:ok, result} ->
+        format_result(state, result)
       _ -> {:reply, {:error, 0, "VM panic"}, state}
     end
   end
@@ -148,7 +187,8 @@ defmodule VM do
           {:reply, {:error, error_code, Atom.to_string(Cbor.decode(result))}, state}
         end
   end
+
   def format_result(state, <<>>) do
-    {:reply, {:error, 1, "vm_error"}, state}
+    {:reply, {:ok, ""}, state}
   end
 end

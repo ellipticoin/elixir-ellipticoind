@@ -46,8 +46,16 @@ defmodule TransactionPool do
   def forge_transactions(redis, results) do
     {:ok, transaction} = Redis.lpop(redis, "transaction_pool")
 
+
     if transaction do
-      {:ok, result} = VM.call(Cbor.decode!(transaction))
+      decoded_transaction = Cbor.decode!(transaction)
+
+      if Map.has_key?(decoded_transaction, :code) do
+        {:ok, result} = VM.deploy(decoded_transaction)
+      else
+        {:ok, result} = VM.call(decoded_transaction)
+      end
+
       results = Map.put(results, transaction, result)
 
       if within_forging_period?() do

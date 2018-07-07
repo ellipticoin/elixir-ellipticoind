@@ -16,105 +16,57 @@ defmodule Integration.BaseTokenTest do
       params: [100],
     })
 
-    # {:ok, response} = get(%{
-    #   private_key: @sender_private_key,
-    #   method: :balance_of,
-    #   params: [@sender],
-    # })
-    #
-    # assert Cbor.decode!(response.body) == 100
-    #
-    # post(%{
-    #   private_key: @sender_private_key,
-    #   nonce: 2,
-    #   method: :transfer,
-    #   params: [@receiver, 50],
-    # })
-    #
-    # {:ok, response} = get(%{
-    #   private_key: @sender_private_key,
-    #   nonce: 3,
-    #   method: :balance_of,
-    #   params: [@sender],
-    # })
-    #
-    # assert Cbor.decode!(response.body) == 50
+    {:ok, response} = get(%{
+      private_key: @sender_private_key,
+      method: :balance_of,
+      params: [@sender],
+    })
+
+    assert Cbor.decode!(response.body) == 100
+
+    post(%{
+      private_key: @sender_private_key,
+      nonce: 2,
+      method: :transfer,
+      params: [@receiver, 50],
+    })
+
+    {:ok, response} = get(%{
+      private_key: @sender_private_key,
+      nonce: 3,
+      method: :balance_of,
+      params: [@sender],
+    })
+
+    assert Cbor.decode!(response.body) == 50
   end
-  # test "send tokens" do
-  #   post(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 0,
-  #     method: :constructor,
-  #     params: [100],
-  #   })
-  #
-  #   {:ok, response} = get(%{
-  #     private_key: @sender_private_key,
-  #     method: :balance_of,
-  #     params: [@sender],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 100
-  #
-  #   post(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 2,
-  #     method: :transfer,
-  #     params: [@receiver, 50],
-  #   })
-  #
-  #   {:ok, response} = get(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 3,
-  #     method: :balance_of,
-  #     params: [@sender],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 50
-  #
-  #   post(%{
-  #     private_key: @receiver_private_key,
-  #     nonce: 4,
-  #     method: :transfer,
-  #     params: [@sender, 25],
-  #   })
-  #
-  #   {:ok, response} = post(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 5,
-  #     method: :balance_of,
-  #     params: [@sender],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 75
-  # end
-  #
-  # test "deploy a contract" do
-  #   nonce = 0
-  #   contract_name = "Adder"
-  #
-  #   path = "/" <> Enum.join([
-  #     Base.encode16(@sender, case: :lower),
-  #     contract_name,
-  #   ], "/")
-  #   deployment = Cbor.encode(%{
-  #     code: @adder_contract_code,
-  #     params: []
-  #   })
-  #
-  #   put_signed(path, deployment, @sender_private_key, nonce)
-  #
-  #   {:ok, response} = post(%{
-  #     private_key: @sender_private_key,
-  #     contract_name: "Adder",
-  #     address: @sender,
-  #     nonce: 1,
-  #     method: :add,
-  #     params: [1, 2],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 3
-  # end
+
+  test "deploy a contract" do
+    nonce = 0
+    contract_name = "Adder"
+    path = "/contracts"
+    sender =  Crypto.public_key_from_private_key(@sender_private_key)
+    deployment = Cbor.encode(%{
+      contract_name: contract_name,
+      sender: sender,
+      code: @adder_contract_code,
+      params: [],
+      nonce: nonce,
+    })
+
+    put_signed(path, deployment, @sender_private_key)
+
+    {:ok, response} = get(%{
+      private_key: @sender_private_key,
+      contract_name: "Adder",
+      address: @sender,
+      nonce: 1,
+      method: :add,
+      params: [1, 2],
+    })
+
+    assert Cbor.decode!(response.body) == 3
+  end
 
   def get(options \\ []) do
     defaults = %{
@@ -130,12 +82,12 @@ defmodule Integration.BaseTokenTest do
 
     address  = Base.encode16(address, case: :lower)
     path = "/" <> Enum.join([address, contract_name], "/")
-    rpc = Cbor.encode(%{
+    query = Plug.Conn.Query.encode(%{
       method: method,
-      params: params,
+      params: Base.encode16(Cbor.encode(params)),
     })
 
-    http_get(path, rpc)
+    http_get(path, query)
   end
 
   def post(options \\ []) do
@@ -166,8 +118,8 @@ defmodule Integration.BaseTokenTest do
     http_post_signed(path, transaction, private_key)
   end
 
-  def http_get(path, message) do
-    HTTPoison.get(@host <> path <> "?" <> Base.encode16(message, case: :lower))
+  def http_get(path, query) do
+    HTTPoison.get(@host <> path <> "?" <> query)
   end
 
   def http_post_signed(path, message, private_key) do
@@ -184,11 +136,11 @@ defmodule Integration.BaseTokenTest do
     )
   end
 
-  def put_signed(path, message, private_key, nonce) do
+  def put_signed(path, message, private_key) do
     public_key =  Crypto.public_key_from_private_key(private_key)
 
     signature = Crypto.sign(
-      path <> message <> <<nonce::size(32)>>,
+      message,
       private_key
     )
 
@@ -204,6 +156,7 @@ defmodule Integration.BaseTokenTest do
         "Content-Type": "application/cbor",
         Authorization: "Signature "<>
         Base.encode16(signature, case: :lower)
+
       }
   end
 end
