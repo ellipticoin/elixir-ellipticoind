@@ -1,4 +1,5 @@
 use vm::*;
+use sha3::{Digest, Sha3_256};
 use wasmi::{Error as InterpreterError};
 use serde_cbor::{from_slice, to_vec, Value};
 use wasmi::*;
@@ -6,12 +7,13 @@ use std::str;
 
 
 const SENDER_FUNC_INDEX: usize = 0;
-const READ_FUNC_INDEX: usize = 1;
-const WRITE_FUNC_INDEX: usize = 2;
-const THROW_FUNC_INDEX: usize = 3;
-const MEMCPY_FUNC_INDEX: usize = 4;
-const CALL_FUNC_INDEX: usize = 5;
-const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 6;
+const BLOCK_HASH_FUNC_INDEX: usize = 1;
+const READ_FUNC_INDEX: usize = 2;
+const WRITE_FUNC_INDEX: usize = 3;
+const THROW_FUNC_INDEX: usize = 4;
+const MEMCPY_FUNC_INDEX: usize = 5;
+const CALL_FUNC_INDEX: usize = 6;
+const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 7;
 
 pub struct ElipticoinAPI;
 
@@ -42,6 +44,14 @@ impl ElipticoinAPI {
                 } else {
                     Ok(None)
                 }
+            }
+            BLOCK_HASH_FUNC_INDEX => {
+                let block_data = vm.db.get_block_data();
+                let mut hasher = Sha3_256::default();
+                hasher.input(&block_data);
+                let block_hash = hasher.result();
+
+                Ok(Some(vm.write_pointer(block_hash.to_vec()).into()))
             }
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
@@ -102,8 +112,11 @@ impl<'a> ModuleImportResolver for ElipticoinAPI {
         _signature: &Signature,
         ) -> Result<FuncRef, InterpreterError> {
         let func_ref = match field_name {
-            "sender" => {
+            "_sender" => {
                 FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), SENDER_FUNC_INDEX)
+            },
+            "_block_hash" => {
+                FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), BLOCK_HASH_FUNC_INDEX)
             },
             "read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
             "write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),

@@ -3,6 +3,7 @@
 )]
 #[macro_use] extern crate rustler;
 #[macro_use] extern crate lazy_static;
+extern crate sha3;
 extern crate redis;
 extern crate rocksdb;
 extern crate wasmi;
@@ -21,6 +22,8 @@ use wasmi::*;
 use elipticoin_api::ElipticoinAPI;
 use std::ops::Deref;
 use std::sync::{RwLock,Arc};
+use db::redis::RedisHandle;
+use sha3::{Digest, Sha3_256};
 
 
 use rustler::{Env, Term, Encoder, NifResult};
@@ -29,6 +32,8 @@ use rustler::types::map::{ MapIterator };
 use rustler::types::list::{ ListIterator };
 use rustler::resource::ResourceArc;
 
+mod db;
+use db::{DB};
 
 mod atoms {
     rustler_atoms! {
@@ -41,76 +46,14 @@ rustler_export_nifs! {
     [
         ("open_db", 2, open_db),
         ("run", 6, run),
+        ("current_block_hash", 1, current_block_hash),
     ],
     Some(on_load)
 }
 
-pub trait DB {
-    fn write(&self, key: &[u8], value: &[u8]);
-    fn read(&self, key: &[u8]) -> Vec<u8>;
-}
-
-// impl<'a> DB for std::sync::RwLockWriteGuard<'a, rocksdb::DB> {
-//     fn write(&self, key: &[u8], value: &[u8]) {
-//         self.put(key, value).expect("failed to write");
-//     }
-//
-//     fn read(&self, key: &[u8]) -> Vec<u8> {
-//         match self.get(key) {
-//             Ok(Some(value)) => value.to_vec(),
-//             Ok(None) => vec![],
-//             Err(e) => panic!(e),
-//         }
-//     }
-// }
-
-impl<'a> DB for std::sync::RwLockWriteGuard<'a, redis::Client> {
-    fn write(&self, key: &[u8], value: &[u8]) {
-        let con = self.get_connection().unwrap();
-        let _: () = con.set(key, value).unwrap();
-    }
-
-    fn read(&self, key: &[u8]) -> Vec<u8> {
-        let con = self.get_connection().unwrap();
-        con.get(key).unwrap()
-    }
-}
-
-struct RocksDBHandle {
-    pub db: Arc<RwLock<rocksdb::DB>>,
-}
-
-impl Deref for RocksDBHandle {
-    type Target = Arc<RwLock<rocksdb::DB>>;
-
-    fn deref(&self) -> &Self::Target { &self.db }
-}
-
-struct RedisHandle {
-    pub db: Arc<RwLock<redis::Client>>,
-}
-
-impl Deref for RedisHandle {
-    type Target = Arc<RwLock<redis::Client>>;
-
-    fn deref(&self) -> &Self::Target { &self.db }
-}
-
-struct DBHandle {
-    pub db: Arc<RwLock<DB + std::marker::Sync + std::marker::Send>>,
-}
-
-impl Deref for DBHandle {
-    type Target = Arc<RwLock<DB + std::marker::Sync + std::marker::Send>>;
-
-    fn deref(&self) -> &Self::Target { &self.db }
-}
-
 
 fn on_load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
-    resource_struct_init!(RocksDBHandle, env);
     resource_struct_init!(RedisHandle, env);
-    resource_struct_init!(DBHandle, env);
     true
 }
 
@@ -175,4 +118,17 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let mut binary = OwnedBinary::new(output.len()).unwrap();
     binary.as_mut_slice().write(&output).unwrap();
     Ok((atoms::ok(), binary.release(nif_env)).encode(nif_env))
+}
+
+fn current_block_hash<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let db_arc: ResourceArc<RedisHandle> = args[0].decode()?;
+    let ref db = db_arc.deref().db.write().unwrap();
+    let block_data = db.get_block_data();
+    let mut hasher = Sha3_256::default();
+    hasher.input(&block_data);
+    let block_hash = hasher.result();
+
+    let mut binary = OwnedBinary::new(block_hash.len()).unwrap();
+    binary.as_mut_slice().write(&block_hash).unwrap();
+    Ok((binary.release(nif_env)).encode(nif_env))
 }

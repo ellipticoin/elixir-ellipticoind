@@ -1,4 +1,10 @@
 defmodule Redis do
+  def flushall(redis) do
+    Redix.command(redis, [
+      "FLUSHALL",
+    ])
+  end
+
   def set(redis, key, value) do
     Redix.command(redis, [
       "SET",

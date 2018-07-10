@@ -29,6 +29,7 @@ defmodule TransactionPool do
     {:forge_block},
     state=%{
       redis: redis,
+      db: db,
       results: results,
     }
   ) do
@@ -61,16 +62,19 @@ defmodule TransactionPool do
 
   def forge_transactions(redis, results) do
     if within_forging_period?() do
-      transaction = get_next_transaction(redis)
+      results = forge_next_transaction(redis, results)
+      forge_transactions(redis, results)
+    else
+      results
+    end
+  end
 
-      if transaction do
-        result = run_transaction(transaction)
-        results = Map.put(results, transaction, result)
+  def forge_next_transaction(redis, results) do
+    transaction = get_next_transaction(redis)
 
-        forge_transactions(redis, results)
-      else
-        results
-      end
+    if transaction do
+      result = run_transaction(transaction)
+      Map.put(results, transaction, result)
     else
       results
     end

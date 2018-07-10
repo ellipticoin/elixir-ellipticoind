@@ -9,6 +9,7 @@ path = "src/lib.rs"
 crate-type = ["dylib"]
 
 [dependencies]
+sha3 = "0.7.3"
 redis = "0.8.0"
 # rustler = { git = "https://github.com/hansihe/rustler.git"}
 rustler = { git = "https://github.com/masonforest/rustler", branch="add-is-number"}

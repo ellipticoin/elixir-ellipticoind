@@ -21,10 +21,14 @@ defmodule Router do
 
 
   get "/:address/:contract_name" do
-    conn
+    result  = conn
       |> parse_get_request()
       |> VM.run_get()
-      |> send_resp(conn)
+
+    case result do
+      {:ok, result } -> send_resp(conn, 200, result)
+      {:error, error_code, response } -> send_resp(conn, 500, response)
+    end
   end
 
   put "/contracts" do
@@ -48,27 +52,16 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
-
-  def send_resp(resp, conn) do
-    case resp do
-      {:ok, result } -> send_resp(conn, 200, result)
-      {:error, error_code, response } -> send_resp(conn, 500, response)
-    end
-  end
-
   def parse_get_request(conn) do
     params = Cbor.decode!(Base.decode16!(conn.query_params["params"]))
     address = Base.decode16!(conn.path_params["address"], case: :lower)
 
-    Map.merge(
-      conn.path_params
-      |> Map.Helpers.atomize_keys,
-      %{
-        address: address,
-        method: String.to_atom(conn.query_params["method"]),
-        params: params,
-      }
-    )
+    %{
+      address: address,
+      method: String.to_atom(conn.query_params["method"]),
+      params: params,
+      contract_name: conn.path_params["contract_name"],
+    }
   end
 
   match _ do

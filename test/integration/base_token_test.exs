@@ -7,6 +7,12 @@ defmodule Integration.BaseTokenTest do
 
   use ExUnit.Case
 
+  setup do
+    reset_db()
+
+    :ok
+  end
+
   test "send tokens asynchronously" do
     post(%{
       private_key: @sender_private_key,
@@ -65,6 +71,41 @@ defmodule Integration.BaseTokenTest do
     })
 
     assert Cbor.decode!(response.body) == 3
+  end
+
+  test "updates the blockhash" do
+    post(%{
+      private_key: @sender_private_key,
+      nonce: 0,
+      method: :constructor,
+      params: [100],
+    })
+
+    {:ok, response} = post(%{
+      private_key: @sender_private_key,
+      contract_name: Constants.base_api_name(),
+      nonce: 0,
+      method: :block_hash,
+      params: [],
+    })
+    assert Cbor.decode!(response.body) == Base.decode16!("081CF1773A3F76ABCC55872DFFE8D094F6225B7775B01DCFC05F04F07149A04C")
+
+    post(%{
+      private_key: @sender_private_key,
+      nonce: 1,
+      method: :transfer,
+      params: [@receiver, 50],
+    })
+
+    {:ok, response} = post(%{
+      private_key: @sender_private_key,
+      contract_name: Constants.base_api_name(),
+      nonce: 0,
+      method: :block_hash,
+      params: [],
+    })
+
+    assert Cbor.decode!(response.body) == Base.decode16!("B19734CE14038BDAF76EC1B755DBF49D3D56DA787EE93F653DA1A982EBBF9F53")
   end
 
   def get(options \\ []) do
@@ -155,5 +196,11 @@ defmodule Integration.BaseTokenTest do
         Base.encode16(signature, case: :lower)
 
       }
+  end
+
+  def reset_db do
+    {:ok, redis} = Redix.start_link()
+    Redis.flushall(redis)
+    NetworkInitializer.run(redis)
   end
 end

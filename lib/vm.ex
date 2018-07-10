@@ -5,6 +5,7 @@ defmodule VM do
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm
 
+  def current_block_hash(_db), do: exit(:nif_not_loaded)
   def run(_db, _env, _contract_id, _address, _method, _params), do: exit(:nif_not_loaded)
   def open_db(_backend, _options), do: exit(:nif_not_loaded)
 
@@ -15,20 +16,7 @@ defmodule VM do
   def init(state) do
     {:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
     {:ok, redis} = Redix.start_link()
-    set_contract_code(
-      redis,
-      Constants.system_address(),
-      Constants.base_token_name(),
-      Constants.base_token_code()
-    )
-
-    set_contract_code(
-      redis,
-      Constants.system_address(),
-      Constants.human_readable_name_registry_name(),
-      Constants.human_readable_name_registry_code()
-    )
-
+    NetworkInitializer.run(redis)
     {:ok, Map.merge(state, %{
       db: db,
       redis: redis,
@@ -37,6 +25,27 @@ defmodule VM do
 
   def deploy(deployment) do
     GenServer.call(VM, {:deploy, deployment})
+  end
+
+
+  def run_get(transaction) do
+    GenServer.call(
+      __MODULE__,
+      {
+        :run_get,
+        transaction
+      }
+    )
+  end
+
+  def call(transaction) do
+    GenServer.call(
+      __MODULE__,
+      {
+        :call,
+        transaction
+      }
+    )
   end
 
   def handle_call({:deploy, %{
@@ -68,26 +77,6 @@ defmodule VM do
     )
   end
 
-  def run_get(transaction) do
-    GenServer.call(
-      __MODULE__,
-      {
-        :run_get,
-        transaction
-      }
-    )
-  end
-
-  def call(transaction) do
-    GenServer.call(
-      __MODULE__,
-      {
-        :call,
-        transaction
-      }
-    )
-  end
-
   def handle_call({:run_get,
     transaction = %{
       method: method,
@@ -116,7 +105,8 @@ defmodule VM do
     )
   end
 
-  def handle_call({:call,
+  def handle_call({
+    :call,
     %{
       method: method,
       params: params,
