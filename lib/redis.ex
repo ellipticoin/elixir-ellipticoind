@@ -1,16 +1,57 @@
 defmodule Redis do
+  import Utils
+
   def flushall(redis) do
     Redix.command(redis, [
       "FLUSHALL",
     ])
   end
 
+  def get(redis, key) do
+    Redix.command(redis, [
+      "GET",
+      key
+    ])
+  end
+
+  def del(redis, key) do
+    Redix.command(redis, [
+      "DEL",
+      key,
+    ])
+  end
   def set(redis, key, value) do
     Redix.command(redis, [
       "SET",
       key,
       value
     ])
+  end
+
+  def hset(redis, key, hash) do
+    Redix.command(redis, [
+      "HSET",
+      key
+    ] ++
+      Enum.flat_map(hash, fn {k, v} -> [k, v] end)
+    )
+  end
+
+  def hgetall(redis, key) do
+    Redix.command(redis, [
+      "HGETALL",
+      key
+    ])
+    |> ok
+    |> Enum.chunk(2)
+    |> Map.new(fn [k, v] -> {String.to_atom(k), coerce_value(v)} end)
+  end
+
+  def coerce_value(value) do
+    case Integer.parse(value) do
+      {integer_value, ""} -> integer_value
+      :error -> value
+    end
   end
 
   def rpush(redis, key, value) do
@@ -32,6 +73,15 @@ defmodule Redis do
     Redix.command(redis, [
       "LLEN",
       key,
+    ])
+  end
+
+  def lrange(redis, key, start, stop) do
+    Redix.command(redis, [
+      "LRANGE",
+      key,
+      start,
+      stop,
     ])
   end
 end

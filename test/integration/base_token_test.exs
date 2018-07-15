@@ -81,31 +81,28 @@ defmodule Integration.BaseTokenTest do
       params: [100],
     })
 
-    {:ok, response} = post(%{
-      private_key: @sender_private_key,
+    {:ok, response} = get(%{
       contract_name: Constants.base_api_name(),
-      nonce: 0,
       method: :block_hash,
       params: [],
     })
-    assert Cbor.decode!(response.body) == Base.decode16!("081CF1773A3F76ABCC55872DFFE8D094F6225B7775B01DCFC05F04F07149A04C")
+
+    assert Cbor.decode!(response.body) == Base.decode16!("E69E241779ECCF6974879B2EC94C2FEAA9F8FB26A62DE9E40B91192203E9787E")
 
     post(%{
       private_key: @sender_private_key,
-      nonce: 1,
+      nonce: 2,
       method: :transfer,
       params: [@receiver, 50],
     })
 
-    {:ok, response} = post(%{
-      private_key: @sender_private_key,
+    {:ok, response} = get(%{
       contract_name: Constants.base_api_name(),
-      nonce: 0,
       method: :block_hash,
       params: [],
     })
 
-    assert Cbor.decode!(response.body) == Base.decode16!("B19734CE14038BDAF76EC1B755DBF49D3D56DA787EE93F653DA1A982EBBF9F53")
+    assert Cbor.decode!(response.body) == Base.decode16!("B13812DDF53A2A1770D91803F6FF75350D18C0CAA8FD7B9F31B961C29D91516B")
   end
 
   def get(options \\ []) do
@@ -201,6 +198,6 @@ defmodule Integration.BaseTokenTest do
   def reset_db do
     {:ok, redis} = Redix.start_link()
     Redis.flushall(redis)
-    NetworkInitializer.run(redis)
+    Blockchain.initialize(redis)
   end
 end

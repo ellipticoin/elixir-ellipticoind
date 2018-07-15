@@ -24,7 +24,7 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith, []},
-      applications: [:cowboy, :ranch, :redix, :plug]]
+      applications: [:cowboy, :ranch, :redix, :plug, :sha3]]
   end
 
   defp deps do
@@ -32,6 +32,7 @@ defmodule Blacksmith.Mixfile do
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:cbor, "~> 0.1"},
       {:cowboy, "~> 2.3"},
+      {:ok, "~> 1.11"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5", runtime: false},
       {:httpoison, "~> 1.1", only: [:dev, :test]},
@@ -39,6 +40,7 @@ defmodule Blacksmith.Mixfile do
       {:plug, "~> 1.5"},
       {:redix, ">= 0.7.0"},
       {:rustler, "0.16.0"},
+      {:sha3, "2.0.0"},
     ]
   end
 end

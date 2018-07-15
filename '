@@ -1,0 +1,18 @@
+defmodule Block do
+  defstruct parent_block: <<0::size(Crypto.hash_size())>>,
+        block_number: 0,
+        block_winner: <<0::size(256)>>,
+        state_changes: []
+
+  def serialize(%{
+    parent_block: parent_block,
+    block_number: block_number,
+    block_winner: block_winner,
+    state_changes: state_changes,
+  }) do
+    parent_block <> <<block_number::size(256)>> <> block_winner <> Enum.join(state_changes)
+  end
+
+  def hash(block), do:
+    Crypto.hash!(serialize(block))
+end

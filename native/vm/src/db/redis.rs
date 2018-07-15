@@ -10,7 +10,7 @@ impl<'a> DB for RwLockWriteGuard<'a, redis::Client> {
         let _ : () = redis::pipe()
                             .atomic()
                             .cmd("SET").arg(key).arg(value).ignore()
-                            .cmd("RPUSH").arg("current_block").arg(([&key[..], &value[..]]).concat()).ignore()
+                            .cmd("RPUSH").arg("state_changes").arg(([&key[..], &value[..]]).concat()).ignore()
                             .query(&conn).unwrap();
     }
 

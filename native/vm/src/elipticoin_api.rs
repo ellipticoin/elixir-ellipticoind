@@ -46,10 +46,7 @@ impl ElipticoinAPI {
                 }
             }
             BLOCK_HASH_FUNC_INDEX => {
-                let block_data = vm.db.get_block_data();
-                let mut hasher = Sha3_256::default();
-                hasher.input(&block_data);
-                let block_hash = hasher.result();
+                let block_hash = vm.db.read("best_block_hash".as_bytes());
 
                 Ok(Some(vm.write_pointer(block_hash.to_vec()).into()))
             }

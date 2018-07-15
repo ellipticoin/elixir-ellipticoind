@@ -35,6 +35,7 @@ defmodule TransactionPool do
   ) do
 
     results = forge_transactions(redis, results)
+    Blockchain.finalize_block(redis)
 
     Enum.each(results, fn {transaction, _result} ->
       transaction_forged(transaction)
