@@ -43,15 +43,10 @@ defmodule Redis do
       key
     ])
     |> ok
-    |> Enum.chunk(2)
-    |> Map.new(fn [k, v] -> {String.to_atom(k), coerce_value(v)} end)
-  end
-
-  def coerce_value(value) do
-    case Integer.parse(value) do
-      {integer_value, ""} -> integer_value
-      :error -> value
-    end
+    |> Enum.chunk_every(2)
+    |> Map.new(fn [k, v] ->
+      {String.to_atom(k), v}
+    end)
   end
 
   def rpush(redis, key, value) do

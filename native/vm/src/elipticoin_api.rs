@@ -1,5 +1,4 @@
 use vm::*;
-use sha3::{Digest, Sha3_256};
 use wasmi::{Error as InterpreterError};
 use serde_cbor::{from_slice, to_vec, Value};
 use wasmi::*;
@@ -14,6 +13,7 @@ const THROW_FUNC_INDEX: usize = 4;
 const MEMCPY_FUNC_INDEX: usize = 5;
 const CALL_FUNC_INDEX: usize = 6;
 const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 7;
+const RUST_OOM_FUNC_INDEX: usize = 8;
 
 pub struct ElipticoinAPI;
 
@@ -52,12 +52,14 @@ impl ElipticoinAPI {
             }
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.read(key);
+                let value: Vec<u8> = vm.read(key.clone());
+                println!("{:?} -> {:?}", key.clone(), value.clone());
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
+                println!("{:?} = {:?}", key.clone(), value.clone());
                 vm.write(key, value);
 
                 Ok(None)
@@ -97,6 +99,9 @@ impl ElipticoinAPI {
             RUST_BEGIN_UNWIND_FUNC_INDEX => {
                 Ok(None)
             }
+            RUST_OOM_FUNC_INDEX => {
+                Ok(None)
+            }
             _ => panic!("unknown function index")
         }
     }
@@ -115,12 +120,13 @@ impl<'a> ModuleImportResolver for ElipticoinAPI {
             "_block_hash" => {
                 FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), BLOCK_HASH_FUNC_INDEX)
             },
-            "read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
-            "write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
+            "_read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
+            "_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
             "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
             "memcpy" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32][..], Some(ValueType::I32)), MEMCPY_FUNC_INDEX),
             "_call" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], Some(ValueType::I32)), CALL_FUNC_INDEX),
-            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
+            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
+            "rust_oom" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), RUST_OOM_FUNC_INDEX),
             _ => return Err(
                 InterpreterError::Function(
                     format!("host module doesn't export function with name {}", field_name)

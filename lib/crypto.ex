@@ -8,14 +8,9 @@ defmodule Crypto do
   end
 
   def hash(value) do
-    :sha3.hash(@hash_size, value)
+    :crypto.hash(:sha256, value)
   end
 
-  def hash!(value) do
-    {:ok, hash}  = hash(value)
-
-    hash
-  end
   def sign(message, secret_key) do
     :libsodium_crypto_sign_ed25519.detached(message, secret_key)
   end

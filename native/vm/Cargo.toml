@@ -16,6 +16,6 @@ rustler = { git = "https://github.com/masonforest/rustler", branch="add-is-numbe
 
 rustler_codegen = "0.16.0"
 lazy_static = "0.2"
-wasmi = { git = "https://github.com/pepyakin/wasmi.git" }
-serde_cbor = "0.8.2"
+wasmi = { path = "../../../wasmi" }
+serde_cbor = { path = "../../../cbor" }
 rocksdb = "0.9.1"

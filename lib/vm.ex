@@ -17,7 +17,7 @@ defmodule VM do
     {:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
     {:ok, redis} = Redix.start_link()
 
-    Blockchain.initialize(redis)
+    Blockchain.initialize()
 
     {:ok, Map.merge(state, %{
       db: db,

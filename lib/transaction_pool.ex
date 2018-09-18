@@ -1,4 +1,5 @@
 defmodule TransactionPool do
+  @db Db.Redis
   @forging_time_per_block 1_000
   use GenServer
 
@@ -35,7 +36,7 @@ defmodule TransactionPool do
   ) do
 
     results = forge_transactions(redis, results)
-    Blockchain.finalize_block(redis)
+    Blockchain.finalize_block()
 
     Enum.each(results, fn {transaction, _result} ->
       transaction_forged(transaction)
@@ -112,7 +113,7 @@ defmodule TransactionPool do
       redis: redis,
     }
   ) do
-    Redis.rpush(redis,"transaction_pool", transaction)
+    @db.push("transaction_pool", transaction)
 
     state = put_in(state, [:processes, transaction], pid)
 

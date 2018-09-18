@@ -103,7 +103,11 @@ fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     for param in params_iter {
         if param.is_number() {
             let param_u32: u32 = try!(param.decode());
-            params.push(RuntimeValue::I32(param_u32 as i32));
+            // params.push(RuntimeValue::I32(param_u32 as i32));
+            let param = to_vec(&Value::U64(param_u32 as u64)).unwrap();
+
+            let arg_pointer = vm.write_pointer(param);
+            params.push(RuntimeValue::I32(arg_pointer as i32));
         } else {
             let param_binary: Binary = try!(param.decode());
             let param = to_vec(&Value::Bytes(param_binary.to_vec())).unwrap();
