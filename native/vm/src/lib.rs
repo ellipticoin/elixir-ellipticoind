@@ -9,7 +9,7 @@ extern crate rocksdb;
 extern crate wasmi;
 extern crate serde_cbor;
 
-mod elipticoin_api;
+mod ellipticoin_api;
 mod helpers;
 mod vm;
 
@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use vm::VM;
 use std::io::Write;
 use wasmi::*;
-use elipticoin_api::ElipticoinAPI;
+use ellipticoin_api::ElipticoinAPI;
 use std::ops::Deref;
 use std::sync::{RwLock,Arc};
 use db::redis::RedisHandle;

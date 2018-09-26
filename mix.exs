@@ -35,6 +35,7 @@ defmodule Blacksmith.Mixfile do
     [
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:cbor, "~> 0.1"},
+      {:cors_plug, "~> 1.5"},
       {:cowboy, "~> 2.3"},
       {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5", runtime: false},

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use wasmi::RuntimeValue;
 use memory_units::Pages;
 use std::mem::transmute;
-use elipticoin_api::*;
+use ellipticoin_api::*;
 use ::DB;
 
 pub struct VM<'a> {
@@ -24,7 +24,7 @@ impl<'a> VM<'a> {
 
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(&"allocate", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
+        let vec_pointer = self.call(&"alloc", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
         self.memory().set(vec_pointer, vec_with_length.as_slice()).unwrap();
         vec_pointer
     }
@@ -51,7 +51,7 @@ impl<'a> VM<'a> {
         let length_slice = self.memory().get(ptr, 4).unwrap();
         let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
         length_u8.clone_from_slice(&length_slice);
-        let length: u32 = unsafe {(transmute::<[u8; 4], u32>(length_u8)).to_be()};
+        let length: u32 = unsafe {(transmute::<[u8; 4], u32>(length_u8))};
         self.memory().get(ptr + 4, length as usize).unwrap()
     }
 

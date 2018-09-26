@@ -29,6 +29,15 @@ defmodule Block do
     |> Poison.encode!()
   end
 
+  def to_binary(%{
+    parent_block: parent_block,
+    number: number,
+    winner: winner,
+    state_changes_hash: state_changes_hash,
+  }) do
+    parent_block <> <<number::size(256)>> <> winner <> state_changes_hash
+  end
+
   def from_map(%{
     parent_block: parent_block,
     number: number,

@@ -24,4 +24,16 @@ defmodule Models.Block do
       :winner,
     ])
   end
+
+  def hash(block), do:
+    Crypto.hash(to_binary(block))
+
+  defp to_binary(%{
+    parent_block: parent_block,
+    number: number,
+    winner: winner,
+    state_changes_hash: state_changes_hash,
+  }) do
+    parent_block <> <<number::size(256)>> <> winner <> state_changes_hash
+  end
 end

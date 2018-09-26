@@ -14,6 +14,7 @@ const MEMCPY_FUNC_INDEX: usize = 5;
 const CALL_FUNC_INDEX: usize = 6;
 const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 7;
 const RUST_OOM_FUNC_INDEX: usize = 8;
+const LOG_WRITE: usize = 9;
 
 pub struct ElipticoinAPI;
 
@@ -99,6 +100,9 @@ impl ElipticoinAPI {
             RUST_BEGIN_UNWIND_FUNC_INDEX => {
                 Ok(None)
             }
+            LOG_WRITE => {
+                Ok(None)
+            }
             RUST_OOM_FUNC_INDEX => {
                 Ok(None)
             }
@@ -127,6 +131,7 @@ impl<'a> ModuleImportResolver for ElipticoinAPI {
             "_call" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], Some(ValueType::I32)), CALL_FUNC_INDEX),
             "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
             "rust_oom" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), RUST_OOM_FUNC_INDEX),
+            "log_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), LOG_WRITE),
             _ => return Err(
                 InterpreterError::Function(
                     format!("host module doesn't export function with name {}", field_name)

@@ -11,6 +11,10 @@ defmodule Blacksmith.Application do
     :pg2.create("websocket::blocks")
     children = [
       supervisor(Blacksmith.Repo, []),
+      {Db.Redis, name: Db.Redis},
+      {VM, name: VM},
+      {TransactionPool, name: TransactionPool},
+      {Clock, name: Clock},
       Plug.Adapters.Cowboy2.child_spec(
         scheme: :http,
         plug: Router,
@@ -25,6 +29,7 @@ defmodule Blacksmith.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Blacksmith.Supervisor]
     Supervisor.start_link(children, opts)
+    # Do the work you desire here
   end
 
   defp dispatch do

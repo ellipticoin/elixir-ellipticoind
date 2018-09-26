@@ -7,7 +7,6 @@ defmodule BlockchainTest do
       %Block{number: number}
     )
 
-    IO.inspect Blockchain.get_latest_blocks(3)
     # Blockchain.forge()
   end
 end

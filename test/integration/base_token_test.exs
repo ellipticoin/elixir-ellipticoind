@@ -4,7 +4,7 @@ defmodule Integration.BaseTokenTest do
   @sender  Base.decode16!("509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
   @sender_private_key Base.decode16!("01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
   @receiver  Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
-  @adder_contract_code  File.read!("test/support/adder.wasm")
+  @adder_contract_code  File.read!("test/support/wasm/adder.wasm")
 
   use ExUnit.Case
 
@@ -14,65 +14,65 @@ defmodule Integration.BaseTokenTest do
     :ok
   end
 
-  # test "send tokens asynchronously" do
-  #   post(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 0,
-  #     method: :constructor,
-  #     params: [100],
-  #   })
-  #
-  #   {:ok, response} = get(%{
-  #     private_key: @sender_private_key,
-  #     method: :balance_of,
-  #     params: [@sender],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 100
-  #
-  #   post(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 2,
-  #     method: :transfer,
-  #     params: [@receiver, 50],
-  #   })
-  #
-  #   {:ok, response} = get(%{
-  #     private_key: @sender_private_key,
-  #     nonce: 3,
-  #     method: :balance_of,
-  #     params: [@sender],
-  #   })
-  #
-  #   assert Cbor.decode!(response.body) == 50
-  # end
-
-  test "deploy a contract" do
-    nonce = 0
-    contract_name = "Adder"
-    path = "/contracts"
-    sender =  Crypto.public_key_from_private_key(@sender_private_key)
-    deployment = Cbor.encode(%{
-      contract_name: contract_name,
-      sender: sender,
-      code: @adder_contract_code,
-      params: [],
-      nonce: nonce,
+  test "send tokens asynchronously" do
+    post(%{
+      private_key: @sender_private_key,
+      nonce: 0,
+      method: :constructor,
+      params: [100],
     })
-
-    put_signed(path, deployment, @sender_private_key)
 
     {:ok, response} = get(%{
       private_key: @sender_private_key,
-      contract_name: "Adder",
-      address: @sender,
-      nonce: 1,
-      method: :add,
-      params: [1, 2],
+      method: :balance_of,
+      params: [@sender],
     })
 
-    assert Cbor.decode!(response.body) == 3
+    assert Cbor.decode!(response.body) == 100
+
+    post(%{
+      private_key: @sender_private_key,
+      nonce: 2,
+      method: :transfer,
+      params: [@receiver, 50],
+    })
+
+    {:ok, response} = get(%{
+      private_key: @sender_private_key,
+      nonce: 3,
+      method: :balance_of,
+      params: [@sender],
+    })
+
+    assert Cbor.decode!(response.body) == 50
   end
+
+  # test "deploy a contract" do
+  #   nonce = 0
+  #   contract_name = "Adder"
+  #   path = "/contracts"
+  #   sender =  Crypto.public_key_from_private_key(@sender_private_key)
+  #   deployment = Cbor.encode(%{
+  #     contract_name: contract_name,
+  #     sender: sender,
+  #     code: @adder_contract_code,
+  #     params: [],
+  #     nonce: nonce,
+  #   })
+  #
+  #   put_signed(path, deployment, @sender_private_key)
+  #
+  #   {:ok, response} = get(%{
+  #     private_key: @sender_private_key,
+  #     contract_name: "Adder",
+  #     address: @sender,
+  #     nonce: 1,
+  #     method: :add,
+  #     params: [1, 2],
+  #   })
+  #
+  #   assert Cbor.decode!(response.body) == 3
+  # end
 
   # test "updates the blockhash" do
   #   post(%{

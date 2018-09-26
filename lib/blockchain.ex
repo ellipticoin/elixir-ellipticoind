@@ -83,7 +83,7 @@ defmodule Blockchain do
   end
 
   def state_changes_hash(), do:
-    Crypto.hash!(Enum.join(state_changes()))
+    Crypto.hash(Enum.join(state_changes()))
 
   def state_changes(), do:
     @db.get_list("state_changes") |> ok
