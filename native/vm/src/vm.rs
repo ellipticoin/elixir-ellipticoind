@@ -2,19 +2,19 @@ use helpers::*;
 use wasmi::*;
 use std::collections::HashMap;
 use wasmi::RuntimeValue;
-use memory_units::Pages;
+use self::memory_units::Pages;
 use std::mem::transmute;
 use ellipticoin_api::*;
-use ::DB;
+use db::DB;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub db: &'a DB,
-    pub env: &'a HashMap<String, &'a [u8]>,
+    pub env: &'a HashMap<String, Vec<u8>>,
 }
 
 impl<'a> VM<'a> {
-    pub fn new(db: &'a DB, env: &'a HashMap<String, &'a [u8]>, main: &'a ModuleRef) -> VM<'a> {
+    pub fn new(db: &'a DB, env: &'a HashMap<String, Vec<u8>>, main: &'a ModuleRef) -> VM<'a> {
         VM {
             instance: main,
             db: db,
@@ -31,9 +31,9 @@ impl<'a> VM<'a> {
 
     pub fn read(&mut self, key: Vec<u8>) -> Vec<u8> {
         let contracts_address = self.env.get("address").unwrap().to_vec();
-        let contract_id = self.env.get("contract_id").unwrap().to_vec();
+        let contract_name = self.env.get("contract_name").unwrap().to_vec();
 
-        let key = [contracts_address, contract_id, key].concat();
+        let key = [contracts_address, contract_name, key].concat();
         self.db.read(key.as_slice())
 
     }
@@ -41,9 +41,10 @@ impl<'a> VM<'a> {
 
     pub fn write(&mut self, key: Vec<u8>, value: Vec<u8>) {
         let contracts_address = self.env.get("address").unwrap().to_vec();
-        let contract_id = self.env.get("contract_id").unwrap().to_vec();
+        let contract_name = self.env.get("contract_name").unwrap().to_vec();
 
-        let key = [contracts_address, contract_id, key].concat();
+        let key = [contracts_address, contract_name, key].concat();
+        println!("writing {:?}", key.clone());
         self.db.write(key.as_slice(), value.as_slice());
     }
 
@@ -78,6 +79,6 @@ impl<'a> Externals for VM<'a> {
         index: usize,
         args: RuntimeArgs,
         ) -> Result<Option<RuntimeValue>, Trap> {
-        ElipticoinAPI::invoke_index(self, index, args)
+        EllipticoinAPI::invoke_index(self, index, args)
     }
 }

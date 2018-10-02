@@ -22,7 +22,7 @@ defmodule Blacksmith.Plug.SignatureAuth do
 
     [
       "Signature",
-      signature_hex,
+      signature_hex
     ] = String.split(authorization, " ")
 
     public_key = conn.params.sender
@@ -31,17 +31,21 @@ defmodule Blacksmith.Plug.SignatureAuth do
     body = Enum.fetch!(conn.assigns.raw_body, 0)
     path = conn.request_path
 
-    conn = Map.put(conn, :assigns, conn.assigns
-      |> Map.put(:body, body)
-      |> Map.put(:public_key, public_key))
+    conn =
+      Map.put(
+        conn,
+        :assigns,
+        conn.assigns
+        |> Map.put(:body, body)
+        |> Map.put(:public_key, public_key)
+      )
 
     if !Crypto.valid_signature?(
-      signature,
-      body,
-      public_key
-    )
-    do
-      throw UnauthorizedError
+         signature,
+         body,
+         public_key
+       ) do
+      throw(UnauthorizedError)
     end
 
     conn

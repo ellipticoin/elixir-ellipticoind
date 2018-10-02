@@ -4,11 +4,11 @@ defmodule Models.Block do
   import Ecto.Query, only: [from: 1, from: 2]
 
   schema "blocks" do
-    field :parent_block, :binary
-    field :number, :integer
-    field :total_difficulty, :integer
-    field :winner, :binary
-    field :state_changes_hash, :binary
+    field(:parent_block, :binary)
+    field(:number, :integer)
+    field(:total_difficulty, :integer)
+    field(:winner, :binary)
+    field(:state_changes_hash, :binary)
     timestamps
   end
 
@@ -21,19 +21,18 @@ defmodule Models.Block do
       :number,
       :parent_block,
       :state_changes_hash,
-      :winner,
+      :winner
     ])
   end
 
-  def hash(block), do:
-    Crypto.hash(to_binary(block))
+  def hash(block), do: Crypto.hash(to_binary(block))
 
   defp to_binary(%{
-    parent_block: parent_block,
-    number: number,
-    winner: winner,
-    state_changes_hash: state_changes_hash,
-  }) do
+         parent_block: parent_block,
+         number: number,
+         winner: winner,
+         state_changes_hash: state_changes_hash
+       }) do
     parent_block <> <<number::size(256)>> <> winner <> state_changes_hash
   end
 end

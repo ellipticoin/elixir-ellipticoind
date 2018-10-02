@@ -9,18 +9,18 @@ defmodule Blacksmith.Application do
     import Supervisor.Spec
     # List all child processes to be supervised
     :pg2.create("websocket::blocks")
+
     children = [
       supervisor(Blacksmith.Repo, []),
       {Db.Redis, name: Db.Redis},
       {VM, name: VM},
       {TransactionPool, name: TransactionPool},
-      {Clock, name: Clock},
       Plug.Adapters.Cowboy2.child_spec(
         scheme: :http,
         plug: Router,
         options: [
           dispatch: dispatch(),
-          port: Application.fetch_env!(:blacksmith, :port),
+          port: Application.fetch_env!(:blacksmith, :port)
         ]
       )
     ]
@@ -34,10 +34,11 @@ defmodule Blacksmith.Application do
 
   defp dispatch do
     [
-      {:_, [
-        {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
-        {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
-      ]}
+      {:_,
+       [
+         {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
+         {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
+       ]}
     ]
   end
 end

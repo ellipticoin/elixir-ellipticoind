@@ -1,5 +1,5 @@
 defmodule Clock do
-  @epoch 1530812550000
+  @epoch 1_530_812_550_000
   @block_time 2_000
   use GenServer
 

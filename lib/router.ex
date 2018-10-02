@@ -1,43 +1,49 @@
 defmodule Router do
   use Plug.Router
-  if Mix.env == :dev do
+
+  if Mix.env() == :dev do
     use Plug.Debugger, otp_app: :blacksmith
   end
 
   alias Blacksmith.Plug.CBOR
   alias Blacksmith.Plug.SignatureAuth
-  plug CORSPlug
-  plug Plug.Parsers,
+  plug(CORSPlug)
+
+  plug(Plug.Parsers,
     parsers: [CBOR],
     body_reader: {CacheBodyReader, :read_body, []},
     cbor_decoder: Cbor
+  )
+
   plug(
     SignatureAuth,
-    only_methods: ["POST", "PUT"],
+    only_methods: ["POST", "PUT"]
   )
+
   use Plug.ErrorHandler
 
-  plug :match
-  plug :dispatch
-
+  plug(:match)
+  plug(:dispatch)
 
   get "/:address/:contract_name" do
-    result  = conn
+    result =
+      conn
       |> parse_get_request()
       |> VM.run_get()
 
     case result do
-      {:ok, result } -> send_resp(conn, 200, result)
-      {:error, error_code, response } -> send_resp(conn, 500, response)
+      {:ok, result} -> send_resp(conn, 200, result)
+      {:error, error_code, response} -> send_resp(conn, 500, response)
     end
   end
 
   get "/blocks" do
-    number = if conn.query_params["number"] do
-      Integer.parse(conn.query_params["number"])
-    else
-      nil
-    end
+    number =
+      if conn.query_params["number"] do
+        Integer.parse(conn.query_params["number"])
+      else
+        nil
+      end
 
     send_resp(conn, 200, "{\"blocks\": []}")
   end
@@ -45,20 +51,21 @@ defmodule Router do
   put "/contracts" do
     TransactionPool.add(conn.assigns.body)
 
-    result = receive do
-      {:transaction_forged, transaction} -> transaction
-    end
+    result =
+      receive do
+        {:transaction_forged, transaction} -> transaction
+      end
 
     send_resp(conn, 200, result)
   end
 
-
   post "/transactions" do
     TransactionPool.add(conn.assigns.body)
 
-    result = receive do
-      {:transaction_forged, transaction} -> transaction
-    end
+    result =
+      receive do
+        {:transaction_forged, transaction} -> transaction
+      end
 
     send_resp(conn, 200, result)
   end
@@ -71,7 +78,7 @@ defmodule Router do
       address: address,
       method: String.to_atom(conn.query_params["method"]),
       params: params,
-      contract_name: conn.path_params["contract_name"],
+      contract_name: conn.path_params["contract_name"]
     }
   end
 

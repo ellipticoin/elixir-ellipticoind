@@ -1,0 +1,16 @@
+[package]
+name = "transaction_processor"
+version = "0.1.0"
+authors = ["Mason Fischer <mason@kissr.co>"]
+
+[[bin]]
+name = "transaction_processor"
+
+[dependencies]
+heck = "0.3.0"
+lazy_static = "1.1.0"
+redis = "0.9.1"
+serde_cbor = "0.9.0"
+vm = { "path" = "../vm" }
+
+

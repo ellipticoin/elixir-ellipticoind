@@ -11,15 +11,21 @@ defmodule Blacksmith.Mixfile do
       compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates(),
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env),
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
   defp rustler_crates do
-    [vm: [
-      path: "native/vm",
-      mode: (if Mix.env == :prod, do: :release, else: :debug),
-    ]]
+    [
+      vm_nif: [
+        path: "native/vm_nif",
+        mode: if(Mix.env() == :prod, do: :release, else: :debug)
+      ],
+      transaction_processor: [
+        path: "native/transaction_processor",
+        mode: if(Mix.env() == :prod, do: :release, else: :debug)
+      ]
+    ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
@@ -28,7 +34,8 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith.Application, []},
-      extra_applications: [:cowboy, :ranch, :redix, :plug, :sha3]]
+      extra_applications: [:cowboy, :ranch, :redix, :plug, :sha3]
+    ]
   end
 
   defp deps do
@@ -45,9 +52,12 @@ defmodule Blacksmith.Mixfile do
       {:libsodium, "~> 0.0.10"},
       {:ok, "~> 1.11"},
       {:plug, "~> 1.5"},
-      {:postgrex, "~> 0.13.0" },
-      {:redix, ">= 0.7.0"},
-      {:rustler, "0.16.0"},
+      {:postgrex, "~> 0.13.0"},
+      {:redix, "0.6.0"},
+      {:redix_pubsub, "~> 0.4.2"},
+      # Pull down [this branch](https://github.com/cristianberneanu/rustler)
+      # Until [this PR](https://github.com/hansihe/rustler/pull/166) is merged
+      {:rustler, [path: "../rustler/rustler_mix"]},
       {:sha3, "2.0.0"}
     ]
   end

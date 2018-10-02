@@ -16,14 +16,14 @@ const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 7;
 const RUST_OOM_FUNC_INDEX: usize = 8;
 const LOG_WRITE: usize = 9;
 
-pub struct ElipticoinAPI;
+pub struct EllipticoinAPI;
 
-impl ElipticoinAPI {
+impl EllipticoinAPI {
     pub fn new_module(code: &[u8]) -> ModuleRef {
         let module = Module::from_buffer(code).unwrap();
 
         let mut imports = ImportsBuilder::new();
-        imports.push_resolver("env", &ElipticoinAPI);
+        imports.push_resolver("env", &EllipticoinAPI);
         ModuleInstance::new(
             &module,
             &imports
@@ -54,13 +54,14 @@ impl ElipticoinAPI {
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.read(key.clone());
-                println!("{:?} -> {:?}", key.clone(), value.clone());
+                // println!("writing {:?}", key.clone());
+                // println!("{:?} -> {:?}", key.clone(), value.clone());
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                println!("{:?} = {:?}", key.clone(), value.clone());
+                // println!("{:?} = {:?}", key.clone(), value.clone());
                 vm.write(key, value);
 
                 Ok(None)
@@ -80,7 +81,7 @@ impl ElipticoinAPI {
                     .unwrap();
                 let _storage = vm.read_pointer(args.nth(3));
 
-                let module = ElipticoinAPI::new_module(&code);
+                let module = EllipticoinAPI::new_module(&code);
                 let mut inner_vm = VM::new(vm.db, &vm.env, &module);
                 let mut args = Vec::new();
                 for arg in args_iter {
@@ -111,7 +112,7 @@ impl ElipticoinAPI {
     }
 }
 
-impl<'a> ModuleImportResolver for ElipticoinAPI {
+impl<'a> ModuleImportResolver for EllipticoinAPI {
     fn resolve_func(
         &self,
         field_name: &str,

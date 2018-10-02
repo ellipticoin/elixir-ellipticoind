@@ -8,7 +8,7 @@ defmodule Models.BlockTest do
     insert_list(5, :block)
 
     assert Block.latest(3)
-    |> Repo.all
-    |> length == 3
+           |> Repo.all()
+           |> length == 3
   end
 end

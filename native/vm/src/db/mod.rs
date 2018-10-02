@@ -1,5 +1,4 @@
 pub mod redis;
-pub mod rocks_db;
 
 pub trait DB {
     fn write(&self, key: &[u8], value: &[u8]);

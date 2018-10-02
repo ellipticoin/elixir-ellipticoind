@@ -3,7 +3,7 @@ defmodule Redis do
 
   def flushall(redis) do
     Redix.command(redis, [
-      "FLUSHALL",
+      "FLUSHALL"
     ])
   end
 
@@ -17,9 +17,10 @@ defmodule Redis do
   def del(redis, key) do
     Redix.command(redis, [
       "DEL",
-      key,
+      key
     ])
   end
+
   def set(redis, key, value) do
     Redix.command(redis, [
       "SET",
@@ -29,11 +30,12 @@ defmodule Redis do
   end
 
   def hset(redis, key, hash) do
-    Redix.command(redis, [
-      "HSET",
-      key
-    ] ++
-      Enum.flat_map(hash, fn {k, v} -> [k, v] end)
+    Redix.command(
+      redis,
+      [
+        "HSET",
+        key
+      ] ++ Enum.flat_map(hash, fn {k, v} -> [k, v] end)
     )
   end
 
@@ -60,14 +62,14 @@ defmodule Redis do
   def lpop(redis, key) do
     Redix.command(redis, [
       "LPOP",
-      key,
+      key
     ])
   end
 
   def llen(redis, key) do
     Redix.command(redis, [
       "LLEN",
-      key,
+      key
     ])
   end
 
@@ -76,7 +78,7 @@ defmodule Redis do
       "LRANGE",
       key,
       start,
-      stop,
+      stop
     ])
   end
 end

@@ -1,10 +1,17 @@
 defmodule Integration.BaseTokenTest do
   @db Db.Redis
   @host "http://localhost:4047"
-  @sender  Base.decode16!("509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
-  @sender_private_key Base.decode16!("01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a", case: :lower)
-  @receiver  Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30", case: :lower)
-  @adder_contract_code  File.read!("test/support/wasm/adder.wasm")
+  @sender Base.decode16!("509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a",
+            case: :lower
+          )
+  @sender_private_key Base.decode16!(
+                        "01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a",
+                        case: :lower
+                      )
+  @receiver Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30",
+              case: :lower
+            )
+  @adder_contract_code File.read!("test/support/wasm/adder.wasm")
 
   use ExUnit.Case
 
@@ -19,14 +26,15 @@ defmodule Integration.BaseTokenTest do
       private_key: @sender_private_key,
       nonce: 0,
       method: :constructor,
-      params: [100],
+      params: [100]
     })
 
-    {:ok, response} = get(%{
-      private_key: @sender_private_key,
-      method: :balance_of,
-      params: [@sender],
-    })
+    {:ok, response} =
+      get(%{
+        private_key: @sender_private_key,
+        method: :balance_of,
+        params: [@sender]
+      })
 
     assert Cbor.decode!(response.body) == 100
 
@@ -34,15 +42,16 @@ defmodule Integration.BaseTokenTest do
       private_key: @sender_private_key,
       nonce: 2,
       method: :transfer,
-      params: [@receiver, 50],
+      params: [@receiver, 50]
     })
 
-    {:ok, response} = get(%{
-      private_key: @sender_private_key,
-      nonce: 3,
-      method: :balance_of,
-      params: [@sender],
-    })
+    {:ok, response} =
+      get(%{
+        private_key: @sender_private_key,
+        nonce: 3,
+        method: :balance_of,
+        params: [@sender]
+      })
 
     assert Cbor.decode!(response.body) == 50
   end
@@ -109,21 +118,24 @@ defmodule Integration.BaseTokenTest do
   def get(options \\ []) do
     defaults = %{
       address: Constants.system_address(),
-      contract_name: Constants.base_token_name(),
+      contract_name: Constants.base_token_name()
     }
+
     %{
       method: method,
       params: params,
       address: address,
-      contract_name: contract_name,
+      contract_name: contract_name
     } = Enum.into(options, defaults)
 
-    address  = Base.encode16(address, case: :lower)
+    address = Base.encode16(address, case: :lower)
     path = "/" <> Enum.join([address, contract_name], "/")
-    query = Plug.Conn.Query.encode(%{
-      method: method,
-      params: Base.encode16(Cbor.encode(params)),
-    })
+
+    query =
+      Plug.Conn.Query.encode(%{
+        method: method,
+        params: Base.encode16(Cbor.encode(params))
+      })
 
     http_get(path, query)
   end
@@ -131,27 +143,30 @@ defmodule Integration.BaseTokenTest do
   def post(options \\ []) do
     defaults = %{
       address: Constants.system_address(),
-      contract_name: Constants.base_token_name(),
+      contract_name: Constants.base_token_name()
     }
+
     %{
       private_key: private_key,
       nonce: nonce,
       method: method,
       params: params,
       address: address,
-      contract_name: contract_name,
+      contract_name: contract_name
     } = Enum.into(options, defaults)
 
     path = "/transactions"
-    sender =  Crypto.public_key_from_private_key(private_key)
-    transaction = Cbor.encode(%{
-      sender: sender,
-      nonce: nonce,
-      method: method,
-      params: params,
-      address: address,
-      contract_name: contract_name,
-    })
+    sender = Crypto.public_key_from_private_key(private_key)
+
+    transaction =
+      Cbor.encode(%{
+        sender: sender,
+        nonce: nonce,
+        method: method,
+        params: params,
+        address: address,
+        contract_name: contract_name
+      })
 
     http_post_signed(path, transaction, private_key)
   end
@@ -167,18 +182,17 @@ defmodule Integration.BaseTokenTest do
       @host <> path,
       message,
       headers(signature),
-      [
-        timeout: 50_000,
-        recv_timeout: 50_000,
-      ]
+      timeout: 50_000,
+      recv_timeout: 50_000
     )
   end
 
   def put_signed(path, message, private_key) do
-    signature = Crypto.sign(
-      message,
-      private_key
-    )
+    signature =
+      Crypto.sign(
+        message,
+        private_key
+      )
 
     HTTPoison.put(
       @host <> path,
@@ -188,12 +202,10 @@ defmodule Integration.BaseTokenTest do
   end
 
   def headers(signature) do
-      %{
-        "Content-Type": "application/cbor",
-        Authorization: "Signature "<>
-        Base.encode16(signature, case: :lower)
-
-      }
+    %{
+      "Content-Type": "application/cbor",
+      Authorization: "Signature " <> Base.encode16(signature, case: :lower)
+    }
   end
 
   def reset_db do

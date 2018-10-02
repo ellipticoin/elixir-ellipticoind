@@ -3,19 +3,13 @@ name = "vm"
 version = "0.1.0"
 authors = []
 
-[lib]
-name = "vm"
-path = "src/lib.rs"
-crate-type = ["dylib"]
-
 [dependencies]
 sha3 = "0.7.3"
 redis = "0.8.0"
 # rustler = { git = "https://github.com/hansihe/rustler.git"}
-rustler = { git = "https://github.com/masonforest/rustler", branch="add-is-number"}
+#rustler = { git = "https://github.com/masonforest/rustler", branch="add-is-number"}
 
-rustler_codegen = "0.16.0"
+#rustler_codegen = "0.16.0"
 lazy_static = "0.2"
 wasmi = { path = "../../../wasmi" }
 serde_cbor = { path = "../../../cbor" }
-rocksdb = "0.9.1"

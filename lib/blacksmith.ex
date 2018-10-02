@@ -4,6 +4,7 @@ defmodule Blacksmith do
 
   def start(_type, _args) do
     :pg2.create("websocket::blocks")
+
     children = [
       # Blacksmith.Supervisor,
       # Plug.Adapters.Cowboy2.child_spec(
@@ -22,10 +23,11 @@ defmodule Blacksmith do
 
   defp dispatch do
     [
-      {:_, [
-        {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
-        {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
-      ]}
+      {:_,
+       [
+         {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
+         {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
+       ]}
     ]
   end
 end

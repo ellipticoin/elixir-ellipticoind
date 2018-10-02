@@ -18,6 +18,6 @@ defmodule Utils do
 
   """
   def ok({:ok, x}), do: x
-  def ok({:error, x}), do: raise x
-  def ok(x), do: raise x
+  def ok({:error, x}), do: raise(x)
+  def ok(x), do: raise(x)
 end
