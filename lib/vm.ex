@@ -3,39 +3,20 @@ defmodule VM do
   @base_token_name Constants.base_token_name()
   alias NativeContracts.BaseToken
   use GenServer
-  #use Rustler, otp_app: :blacksmith, crate: :vm
+  use Rustler, otp_app: :blacksmith, crate: :vm_nif
 
-  def current_block_hash(_db), do: exit(:nif_not_loaded)
-  def run(_db, _transaction), do: exit(:nif_not_loaded)
-  def start_forging(_db), do: exit(:nif_not_loaded)
-  def open_db(_backend, _options), do: exit(:nif_not_loaded)
+  def current_block_hash(_redis_url), do: exit(:nif_not_loaded)
+  def run(_redis_url, _transaction), do: exit(:nif_not_loaded)
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %{}, opts)
   end
 
   def init(state) do
-    # {:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
-    # {:ok, redis} = Redix.start_link()
-    # {:ok, pubsub} = Redix.PubSub.start_link()
-    # Blockchain.initialize()
-    # channel = "transactions"
-    # Redix.PubSub.subscribe(pubsub, channel, self())
-    # receive do
-    #   {:redix_pubsub, ^pubsub, :subscribed, %{channel: channel}} -> :ok
-    # end
-    #
-    # {:ok,
-    #  Map.merge(state, %{
-    #    db: db,
-    #    pubsub: pubsub,
-    #    redis: redis
-    #  })}
-    {:ok, {}}
-  end
-
-  def start_forging() do
-    GenServer.cast(__MODULE__, {:start_forging})
+    {:ok,
+     Map.merge(state, %{
+       redis_url: "redis://127.0.0.1/",
+     })}
   end
 
   def get(transaction) when is_map(transaction) do
@@ -46,14 +27,8 @@ defmodule VM do
     GenServer.call(__MODULE__, {:get, transaction})
   end
 
-  def handle_call({:get, transaction}, _from, state = %{db: db}) do
-    run_vm(state, db, transaction)
-  end
-
-  def handle_cast({:start_forging}, state = %{db: db}) do
-    start_forging(db)
-
-    {:noreply, state}
+  def handle_call({:get, transaction}, _from, state = %{redis_url: redis_url}) do
+    run_vm(state, redis_url, transaction)
   end
 
   def handle_call({:wait_for_transaction, sender, nonce}, _from, state = %{pubsub: pubsub}) do
@@ -79,8 +54,8 @@ defmodule VM do
     ])
   end
 
-  def run_vm(state, db, transaction) do
-    case run(db, transaction) do
+  def run_vm(state, redis_url, transaction) do
+    case run(redis_url, transaction) do
       {:ok, result} ->
         format_result(state, result)
 

@@ -44,7 +44,6 @@ impl<'a> VM<'a> {
         let contract_name = self.env.get("contract_name").unwrap().to_vec();
 
         let key = [contracts_address, contract_name, key].concat();
-        println!("writing {:?}", key.clone());
         self.db.write(key.as_slice(), value.as_slice());
     }
 

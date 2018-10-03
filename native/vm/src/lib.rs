@@ -6,6 +6,7 @@
 extern crate sha3;
 extern crate redis;
 extern crate wasmi;
+#[macro_use] extern crate rustler;
 extern crate serde_cbor;
 
 mod ellipticoin_api;
@@ -25,12 +26,21 @@ pub use wasmi::{
     RuntimeValue,
 };
 
+pub use rustler::{Env, Term, NifResult, Encoder, Decoder};
+pub use rustler::types::atom::{Atom};
 pub use redis::{
     Connection,
     Client,
     Commands,
 };
+pub use rustler::resource::ResourceArc;
 
+
+pub fn on_load<'a>(env: Env<'a>, load_info: Term<'a>) -> bool {
+    resource_struct_init!(RedisHandle, env);
+    true
+}
+pub use db::rw_lock_write_guard_redis::RedisHandle;
 // use db::{DB};
 // use serde_cbor::{to_vec, Value};
 // use redis::Commands;

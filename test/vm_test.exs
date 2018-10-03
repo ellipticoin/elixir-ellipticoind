@@ -8,9 +8,7 @@ defmodule VMTest do
   test "TransactionProccessor proccesses transactions" do
     @db.reset()
     TransactionProccessor.start_link()
-    IO.inspect "deploying"
     deploy(:Counter, read_test_wasm("counter.wasm"), @sender, 1)
-    IO.inspect "deployed"
 
     TransactionPool.add(%{
       sender: @sender,
@@ -40,7 +38,7 @@ defmodule VMTest do
       address: @sender,
       contract_name: :Counter,
       params: [],
-    }) == {:ok, Cbor.decode(8)}
+    }) == {:ok, ""}
   end
 
   def read_test_wasm(file_name) do
@@ -72,12 +70,5 @@ defmodule VMTest do
       {:transaction, :done, <<return_code::size(32), result::binary>>} -> {return_code, result}
       _ -> raise "Error deploying #{contract_name}"
     end
-    #
-    # IO.puts "Return code: #{inspect return_code}"
-    # if result == <<>> do
-    #   IO.puts "No return message"
-    # else
-    #   IO.puts "Return message: #{inspect Cbor.decode!(result)}"
-    # end
   end
 end

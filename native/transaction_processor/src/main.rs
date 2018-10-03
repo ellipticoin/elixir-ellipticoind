@@ -54,13 +54,9 @@ lazy_static! {
 fn main() {
     let client: Client = vm::Client::open("redis://127.0.0.1/").unwrap();
     let conn = client.get_connection().unwrap();
-    // for (name, code) in SYSTEM_CONTRACTS.iter() {
-    //     println!("{:?} {}", name, code.len());
-    // }
     loop {
         let transaction_bytes: Vec<u8> = conn.brpoplpush("transactions", "transactions_processing", 0).unwrap();
         let transaction: BTreeMap<String, Value> = from_slice(&transaction_bytes).unwrap();
-        // println!("{:?}", transaction);
         let sender: Vec<u8> = transaction.get("sender").unwrap().as_bytes().unwrap().to_vec();
         let address: Vec<u8> = transaction.get("address").unwrap().as_bytes().unwrap().to_vec();
         let contract_name: &str = transaction.get("contract_name").unwrap().as_string().unwrap();
@@ -103,7 +99,6 @@ fn get_code(conn: &vm::Connection, address: Vec<u8>, contract_name: &str) -> Vec
         user_contract_addess.extend(SYSTEM_ADDRESS.to_vec());
         user_contract_addess.extend(USER_CONTRACTS_NAME.bytes());
         user_contract_addess.extend(contract_name.bytes());
-        println!("getting {:?}", user_contract_addess);
         conn.get::<_, Vec<u8>>(user_contract_addess).unwrap().to_vec()
     }
 }

@@ -62,7 +62,6 @@ defmodule TransactionPool do
     sender_and_nonce::binary-size(40),
     output::binary,
     >> = payload
-    IO.inspect "recieved sub"
     pid = get_in(state, [:subscribers, sender_and_nonce])
     send(pid, {:transaction, :done, output})
     {:noreply, state}
