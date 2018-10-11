@@ -17,6 +17,6 @@ defmodule Constants do
   def system_address(), do: @system_address
 
   def contract_code(file_name) do
-    File.read!(Application.get_env(:blacksmith, :base_contracts_path) <>  "/" <> file_name)
+    File.read!(Application.get_env(:blacksmith, :base_contracts_path) <> "/" <> file_name)
   end
 end

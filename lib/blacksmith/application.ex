@@ -13,6 +13,7 @@ defmodule Blacksmith.Application do
     children = [
       supervisor(Blacksmith.Repo, []),
       {Db.Redis, name: Db.Redis},
+      {Forger, name: Forger},
       {VM, name: VM},
       {TransactionPool, name: TransactionPool},
       Plug.Adapters.Cowboy2.child_spec(

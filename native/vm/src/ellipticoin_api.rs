@@ -10,11 +10,8 @@ const BLOCK_HASH_FUNC_INDEX: usize = 1;
 const READ_FUNC_INDEX: usize = 2;
 const WRITE_FUNC_INDEX: usize = 3;
 const THROW_FUNC_INDEX: usize = 4;
-const MEMCPY_FUNC_INDEX: usize = 5;
-const CALL_FUNC_INDEX: usize = 6;
-const RUST_BEGIN_UNWIND_FUNC_INDEX: usize = 7;
-const RUST_OOM_FUNC_INDEX: usize = 8;
-const LOG_WRITE: usize = 9;
+const CALL_FUNC_INDEX: usize = 5;
+const LOG_WRITE: usize = 6;
 
 pub struct EllipticoinAPI;
 
@@ -54,23 +51,17 @@ impl EllipticoinAPI {
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.read(key.clone());
-                // println!("writing {:?}", key.clone());
-                // println!("{:?} -> {:?}", key.clone(), value.clone());
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                // println!("{:?} = {:?}", key.clone(), value.clone());
                 vm.write(key, value);
 
                 Ok(None)
             }
             THROW_FUNC_INDEX => {
                 Ok(None)
-            }
-            MEMCPY_FUNC_INDEX => {
-                Ok(Some((0).into()))
             }
             CALL_FUNC_INDEX => {
                 let code = vm.read_pointer(args.nth(0));
@@ -98,13 +89,7 @@ impl EllipticoinAPI {
                 let result = inner_vm.read_pointer(result_ptr).clone();
                 Ok(Some(vm.write_pointer(result.to_vec()).into()))
             }
-            RUST_BEGIN_UNWIND_FUNC_INDEX => {
-                Ok(None)
-            }
             LOG_WRITE => {
-                Ok(None)
-            }
-            RUST_OOM_FUNC_INDEX => {
                 Ok(None)
             }
             _ => panic!("unknown function index")
@@ -128,10 +113,7 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
             "_read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
             "_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
             "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
-            "memcpy" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32,ValueType::I32,ValueType::I32][..], Some(ValueType::I32)), MEMCPY_FUNC_INDEX),
             "_call" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], Some(ValueType::I32)), CALL_FUNC_INDEX),
-            "rust_begin_unwind" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), RUST_BEGIN_UNWIND_FUNC_INDEX),
-            "rust_oom" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), RUST_OOM_FUNC_INDEX),
             "log_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), LOG_WRITE),
             _ => return Err(
                 InterpreterError::Function(

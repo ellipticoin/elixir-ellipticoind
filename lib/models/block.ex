@@ -6,11 +6,13 @@ defmodule Models.Block do
   schema "blocks" do
     field(:parent_block, :binary)
     field(:number, :integer)
-    field(:total_difficulty, :integer)
+    field(:total_burned, :integer)
     field(:winner, :binary)
     field(:state_changes_hash, :binary)
     timestamps
   end
+
+  def max_burned(query \\ __MODULE__), do: from(q in query, order_by: q.max_burned) |> Repo.one()
 
   def latest(query \\ __MODULE__, count), do: from(q in query, order_by: q.number, limit: ^count)
 

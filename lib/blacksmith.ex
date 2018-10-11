@@ -6,7 +6,7 @@ defmodule Blacksmith do
     :pg2.create("websocket::blocks")
 
     children = [
-      # Blacksmith.Supervisor,
+      Blacksmith.Supervisor
       # Plug.Adapters.Cowboy2.child_spec(
       #   scheme: :http,
       #   plug: Router,

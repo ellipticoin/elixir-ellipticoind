@@ -15,7 +15,7 @@ defmodule VM do
   def init(state) do
     {:ok,
      Map.merge(state, %{
-       redis_url: "redis://127.0.0.1/",
+       redis_url: "redis://127.0.0.1/"
      })}
   end
 
@@ -32,9 +32,10 @@ defmodule VM do
   end
 
   def handle_call({:wait_for_transaction, sender, nonce}, _from, state = %{pubsub: pubsub}) do
-    result = receive do
-      {:redix_pubsub, ^pubsub, :message, %{channel: channel, payload: result}} -> result
-    end
+    result =
+      receive do
+        {:redix_pubsub, ^pubsub, :message, %{channel: channel, payload: result}} -> result
+      end
 
     {:reply, {:ok, result}, state}
   end

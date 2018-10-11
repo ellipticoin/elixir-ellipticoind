@@ -8,7 +8,6 @@ defmodule TransactionPool do
   end
 
   def init(state) do
-    #{:ok, db} = VM.open_db(:redis, "redis://127.0.0.1/")
     {:ok, pubsub} = Redix.PubSub.start_link()
     {:ok, redis} = Redix.start_link()
     Redix.PubSub.subscribe(pubsub, @channel, self())
@@ -35,8 +34,12 @@ defmodule TransactionPool do
     TransactionPool.subscribe(sender, nonce, self())
 
     receive do
-      {:transaction, :done, <<return_code::size(32), result::binary>>} -> {return_code, result}
-      other -> IO.inspect other
+      {:transaction, :done, <<return_code::size(32), result::binary>>} ->
+        IO.inspect("got it")
+        {return_code, result}
+
+      other ->
+        IO.inspect(other)
     end
   end
 
@@ -45,7 +48,7 @@ defmodule TransactionPool do
   end
 
   def handle_info({:redix_pubsub, pid, :subscribed, %{channel: @channel}}, state) do
-    { :noreply, state }
+    {:noreply, state}
   end
 
   def handle_cast({:subscribe, sender, nonce, pid}, state = %{pubsub: pubsub}) do
@@ -54,18 +57,20 @@ defmodule TransactionPool do
     {:noreply, state}
   end
 
-
   def handle_info(
-    {:redix_pubsub, pubsub, :message, %{channel: @channel, payload: payload}}, state
-  ) do
+        {:redix_pubsub, pubsub, :message, %{channel: @channel, payload: payload}},
+        state
+      ) do
     <<
-    sender_and_nonce::binary-size(40),
-    output::binary,
+      sender_and_nonce::binary-size(40),
+      output::binary
     >> = payload
+
     pid = get_in(state, [:subscribers, sender_and_nonce])
     send(pid, {:transaction, :done, output})
     {:noreply, state}
   end
+
   def handle_call(
         {:add, transaction},
         {pid, _reference},
@@ -73,12 +78,10 @@ defmodule TransactionPool do
           redis: redis
         }
       ) do
-
-    @db.push("transactions", transaction)
+    @db.push("transactions::queued", transaction)
 
     {:reply, {:ok, nil}, state}
   end
-
 
   def set_contract_code(redis, address, contract_name, contract_code) do
     key = address <> Helpers.pad_bytes_right(contract_name)

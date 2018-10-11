@@ -5,40 +5,57 @@ defmodule VMTest do
 
   use ExUnit.Case
 
+  setup_all do
+    Forger.enable_auto_forging()
+
+    on_exit(fn ->
+      @db.reset()
+      Forger.disable_auto_forging()
+    end)
+  end
+
   test "TransactionProccessor proccesses transactions" do
-    @db.reset()
-    TransactionProccessor.start_link()
-    deploy(:Counter, read_test_wasm("counter.wasm"), @sender, 1)
+    counter_code = read_test_wasm("counter.wasm")
 
     TransactionPool.add(%{
-      sender: @sender,
-      nonce: 2,
-      address: @sender,
-      contract_name: :Counter,
+      code: counter_code,
+      env: %{
+        sender: @sender,
+        address: @sender,
+        contract_name: :Counter
+      },
       method: :increment_by,
       params: [
-        3
+        1
       ]
     })
-    TransactionPool.wait_for_transaction(@sender, 2)
+
+    Forger.wait_for_block(self())
+
     TransactionPool.add(%{
-      sender: @sender,
-      nonce: 3,
-      address: @sender,
-      contract_name: :Counter,
+      code: counter_code,
+      env: %{
+        sender: @sender,
+        address: @sender,
+        contract_name: :Counter
+      },
       method: :increment_by,
       params: [
-        5
+        1
       ]
     })
-    TransactionPool.wait_for_transaction(@sender, 3)
+    Forger.wait_for_block(self())
 
     assert VM.get(%{
+      code: counter_code,
+      env: %{
+        sender: @sender,
+        address: @sender,
+        contract_name: :Counter
+      },
       method: :get_count,
-      address: @sender,
-      contract_name: :Counter,
-      params: [],
-    }) == {:ok, ""}
+      params: []
+    }) == {:ok, Cbor.encode(2)}
   end
 
   def read_test_wasm(file_name) do
@@ -63,10 +80,9 @@ defmodule VMTest do
       ]
     })
 
-
     TransactionPool.subscribe(sender, nonce, self())
 
-    {return_code, result} = receive do
+    receive do
       {:transaction, :done, <<return_code::size(32), result::binary>>} -> {return_code, result}
       _ -> raise "Error deploying #{contract_name}"
     end

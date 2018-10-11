@@ -6,7 +6,7 @@ defmodule TransactionProccessor do
   end
 
   def path_to_executable() do
-    Path.expand("../_build/dev/rustler_crates/#{@crate}/#{mode()}/#{@crate}", __DIR__)
+    Path.expand("../priv/native/#{@crate}", __DIR__)
   end
 
   def mode() do
