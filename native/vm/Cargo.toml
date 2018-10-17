@@ -12,3 +12,4 @@ time = "*"
 lazy_static = "0.2"
 wasmi = { path = "../../../wasmi" }
 serde_cbor = { path = "../../../cbor" }
+hex = "*"

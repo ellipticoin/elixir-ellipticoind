@@ -1,56 +1,41 @@
 defmodule Integration.BaseTokenTest do
-  @db Db.Redis
   @host "http://localhost:4047"
-  @sender Base.decode16!("509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a",
-            case: :lower
-          )
-  @sender_private_key Base.decode16!(
-                        "01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a",
-                        case: :lower
-                      )
-  @receiver Base.decode16!("027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30",
-              case: :lower
-            )
   @adder_contract_code File.read!("test/support/wasm/adder.wasm")
 
+  import Test.Utils
+  use NamedAccounts
   use ExUnit.Case
 
   setup do
-    reset_db()
+    Redis.reset()
+    Forger.enable_auto_forging()
+
+    on_exit(fn ->
+      Redis.reset()
+      Forger.disable_auto_forging()
+    end)
 
     :ok
   end
 
   test "send tokens asynchronously" do
-    post(%{
-      private_key: @sender_private_key,
-      nonce: 0,
-      method: :constructor,
-      params: [100]
+    set_balances(%{
+      @alice => 100,
+      @bob => 100
     })
 
-    {:ok, response} =
-      get(%{
-        private_key: @sender_private_key,
-        method: :balance_of,
-        params: [@sender]
-      })
-
-    assert Cbor.decode!(response.body) == 100
-
     post(%{
-      private_key: @sender_private_key,
+      private_key: @alices_private_key,
       nonce: 2,
       method: :transfer,
-      params: [@receiver, 50]
+      params: [@bob, 50]
     })
 
     {:ok, response} =
       get(%{
-        private_key: @sender_private_key,
-        nonce: 3,
+        private_key: @alices_private_key,
         method: :balance_of,
-        params: [@sender]
+        params: [@alice]
       })
 
     assert Cbor.decode!(response.body) == 50
@@ -60,7 +45,7 @@ defmodule Integration.BaseTokenTest do
   #   nonce = 0
   #   contract_name = "Adder"
   #   path = "/contracts"
-  #   sender =  Crypto.public_key_from_private_key(@sender_private_key)
+  #   sender =  Crypto.public_key_from_private_key(@alices_private_key)
   #   deployment = Cbor.encode(%{
   #     contract_name: contract_name,
   #     sender: sender,
@@ -69,12 +54,12 @@ defmodule Integration.BaseTokenTest do
   #     nonce: nonce,
   #   })
   #
-  #   put_signed(path, deployment, @sender_private_key)
+  #   put_signed(path, deployment, @alices_private_key)
   #
   #   {:ok, response} = get(%{
-  #     private_key: @sender_private_key,
+  #     private_key: @alices_private_key,
   #     contract_name: "Adder",
-  #     address: @sender,
+  #     address: @alice,
   #     nonce: 1,
   #     method: :add,
   #     params: [1, 2],
@@ -85,7 +70,7 @@ defmodule Integration.BaseTokenTest do
 
   # test "updates the blockhash" do
   #   post(%{
-  #     private_key: @sender_private_key,
+  #     private_key: @alices_private_key,
   #     nonce: 0,
   #     method: :constructor,
   #     params: [100],
@@ -100,10 +85,10 @@ defmodule Integration.BaseTokenTest do
   #   assert Cbor.decode!(response.body) == Base.decode16!("D2F64658686ADEE3EBE827A27AE1F691D21A24BA37975B3F18856307D0A0283D")
   #
   #   post(%{
-  #     private_key: @sender_private_key,
+  #     private_key: @alices_private_key,
   #     nonce: 2,
   #     method: :transfer,
-  #     params: [@receiver, 50],
+  #     params: [@bob, 50],
   #   })
   #
   #   {:ok, response} = get(%{

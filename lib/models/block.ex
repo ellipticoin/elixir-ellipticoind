@@ -12,7 +12,7 @@ defmodule Models.Block do
     timestamps
   end
 
-  def max_burned(query \\ __MODULE__), do: from(q in query, order_by: q.max_burned) |> Repo.one()
+  def max_burned(query \\ __MODULE__), do: from(q in query, order_by: q.total_burned)
 
   def latest(query \\ __MODULE__, count), do: from(q in query, order_by: q.number, limit: ^count)
 

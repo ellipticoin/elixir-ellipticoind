@@ -1,15 +1,15 @@
 defmodule VMTest do
-  @db Db.Redis
   @sender "509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a"
           |> Base.decode16!(case: :lower)
 
   use ExUnit.Case
 
   setup_all do
+    Redis.reset()
     Forger.enable_auto_forging()
 
     on_exit(fn ->
-      @db.reset()
+      Redis.reset()
       Forger.disable_auto_forging()
     end)
   end
@@ -22,7 +22,7 @@ defmodule VMTest do
       env: %{
         sender: @sender,
         address: @sender,
-        contract_name: :Counter
+        contract_name: "Counter"
       },
       method: :increment_by,
       params: [
@@ -37,25 +37,26 @@ defmodule VMTest do
       env: %{
         sender: @sender,
         address: @sender,
-        contract_name: :Counter
+        contract_name: "Counter"
       },
       method: :increment_by,
       params: [
         1
       ]
     })
+
     Forger.wait_for_block(self())
 
     assert VM.get(%{
-      code: counter_code,
-      env: %{
-        sender: @sender,
-        address: @sender,
-        contract_name: :Counter
-      },
-      method: :get_count,
-      params: []
-    }) == {:ok, Cbor.encode(2)}
+             code: counter_code,
+             env: %{
+               sender: @sender,
+               address: @sender,
+               contract_name: "Counter"
+             },
+             method: :get_count,
+             params: []
+           }) == {:ok, Cbor.encode(2)}
   end
 
   def read_test_wasm(file_name) do

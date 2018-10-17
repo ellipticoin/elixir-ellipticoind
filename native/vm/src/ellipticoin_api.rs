@@ -1,9 +1,8 @@
-use vm::*;
-use wasmi::{Error as InterpreterError};
 use serde_cbor::{from_slice, to_vec, Value};
-use wasmi::*;
 use std::str;
-
+use vm::*;
+use wasmi::Error as InterpreterError;
+use wasmi::*;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
@@ -21,10 +20,7 @@ impl EllipticoinAPI {
 
         let mut imports = ImportsBuilder::new();
         imports.push_resolver("env", &EllipticoinAPI);
-        ModuleInstance::new(
-            &module,
-            &imports
-        )
+        ModuleInstance::new(&module, &imports)
             .expect("Failed to instantiate module")
             .run_start(&mut NopExternals)
             .expect("Failed to run start function in module")
@@ -34,7 +30,7 @@ impl EllipticoinAPI {
         vm: &mut VM,
         index: usize,
         args: RuntimeArgs,
-        ) -> Result<Option<RuntimeValue>, Trap> {
+    ) -> Result<Option<RuntimeValue>, Trap> {
         match index {
             SENDER_FUNC_INDEX => {
                 if let Some(sender) = vm.env.get("sender") {
@@ -60,16 +56,12 @@ impl EllipticoinAPI {
 
                 Ok(None)
             }
-            THROW_FUNC_INDEX => {
-                Ok(None)
-            }
+            THROW_FUNC_INDEX => Ok(None),
             CALL_FUNC_INDEX => {
                 let code = vm.read_pointer(args.nth(0));
                 let method = vm.read_pointer(args.nth(1));
                 let args_value = from_slice::<Value>(&vm.read_pointer(args.nth(2))).unwrap();
-                let args_iter: &Vec<Value> = args_value
-                    .as_array()
-                    .unwrap();
+                let args_iter: &Vec<Value> = args_value.as_array().unwrap();
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = EllipticoinAPI::new_module(&code);
@@ -89,10 +81,8 @@ impl EllipticoinAPI {
                 let result = inner_vm.read_pointer(result_ptr).clone();
                 Ok(Some(vm.write_pointer(result.to_vec()).into()))
             }
-            LOG_WRITE => {
-                Ok(None)
-            }
-            _ => panic!("unknown function index")
+            LOG_WRITE => Ok(None),
+            _ => panic!("unknown function index"),
         }
     }
 }
@@ -102,24 +92,50 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
         &self,
         field_name: &str,
         _signature: &Signature,
-        ) -> Result<FuncRef, InterpreterError> {
+    ) -> Result<FuncRef, InterpreterError> {
         let func_ref = match field_name {
-            "_sender" => {
-                FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), SENDER_FUNC_INDEX)
-            },
-            "_block_hash" => {
-                FuncInstance::alloc_host(Signature::new(&[][..], Some(ValueType::I32)), BLOCK_HASH_FUNC_INDEX)
-            },
-            "_read" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], Some(ValueType::I32)), READ_FUNC_INDEX),
-            "_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), WRITE_FUNC_INDEX),
-            "throw" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32][..], None), THROW_FUNC_INDEX),
-            "_call" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32, ValueType::I32, ValueType::I32][..], Some(ValueType::I32)), CALL_FUNC_INDEX),
-            "log_write" => FuncInstance::alloc_host(Signature::new(&[ValueType::I32, ValueType::I32][..], None), LOG_WRITE),
-            _ => return Err(
-                InterpreterError::Function(
-                    format!("host module doesn't export function with name {}", field_name)
-                    )
-                )
+            "_sender" => FuncInstance::alloc_host(
+                Signature::new(&[][..], Some(ValueType::I32)),
+                SENDER_FUNC_INDEX,
+            ),
+            "_block_hash" => FuncInstance::alloc_host(
+                Signature::new(&[][..], Some(ValueType::I32)),
+                BLOCK_HASH_FUNC_INDEX,
+            ),
+            "_read" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32][..], Some(ValueType::I32)),
+                READ_FUNC_INDEX,
+            ),
+            "_write" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32, ValueType::I32][..], None),
+                WRITE_FUNC_INDEX,
+            ),
+            "throw" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32][..], None),
+                THROW_FUNC_INDEX,
+            ),
+            "_call" => FuncInstance::alloc_host(
+                Signature::new(
+                    &[
+                        ValueType::I32,
+                        ValueType::I32,
+                        ValueType::I32,
+                        ValueType::I32,
+                    ][..],
+                    Some(ValueType::I32),
+                ),
+                CALL_FUNC_INDEX,
+            ),
+            "log_write" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32, ValueType::I32][..], None),
+                LOG_WRITE,
+            ),
+            _ => {
+                return Err(InterpreterError::Function(format!(
+                    "host module doesn't export function with name {}",
+                    field_name
+                )))
+            }
         };
         Ok(func_ref)
     }

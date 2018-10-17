@@ -1,20 +1,14 @@
-#[macro_use] extern crate rustler;
-#[macro_use] extern crate lazy_static;
-extern crate vm;
+#[macro_use]
+extern crate rustler;
+#[macro_use]
+extern crate lazy_static;
 extern crate redis;
+extern crate vm;
 
-use rustler::{Env, Term, NifResult};
-use rustler::types::{
-    Encoder,
-    OwnedBinary,
-    Binary,
-};
+use rustler::types::{Binary, Encoder, OwnedBinary};
+use rustler::{Env, NifResult, Term};
 use std::io::Write;
-use vm::{
-    Client,
-    transaction_from_slice,
-    run_transaction,
-};
+use vm::{run_transaction, transaction_from_slice, Client};
 
 mod atoms {
     rustler_atoms! {
@@ -29,7 +23,6 @@ rustler_export_nifs! {
     ],
     None
 }
-
 
 fn run<'a>(nif_env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let conn_string: &str = try!(args[0].decode());

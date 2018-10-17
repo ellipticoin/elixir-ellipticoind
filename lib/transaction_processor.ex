@@ -1,8 +1,17 @@
 defmodule TransactionProccessor do
+  use GenServer
+
   @crate "transaction_processor"
-  def start_link() do
-    # Port.open({:spawn_executable, path_to_executable}, 
-    #     [args: ["redis://127.0.0.1/"]])
+  def start_link(opts) do
+    Port.open({:spawn_executable, path_to_executable},
+      args: ["redis://127.0.0.1/"]
+    )
+
+    GenServer.start_link(__MODULE__, %{}, opts)
+  end
+
+  def init(_args) do
+    {:ok, nil}
   end
 
   def path_to_executable() do

@@ -7,6 +7,8 @@ defmodule Router do
 
   alias Blacksmith.Plug.CBOR
   alias Blacksmith.Plug.SignatureAuth
+  alias Models.Contract
+
   plug(CORSPlug)
 
   plug(Plug.Parsers,
@@ -29,12 +31,9 @@ defmodule Router do
     result =
       conn
       |> parse_get_request()
-      |> VM.run_get()
+    {:ok, result} = Contract.get(result)
 
-    case result do
-      {:ok, result} -> send_resp(conn, 200, result)
-      {:error, error_code, response} -> send_resp(conn, 500, response)
-    end
+    send_resp(conn, 200, result)
   end
 
   get "/blocks" do
@@ -60,14 +59,10 @@ defmodule Router do
   end
 
   post "/transactions" do
-    TransactionPool.add(conn.assigns.body)
+    Contract.post(conn.params)
+    Forger.wait_for_block(self())
 
-    result =
-      receive do
-        {:transaction_forged, transaction} -> transaction
-      end
-
-    send_resp(conn, 200, result)
+    send_resp(conn, 200, "")
   end
 
   def parse_get_request(conn) do

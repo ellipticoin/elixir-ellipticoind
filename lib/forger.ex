@@ -1,4 +1,5 @@
 defmodule Forger do
+  @one_second 1_000
   use GenServer
 
   def start_link(opts) do
@@ -39,11 +40,14 @@ defmodule Forger do
   end
 
   def handle_cast(:auto_forge, state = %{redis: redis, auto_forge: auto_forge}) do
-    {:ok, ["transactions::done", receipt]} =
-      Redix.command(redis, ["BRPOP", "transactions::done", 0])
+    case Redix.command(redis, ["BRPOP", "transactions::done", 1]) do
+      {:ok, ["transactions::done", receipt]} ->
+        GenServer.cast(self(), {:forge, [receipt]})
+      {:ok, nil} ->
+    end
+
 
     if auto_forge do
-      GenServer.cast(self(), {:forge, [receipt]})
       GenServer.cast(self(), :auto_forge)
     end
 
@@ -55,6 +59,10 @@ defmodule Forger do
       send(subscriber, receipts)
     end)
 
+    state = Map.put(state, :subscribers, [])
+    {:noreply, state}
+  end
+  def handle_cast({:forge, receipts}, state) do
     {:noreply, state}
   end
 
