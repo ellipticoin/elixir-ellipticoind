@@ -2,6 +2,7 @@ defmodule VMTest do
   @sender "509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a"
           |> Base.decode16!(case: :lower)
 
+  import Test.Utils
   use ExUnit.Case
 
   setup_all do
@@ -57,15 +58,6 @@ defmodule VMTest do
              method: :get_count,
              params: []
            }) == {:ok, Cbor.encode(2)}
-  end
-
-  def read_test_wasm(file_name) do
-    Path.join([test_support_dir(), "wasm", file_name])
-    |> File.read!()
-  end
-
-  def test_support_dir() do
-    Path.join([File.cwd!(), "test", "support"])
   end
 
   def deploy(contract_name, contract_code, sender, nonce) do

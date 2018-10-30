@@ -31,6 +31,7 @@ defmodule Router do
     result =
       conn
       |> parse_get_request()
+
     {:ok, result} = Contract.get(result)
 
     send_resp(conn, 200, result)

@@ -13,10 +13,11 @@ defmodule Blacksmith.Application do
     children = [
       supervisor(Blacksmith.Repo, []),
       {Redis, name: Redis},
+      {TransactionPool, name: TransactionPool},
       {TransactionProccessor, name: TransactionProccessor},
+      {StakingContractMonitor, name: StakingContractMonitor},
       {Forger, name: Forger},
       {VM, name: VM},
-      {TransactionPool, name: TransactionPool},
       Plug.Adapters.Cowboy2.child_spec(
         scheme: :http,
         plug: Router,

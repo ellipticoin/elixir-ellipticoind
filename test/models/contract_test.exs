@@ -33,23 +33,21 @@ defmodule Models.ContractTest do
 
       Forger.wait_for_block(self())
 
-      assert (Contract.get(%{
-        address: Constants.system_address(),
-        contract_name: Constants.base_token_name(),
-        method: :balance_of,
-        params: [@alice]
-      })
-      ~>> Cbor.decode!()
-      ) == 50
+      assert Contract.get(%{
+               address: Constants.system_address(),
+               contract_name: Constants.base_token_name(),
+               method: :balance_of,
+               params: [@alice]
+             })
+             ~>> Cbor.decode!() == 50
 
       assert Contract.get(%{
-        address: Constants.system_address(),
-        contract_name: Constants.base_token_name(),
-        method: :balance_of,
-        params: [@bob]
-      })
-      ~>> Cbor.decode!()
-      == 150
+               address: Constants.system_address(),
+               contract_name: Constants.base_token_name(),
+               method: :balance_of,
+               params: [@bob]
+             })
+             ~>> Cbor.decode!() == 150
     end
   end
 end

@@ -1,5 +1,4 @@
 defmodule TransactionPool do
-  @channel "transactions"
   use GenServer
 
   def start_link(opts) do
@@ -32,9 +31,6 @@ defmodule TransactionPool do
     receive do
       {:transaction, :done, <<return_code::size(32), result::binary>>} ->
         {return_code, result}
-
-      other ->
-        IO.inspect(other)
     end
   end
 
@@ -44,9 +40,9 @@ defmodule TransactionPool do
 
   def handle_call(
         {:add, transaction},
-        {pid, _reference},
+        {_pid, _reference},
         state = %{
-          redis: redis
+          redis: _redis
         }
       ) do
     Redis.push("transactions::queued", transaction)

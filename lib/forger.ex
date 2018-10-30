@@ -43,9 +43,10 @@ defmodule Forger do
     case Redix.command(redis, ["BRPOP", "transactions::done", 1]) do
       {:ok, ["transactions::done", receipt]} ->
         GenServer.cast(self(), {:forge, [receipt]})
-      {:ok, nil} ->
-    end
 
+      {:ok, nil} ->
+        nil
+    end
 
     if auto_forge do
       GenServer.cast(self(), :auto_forge)
@@ -62,6 +63,7 @@ defmodule Forger do
     state = Map.put(state, :subscribers, [])
     {:noreply, state}
   end
+
   def handle_cast({:forge, receipts}, state) do
     {:noreply, state}
   end

@@ -33,17 +33,17 @@ defmodule Models.Contract do
         address: <<0::256>>,
         contract_name: contract_name,
         method: method,
-        params: params,
+        params: params
       }) do
     VM.get(%{
-             code: system_code(contract_name),
-             env: %{
-               address: Constants.system_address(),
-               contract_name: contract_name
-             },
-             method: method,
-             params: params
-           })
+      code: system_code(contract_name),
+      env: %{
+        address: Constants.system_address(),
+        contract_name: contract_name
+      },
+      method: method,
+      params: params
+    })
   end
 
   def system_code(contract_name) do

@@ -29,6 +29,11 @@ defmodule Models.Block do
 
   def hash(block), do: Crypto.hash(to_binary(block))
 
+  def forge() do
+    TransactionProccessor.proccess_transactions()
+  end
+
+
   defp to_binary(%{
          parent_block: parent_block,
          number: number,
