@@ -24,6 +24,17 @@ defmodule Redis do
     GenServer.cast(Redis, {:delete, key})
   end
 
+  def publish(channel, value) when is_list(value) do
+    value = value
+            |> Enum.map(fn item -> "#{item}" end)
+            |> Enum.join(" ")
+    publish(channel, value)
+  end
+
+  def publish(channel, value) do
+    GenServer.cast(Redis, {:publish, channel, value})
+  end
+
   def set_binary(key, value) do
     GenServer.cast(Redis, {:set_binary, key, value})
   end
@@ -80,6 +91,16 @@ defmodule Redis do
         key
       ] ++ keys_and_values
     )
+
+    {:noreply, redis}
+  end
+
+  def handle_cast({:publish, channel, value}, redis) do
+    Redix.command(redis, [
+      "PUBLISH",
+      channel,
+      value,
+    ])
 
     {:noreply, redis}
   end

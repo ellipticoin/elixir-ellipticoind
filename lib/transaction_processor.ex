@@ -4,15 +4,17 @@ defmodule TransactionProccessor do
   @crate "transaction_processor"
 
   def start_link(opts) do
-    Port.open({:spawn_executable, path_to_executable},
-      args: ["redis://127.0.0.1/"]
-    )
-
     GenServer.start_link(__MODULE__, %{}, opts)
   end
 
+
+
   def init(state) do
     {:ok, redis} = Redix.start_link()
+    Port.open({:spawn_executable, path_to_executable()},
+      args: ["redis://127.0.0.1/"]
+    )
+    # Redis.subscribe("transaction_processor", "done", [__MODULE__, :done, []])
 
     {:ok,
       Map.merge(state, %{
@@ -21,28 +23,20 @@ defmodule TransactionProccessor do
     }
   end
 
-  def proccess_transactions() do
-    start_proccessing_transactions()
-    :timer.apply_after(15000, __MODULE__, :start_proccessing_transactions, [])
+  def proccess_transactions(duration) do
+    GenServer.cast(__MODULE__, {:proccess_transactions, duration})
   end
 
-  def start_proccessing_transactions do
-    GenServer.cast(__MODULE__, {:start_proccessing_transactions})
-  end
-
-  def stop_proccessing_transactions do
-    GenServer.cast(__MODULE__, {:start_proccessing_transactions})
-  end
-
-  def handle_cast({:start_proccessing_transactions}, state) do
-    Redis.set_binary("continue_processing_transactions", true)
+  def handle_cast({:proccess_transactions, duration}, state) do
+    Redis.publish("transaction_processor", ["proccess_transactions", duration])
     {:noreply, state}
   end
 
-  def handle_cast({:stop_proccessing_transactions}, state) do
-    Redis.set_binary("continue_processing_transactions", false)
+  def handle_info({_port, {:data, message}}, state) do
+    IO.write message
     {:noreply, state}
   end
+
 
   def path_to_executable() do
     Path.expand("../priv/native/#{@crate}", __DIR__)

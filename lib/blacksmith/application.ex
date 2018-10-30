@@ -7,6 +7,7 @@ defmodule Blacksmith.Application do
 
   def start(_type, _args) do
     import Supervisor.Spec
+    Process.flag(:trap_exit, true)
     # List all child processes to be supervised
     :pg2.create("websocket::blocks")
 
@@ -34,6 +35,17 @@ defmodule Blacksmith.Application do
     Supervisor.start_link(children, opts)
     # Do the work you desire here
   end
+  def handle_info(payload, state) do
+    IO.inspect payload
+    {:noreply, state}
+  end
+  def handle_call(payload, _from, state) do
+    IO.inspect payload
+    {:noreply, state}
+  end
+
+
+
 
   defp dispatch do
     [

@@ -21,7 +21,7 @@ pub use transaction::{run_transaction, transaction_from_slice, Transaction};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;
 
-pub use redis::{pipe, Client, Commands, Connection};
+pub use redis::{pipe, Client, Commands, Connection, ControlFlow, PubSubCommands};
 pub use rustler::resource::ResourceArc;
 pub use rustler::types::atom::Atom;
 pub use rustler::{Decoder, Encoder, Env, NifResult, Term};

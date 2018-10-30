@@ -13,7 +13,8 @@ defmodule TransactionPool do
        subscribers: %{},
        processes: %{},
        redis: redis,
-       results: %{}
+       results: %{},
+       auto_forge: false,
      })}
   end
 
@@ -42,11 +43,32 @@ defmodule TransactionPool do
         {:add, transaction},
         {_pid, _reference},
         state = %{
-          redis: _redis
+          redis: _redis,
+          auto_forge: auto_forge,
         }
       ) do
     Redis.push("transactions::queued", transaction)
 
+    if auto_forge do
+      TransactionProccessor.proccess_transactions(1000)
+    end
+
     {:reply, {:ok, nil}, state}
+  end
+
+  def enable_auto_forging() do
+    GenServer.cast(__MODULE__, {:enable_auto_forging})
+  end
+
+  def disable_auto_forging() do
+    GenServer.cast(__MODULE__, {:disable_auto_forging})
+  end
+
+  def handle_cast({:enable_auto_forging}, state) do
+    {:noreply, %{state | auto_forge: true}}
+  end
+
+  def handle_cast({:disable_auto_forging}, state) do
+    {:noreply, %{state | auto_forge: false}}
   end
 end

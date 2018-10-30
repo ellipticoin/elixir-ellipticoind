@@ -30,7 +30,7 @@ defmodule Models.Block do
   def hash(block), do: Crypto.hash(to_binary(block))
 
   def forge() do
-    TransactionProccessor.proccess_transactions()
+    TransactionProccessor.proccess_transactions(1)
   end
 
 

@@ -8,10 +8,13 @@ defmodule VMTest do
   setup_all do
     Redis.reset()
     Forger.enable_auto_forging()
+    TransactionPool.enable_auto_forging()
 
     on_exit(fn ->
       Redis.reset()
       Forger.disable_auto_forging()
+      TransactionPool.disable_auto_forging()
+      :init.stop
     end)
   end
 
