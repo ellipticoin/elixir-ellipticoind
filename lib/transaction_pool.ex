@@ -10,8 +10,6 @@ defmodule TransactionPool do
 
     {:ok,
      Map.merge(state, %{
-       subscribers: %{},
-       processes: %{},
        redis: redis,
        results: %{},
        auto_forge: false,
@@ -35,9 +33,6 @@ defmodule TransactionPool do
     end
   end
 
-  def subscribe(sender, nonce, pid) do
-    GenServer.cast(__MODULE__, {:subscribe, sender, nonce, pid})
-  end
 
   def handle_call(
         {:add, transaction},
@@ -50,7 +45,7 @@ defmodule TransactionPool do
     Redis.push("transactions::queued", transaction)
 
     if auto_forge do
-      TransactionProccessor.proccess_transactions(1000)
+      TransactionProccessor.proccess_transactions(1)
     end
 
     {:reply, {:ok, nil}, state}

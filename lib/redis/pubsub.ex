@@ -25,11 +25,12 @@ defmodule Redis.PubSub do
     GenServer.cast(__MODULE__, {:subscribe, channel, pid})
   end
 
-  def handle_info({:redix_pubsub, pid, :subscribed, %{channel: channel}}, state) do
+  def handle_info({:redix_pubsub, _pid, :subscribed, %{channel: _channel}}, state) do
     {:noreply, state}
   end
 
-  def handle_info({:redix_pubsub, pid, :message, %{channel: channel, payload: payload}}, state = %{subscriptions: subscriptions, pubsub: pubsub}) do
+  def handle_info({:redix_pubsub, _pid, :message, %{channel: channel, payload: payload}}, state = %{subscriptions: subscriptions, pubsub: _pubsub}) do
+
     Enum.each(subscriptions[String.to_atom(channel)], fn subscriber ->
       send(subscriber, {:pubsub, channel, payload})
     end)

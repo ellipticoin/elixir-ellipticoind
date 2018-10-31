@@ -14,7 +14,6 @@ defmodule TransactionProccessor do
     Port.open({:spawn_executable, path_to_executable()},
       args: ["redis://127.0.0.1/"]
     )
-    # PubSub.subscribe(@channel, self())
 
     {:ok,
       Map.merge(state, %{

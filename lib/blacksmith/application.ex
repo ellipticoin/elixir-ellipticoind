@@ -18,7 +18,6 @@ defmodule Blacksmith.Application do
       {TransactionPool, name: TransactionPool},
       {TransactionProccessor, name: TransactionProccessor},
       {StakingContractMonitor, name: StakingContractMonitor},
-      {Forger, name: Forger},
       {VM, name: VM},
       Plug.Adapters.Cowboy2.child_spec(
         scheme: :http,
