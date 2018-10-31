@@ -14,6 +14,7 @@ defmodule Blacksmith.Application do
     children = [
       supervisor(Blacksmith.Repo, []),
       {Redis, name: Redis},
+      {Redis.PubSub, name: Redis.PubSub},
       {TransactionPool, name: TransactionPool},
       {TransactionProccessor, name: TransactionProccessor},
       {StakingContractMonitor, name: StakingContractMonitor},

@@ -34,7 +34,7 @@ defmodule VMTest do
       ]
     })
 
-    Forger.wait_for_block(self())
+    TransactionProccessor.wait_for_block(self())
 
     TransactionPool.add(%{
       code: counter_code,
@@ -48,8 +48,7 @@ defmodule VMTest do
         1
       ]
     })
-
-    Forger.wait_for_block(self())
+    TransactionProccessor.wait_for_block(self())
 
     assert VM.get(%{
              code: counter_code,

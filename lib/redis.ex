@@ -1,5 +1,4 @@
 defmodule Redis do
-  @behaviour DbBehaviour
   import Utils
   use GenServer
 

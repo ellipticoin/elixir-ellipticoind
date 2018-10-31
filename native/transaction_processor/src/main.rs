@@ -73,6 +73,9 @@ fn main() {
                     proccess_transactions(&conn, duration.parse().unwrap());
                     ControlFlow::Continue
                 },
+                ["done"] => {
+                    ControlFlow::Continue
+                },
                 command => panic!("Invalid command!: {:?}", command),
             }
         }).unwrap();
@@ -152,4 +155,5 @@ fn proccess_transactions(conn: &vm::Connection, duration: u32) {
             .query(conn)
             .unwrap();
     }
+    let _: () = conn.publish("transaction_processor", "done").unwrap();
 }

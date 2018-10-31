@@ -1,20 +1,20 @@
 defmodule TransactionProccessor do
   use GenServer
+  alias Redis.PubSub
 
   @crate "transaction_processor"
+  @channel "transaction_processor"
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %{}, opts)
   end
-
-
 
   def init(state) do
     {:ok, redis} = Redix.start_link()
     Port.open({:spawn_executable, path_to_executable()},
       args: ["redis://127.0.0.1/"]
     )
-    # Redis.subscribe("transaction_processor", "done", [__MODULE__, :done, []])
+    # PubSub.subscribe(@channel, self())
 
     {:ok,
       Map.merge(state, %{
@@ -23,12 +23,33 @@ defmodule TransactionProccessor do
     }
   end
 
+  def done() do
+    GenServer.cast(__MODULE__, {:done})
+  end
+
   def proccess_transactions(duration) do
     GenServer.cast(__MODULE__, {:proccess_transactions, duration})
   end
 
+  def wait_for_block(pid) do
+    PubSub.subscribe(@channel, self())
+
+    receive do
+      {:pubsub, "transaction_processor", "done"} -> nil
+    end
+  end
+
+  def handle_cast({:pubsub, channel, payload}, state) do
+    {:noreply, state}
+  end
+
   def handle_cast({:proccess_transactions, duration}, state) do
-    Redis.publish("transaction_processor", ["proccess_transactions", duration])
+    Redis.publish(@channel, ["proccess_transactions", duration])
+    {:noreply, state}
+  end
+
+  def handle_cast({:done}, state) do
+    IO.inspect "done processing!"
     {:noreply, state}
   end
 
