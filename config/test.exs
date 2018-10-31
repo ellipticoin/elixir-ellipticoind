@@ -22,4 +22,5 @@ config :blacksmith, Blacksmith.Repo,
   password: "",
   database: "test_phoenix_dev",
   hostname: "localhost",
-  pool_size: 10
+  pool_size: 10,
+  loggers: []

@@ -1,6 +1,5 @@
 defmodule Constants do
   @system_address <<0::256>>
-  @genisis_block_hash <<0::256>>
   @base_api_name "BaseApi"
   @base_token_name "BaseToken"
   @user_contracts_name "UserContracts"

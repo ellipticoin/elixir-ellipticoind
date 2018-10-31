@@ -2,7 +2,6 @@ defmodule StakingContractMonitor do
   use GenServer
   use Utils
   alias ABI.TypeDecoder
-  alias Models.Block
 
   def start_link(name) do
     GenServer.start_link(__MODULE__, %{name: name})

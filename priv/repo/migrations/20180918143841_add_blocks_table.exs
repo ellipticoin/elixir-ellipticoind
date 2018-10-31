@@ -3,11 +3,12 @@ defmodule Blacksmith.Repo.Migrations.AddBlocksTable do
 
   def change do
     create table("blocks") do
-      add :parent_block, :binary
+      add :parent_id, references(:blocks), null: false
       add :number, :integer
       add :total_difficulty, :integer
       add :winner, :binary
       add :state_changes_hash, :binary
+      add :block_hash, :binary
 
       timestamps()
     end

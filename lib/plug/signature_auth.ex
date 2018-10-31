@@ -29,7 +29,7 @@ defmodule Blacksmith.Plug.SignatureAuth do
     signature = Base.decode16!(signature_hex, case: :lower)
 
     body = Enum.fetch!(conn.assigns.raw_body, 0)
-    path = conn.request_path
+    _path = conn.request_path
 
     conn =
       Map.put(

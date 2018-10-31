@@ -8,7 +8,7 @@ defmodule WebsocketHandler do
   def websocket_init(state) do
     channel = state[:channel]
 
-    :pg2.join("websocket::#{channel}", self)
+    :pg2.join("websocket::#{channel}", self())
 
     {:ok, state}
   end
@@ -21,12 +21,12 @@ defmodule WebsocketHandler do
     {:ok, state}
   end
 
-  def websocket_info({channel, message}, state) do
+  def websocket_info({_channel, message}, state) do
     body = apply(message.__struct__, :to_json, [message])
     {:reply, {:text, body}, state}
   end
 
-  def handle_info(info, state) do
+  def handle_info(_info, state) do
     {:ok, state}
   end
 

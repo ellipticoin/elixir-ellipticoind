@@ -1,5 +1,4 @@
 defmodule Blacksmith do
-  import Supervisor.Spec
   use Application
 
   def start(_type, _args) do
@@ -21,13 +20,13 @@ defmodule Blacksmith do
     Supervisor.start_link(children, opts)
   end
 
-  defp dispatch do
-    [
-      {:_,
-       [
-         {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
-         {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
-       ]}
-    ]
-  end
+  # defp dispatch do
+  #   [
+  #     {:_,
+  #      [
+  #        {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
+  #        {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
+  #      ]}
+  #   ]
+  # end
 end

@@ -37,7 +37,7 @@ defmodule Mix.Tasks.Benchmark do
     })
   end
 
-  def constructor(sender, amount) do
+  def constructor(_sender, amount) do
     call(%{
       method: :constructor,
       params: [amount]

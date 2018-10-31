@@ -46,7 +46,7 @@ defmodule Redis.PubSub do
 
   def handle_cast(
         {:subscribe, channel, pid},
-        state = %{subscriptions: subscriptions, pubsub: pubsub}
+        state = %{pubsub: pubsub}
       ) do
     Redix.PubSub.subscribe(pubsub, channel, self())
     state = update_in(state, [:subscriptions, String.to_atom(channel)], &[pid | &1])

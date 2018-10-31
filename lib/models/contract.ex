@@ -3,11 +3,10 @@ defmodule Models.Contract do
 
   use Ecto.Schema
   import Ecto.Changeset
-  import Ecto.Query, only: [from: 1, from: 2]
 
   schema "contracts" do
     field(:code, :binary)
-    timestamps
+    timestamps()
   end
 
   def post(%{
@@ -55,7 +54,7 @@ defmodule Models.Contract do
     end
   end
 
-  def changeset(user, params \\ %{}) do
+  def changeset(user, _params \\ %{}) do
     user
     |> validate_required([
       :code

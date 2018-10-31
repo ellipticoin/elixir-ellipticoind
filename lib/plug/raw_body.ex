@@ -1,7 +1,7 @@
 defmodule Blacksmith.Plug.RawBody do
   def init(options), do: options
 
-  def call(conn, options) do
+  def call(conn, _options) do
     {:ok, body, _} = Plug.Conn.read_body(conn)
 
     conn
