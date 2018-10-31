@@ -15,9 +15,9 @@ defmodule StakingContractMonitor do
   end
 
   def handle_info(_block = %{"hash" => _hash}, state) do
-    private_key  = Application.fetch_env!(:blacksmith, :private_key)
+    private_key = Application.fetch_env!(:blacksmith, :private_key)
     address = private_key_to_address(private_key)
-    contract_address  = Application.fetch_env!(:blacksmith, :staking_contract_address)
+    contract_address = Application.fetch_env!(:blacksmith, :staking_contract_address)
 
     winner = web3_call(contract_address, :winner, [], [:address])
 
@@ -29,17 +29,18 @@ defmodule StakingContractMonitor do
   end
 
   defp web3_call(contract_address, method, args, return_type) do
-    abi_encoded_data  = ABI.encode("#{method}()", args) |> Base.encode16(case: :lower)
-  {:ok, result_bytes} = Ethereumex.WebSocketClient.eth_call(%{
-      data: "0x" <> abi_encoded_data,
-      to: "0x" <> Base.encode16(contract_address)
-    })
+    abi_encoded_data = ABI.encode("#{method}()", args) |> Base.encode16(case: :lower)
 
+    {:ok, result_bytes} =
+      Ethereumex.WebSocketClient.eth_call(%{
+        data: "0x" <> abi_encoded_data,
+        to: "0x" <> Base.encode16(contract_address)
+      })
 
     result_bytes
-      |> String.slice(2..-1)
-      |> Base.decode16!(case: :lower)
-      |> TypeDecoder.decode_raw(return_type)
-      |> List.first
+    |> String.slice(2..-1)
+    |> Base.decode16!(case: :lower)
+    |> TypeDecoder.decode_raw(return_type)
+    |> List.first()
   end
 end

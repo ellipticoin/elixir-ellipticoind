@@ -23,14 +23,14 @@ defmodule Utils do
 
   def private_key_to_address(private_key) do
     private_key_to_public_key(private_key)
-      |> ExthCrypto.Key.der_to_raw()
-      |> ExthCrypto.Hash.Keccak.kec()
-      |> EVM.Helpers.take_n_last_bytes(20)
+    |> ExthCrypto.Key.der_to_raw()
+    |> ExthCrypto.Hash.Keccak.kec()
+    |> EVM.Helpers.take_n_last_bytes(20)
   end
 
   def private_key_to_public_key(private_key) do
     private_key
-      |> ExthCrypto.Signature.get_public_key()
-      |> elem(1)
+    |> ExthCrypto.Signature.get_public_key()
+    |> elem(1)
   end
 end

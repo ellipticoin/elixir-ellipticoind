@@ -38,7 +38,7 @@ defmodule Router do
   end
 
   get "/blocks" do
-    number =
+    _number =
       if conn.query_params["number"] do
         Integer.parse(conn.query_params["number"])
       else
@@ -61,7 +61,6 @@ defmodule Router do
 
   post "/transactions" do
     Contract.post(conn.params)
-    Forger.wait_for_block(self())
 
     send_resp(conn, 200, "")
   end

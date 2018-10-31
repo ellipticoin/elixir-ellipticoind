@@ -35,17 +35,16 @@ defmodule Blacksmith.Application do
     Supervisor.start_link(children, opts)
     # Do the work you desire here
   end
+
   def handle_info(payload, state) do
-    IO.inspect payload
+    IO.inspect(payload)
     {:noreply, state}
   end
+
   def handle_call(payload, _from, state) do
-    IO.inspect payload
+    IO.inspect(payload)
     {:noreply, state}
   end
-
-
-
 
   defp dispatch do
     [

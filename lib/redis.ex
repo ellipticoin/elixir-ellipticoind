@@ -24,9 +24,11 @@ defmodule Redis do
   end
 
   def publish(channel, value) when is_list(value) do
-    value = value
-            |> Enum.map(fn item -> "#{item}" end)
-            |> Enum.join(" ")
+    value =
+      value
+      |> Enum.map(fn item -> "#{item}" end)
+      |> Enum.join(" ")
+
     publish(channel, value)
   end
 
@@ -98,7 +100,7 @@ defmodule Redis do
     Redix.command(redis, [
       "PUBLISH",
       channel,
-      value,
+      value
     ])
 
     {:noreply, redis}

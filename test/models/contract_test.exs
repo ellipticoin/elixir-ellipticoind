@@ -8,11 +8,9 @@ defmodule Models.ContractTest do
 
   setup_all do
     Redis.reset()
-    Forger.enable_auto_forging()
 
     on_exit(fn ->
       Redis.reset()
-      Forger.disable_auto_forging()
     end)
   end
 
@@ -31,7 +29,8 @@ defmodule Models.ContractTest do
         sender: @alice
       })
 
-      Forger.wait_for_block(self())
+      TransactionProccessor.proccess_transactions(1)
+      TransactionProccessor.wait_until_done()
 
       assert Contract.get(%{
                address: Constants.system_address(),

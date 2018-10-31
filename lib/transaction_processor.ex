@@ -11,15 +11,15 @@ defmodule TransactionProccessor do
 
   def init(state) do
     {:ok, redis} = Redix.start_link()
+
     Port.open({:spawn_executable, path_to_executable()},
       args: ["redis://127.0.0.1/"]
     )
 
     {:ok,
-      Map.merge(state, %{
-        redis => redis,
-      })
-    }
+     Map.merge(state, %{
+       redis => redis
+     })}
   end
 
   def done() do
@@ -30,16 +30,12 @@ defmodule TransactionProccessor do
     GenServer.cast(__MODULE__, {:proccess_transactions, duration})
   end
 
-  def wait_for_block(pid) do
+  def wait_until_done() do
     PubSub.subscribe(@channel, self())
 
     receive do
       {:pubsub, "transaction_processor", "done"} -> nil
     end
-  end
-
-  def handle_cast({:pubsub, channel, payload}, state) do
-    {:noreply, state}
   end
 
   def handle_cast({:proccess_transactions, duration}, state) do
@@ -48,15 +44,14 @@ defmodule TransactionProccessor do
   end
 
   def handle_cast({:done}, state) do
-    IO.inspect "done processing!"
+    IO.inspect("done processing!")
     {:noreply, state}
   end
 
   def handle_info({_port, {:data, message}}, state) do
-    IO.write message
+    IO.write(message)
     {:noreply, state}
   end
-
 
   def path_to_executable() do
     Path.expand("../priv/native/#{@crate}", __DIR__)

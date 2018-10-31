@@ -7,12 +7,9 @@ defmodule VMTest do
 
   setup_all do
     Redis.reset()
-    TransactionPool.enable_auto_forging()
 
     on_exit(fn ->
       Redis.reset()
-      TransactionPool.disable_auto_forging()
-      :init.stop
     end)
   end
 
@@ -32,7 +29,8 @@ defmodule VMTest do
       ]
     })
 
-    TransactionProccessor.wait_for_block(self())
+    TransactionProccessor.proccess_transactions(1)
+    TransactionProccessor.wait_until_done()
 
     TransactionPool.add(%{
       code: counter_code,
@@ -46,7 +44,9 @@ defmodule VMTest do
         1
       ]
     })
-    TransactionProccessor.wait_for_block(self())
+
+    TransactionProccessor.proccess_transactions(1)
+    TransactionProccessor.wait_until_done()
 
     assert VM.get(%{
              code: counter_code,
@@ -58,26 +58,5 @@ defmodule VMTest do
              method: :get_count,
              params: []
            }) == {:ok, Cbor.encode(2)}
-  end
-
-  def deploy(contract_name, contract_code, sender, nonce) do
-    TransactionPool.add(%{
-      sender: sender,
-      nonce: nonce,
-      address: Constants.system_address(),
-      contract_name: :UserContracts,
-      method: :deploy,
-      params: [
-        contract_name,
-        contract_code
-      ]
-    })
-
-    TransactionPool.subscribe(sender, nonce, self())
-
-    receive do
-      {:transaction, :done, <<return_code::size(32), result::binary>>} -> {return_code, result}
-      _ -> raise "Error deploying #{contract_name}"
-    end
   end
 end

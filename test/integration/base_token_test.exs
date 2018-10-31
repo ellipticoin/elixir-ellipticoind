@@ -1,6 +1,5 @@
 defmodule Integration.BaseTokenTest do
   @host "http://localhost:4047"
-  @adder_contract_code File.read!("test/support/wasm/adder.wasm")
 
   import Test.Utils
   use NamedAccounts
@@ -8,11 +7,9 @@ defmodule Integration.BaseTokenTest do
 
   setup do
     Redis.reset()
-    Forger.enable_auto_forging()
 
     on_exit(fn ->
       Redis.reset()
-      Forger.disable_auto_forging()
     end)
 
     :ok
@@ -30,6 +27,9 @@ defmodule Integration.BaseTokenTest do
       method: :transfer,
       params: [@bob, 50]
     })
+
+    TransactionProccessor.proccess_transactions(1)
+    TransactionProccessor.wait_until_done()
 
     {:ok, response} =
       get(%{
@@ -191,10 +191,5 @@ defmodule Integration.BaseTokenTest do
       "Content-Type": "application/cbor",
       Authorization: "Signature " <> Base.encode16(signature, case: :lower)
     }
-  end
-
-  def reset_db do
-    @db.reset()
-    Blockchain.initialize()
   end
 end

@@ -34,7 +34,7 @@ defmodule Blacksmith.Mixfile do
   def application do
     [
       mod: {Blacksmith.Application, []},
-      extra_applications: extra_applications(Mix.env),
+      extra_applications: extra_applications(Mix.env())
     ]
   end
 
@@ -61,7 +61,8 @@ defmodule Blacksmith.Mixfile do
       {:postgrex, "~> 0.13.0"},
       {:exth_crypto, "~> 0.1.4", override: true},
       {:mana, [github: "mana-ethereum/mana", app: false]},
-      {:ethereumex, [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
+      {:ethereumex,
+       [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
       {:redix, "0.6.0"},
       {:remix, "~> 0.0.1", only: :dev},
       {:redix_pubsub, "~> 0.4.2"},

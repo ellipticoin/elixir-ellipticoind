@@ -1,7 +1,4 @@
 defmodule VM do
-  @system_address Constants.system_address()
-  @base_token_name Constants.base_token_name()
-  alias NativeContracts.BaseToken
   use GenServer
   use Rustler, otp_app: :blacksmith, crate: :vm_nif
 
@@ -29,15 +26,6 @@ defmodule VM do
 
   def handle_call({:get, transaction}, _from, state = %{redis_url: redis_url}) do
     run_vm(state, redis_url, transaction)
-  end
-
-  def handle_call({:wait_for_transaction, sender, nonce}, _from, state = %{pubsub: pubsub}) do
-    result =
-      receive do
-        {:redix_pubsub, ^pubsub, :message, %{channel: channel, payload: result}} -> result
-      end
-
-    {:reply, {:ok, result}, state}
   end
 
   def set_contract_code(redis, address, contract_name, contract_code) do

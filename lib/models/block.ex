@@ -33,7 +33,6 @@ defmodule Models.Block do
     TransactionProccessor.proccess_transactions(1)
   end
 
-
   defp to_binary(%{
          parent_block: parent_block,
          number: number,
