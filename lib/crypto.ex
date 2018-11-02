@@ -15,14 +15,17 @@ defmodule Crypto do
     :libsodium_crypto_sign_ed25519.detached(message, secret_key)
   end
 
-  def valid_signature?(signature, message, public_key) do
+  def valid_signature_ed25519?(signature, message, public_key) do
     case :libsodium_crypto_sign_ed25519.verify_detached(signature, message, public_key) do
       0 -> true
       -1 -> false
     end
   end
 
-  def public_key_from_private_key(private_key) do
+  def valid_signature_ethereum?(signature, message, address) do
+  end
+
+  def public_key_from_private_key_ed25519(private_key) do
     :libsodium_crypto_sign_ed25519.sk_to_pk(private_key)
   end
 end

@@ -17,11 +17,11 @@ defmodule Router do
     cbor_decoder: Cbor
   )
 
-  plug(
-    SignatureAuth,
-    only_methods: ["POST", "PUT"]
-  )
-
+  # plug(
+  #   SignatureAuth,
+  #   only_methods: ["POST", "PUT"]
+  # )
+  #
   use Plug.ErrorHandler
 
   plug(:match)
@@ -37,6 +37,14 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
+  post "/blocks" do
+    winner = EllipitcoinStakingContract.winner()
+    HTTP.SignatureAuth.verify_block_signature(conn, winner)
+
+    Block.apply(conn.params)
+    send_resp(conn, 200, "")
+  end
+
   get "/blocks" do
     _number =
       if conn.query_params["number"] do
@@ -48,18 +56,9 @@ defmodule Router do
     send_resp(conn, 200, "{\"blocks\": []}")
   end
 
-  put "/contracts" do
-    TransactionPool.add(conn.assigns.body)
-
-    result =
-      receive do
-        {:transaction_forged, transaction} -> transaction
-      end
-
-    send_resp(conn, 200, result)
-  end
 
   post "/transactions" do
+    HTTP.SignatureAuth.verify_ed25519_signature(conn)
     Contract.post(conn.params)
 
     send_resp(conn, 200, "")

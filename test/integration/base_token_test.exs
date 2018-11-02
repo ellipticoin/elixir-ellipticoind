@@ -141,7 +141,7 @@ defmodule Integration.BaseTokenTest do
     } = Enum.into(options, defaults)
 
     path = "/transactions"
-    sender = Crypto.public_key_from_private_key(private_key)
+    sender = Crypto.public_key_from_private_key_ed25519(private_key)
 
     transaction =
       Cbor.encode(%{

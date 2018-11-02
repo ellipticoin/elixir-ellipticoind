@@ -11,8 +11,8 @@ defmodule Redis do
     {:ok, redis}
   end
 
-  def get_binary(key) do
-    GenServer.call(Redis, {:get_binary, key})
+  def get(key) do
+    GenServer.call(Redis, {:get, key})
   end
 
   def reset() do
@@ -176,7 +176,7 @@ defmodule Redis do
     {:reply, value, redis}
   end
 
-  def handle_call({:get_binary, key}, _from, redis) do
+  def handle_call({:get, key}, _from, redis) do
     value =
       Redix.command(redis, [
         "GET",

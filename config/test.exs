@@ -17,10 +17,10 @@ config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
 config :ethereumex, :client_type, :websocket
 
 config :blacksmith, Blacksmith.Repo,
-  adapter: Ecto.Adapters.Postgres,
+  pool: Ecto.Adapters.SQL.Sandbox,
   username: "masonf",
   password: "",
   database: "test_phoenix_dev",
   hostname: "localhost",
   pool_size: 10,
-  loggers: []
+  log: false

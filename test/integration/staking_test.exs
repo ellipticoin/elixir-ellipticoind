@@ -6,7 +6,9 @@ defmodule Integration.StakingTest do
   setup do
     Redis.reset()
 
-    {:ok, contract_address} = deploy("EllipitcoinStakingContract.bin")
+    {:ok, "0x" <> contract_address} = deploy("EllipitcoinStakingContract.bin")
+    IO.inspect contract_address
+    Application.put_env(:blacksmith, :staking_contract_address, Base.decode16!(contract_address, case: :mixed))
 
     on_exit(fn ->
       Redis.reset()

@@ -5,15 +5,18 @@ defmodule Models.Block do
   alias Blacksmith.Repo
 
   schema "blocks" do
-    # belongs_to :parent, Block
+    belongs_to(:parent, __MODULE__)
     field(:number, :integer)
-    # field(:total_burned, :integer)
-    # field(:winner, :binary)
-    # field(:state_changes_hash, :binary)
+    field(:total_burned, :integer)
+    field(:winner, :binary)
+    field(:changeset_hash, :binary)
+    field(:block_hash, :binary)
     timestamps()
   end
 
-  def max_burned(query \\ __MODULE__), do: from(q in query, order_by: q.total_burned)
+  def best_block(query \\ __MODULE__), do:
+    from(q in query, order_by: q.total_burned)
+    |> Ecto.Query.first
 
   def latest(query \\ __MODULE__, count), do: from(q in query, order_by: q.number, limit: ^count)
 
@@ -22,27 +25,38 @@ defmodule Models.Block do
     |> cast(params, [:number])
     |> validate_required([
       :number,
-      # :state_changes_hash,
-      # :winner
+      :changeset_hash,
+      :block_hash,
+      :winner
     ])
   end
 
-  # def hash(block), do: Crypto.hash(to_binary(block))
+  def hash(block), do: Crypto.hash(to_binary(block))
 
-  def forge() do
+  def forge(winner) do
     TransactionProccessor.proccess_transactions(1)
     TransactionProccessor.wait_until_done()
-    block = %__MODULE__{number: 0}
-    IO.inspect block
+    {:ok, changeset} = Redis.get("changeset")
+
+    parent = best_block() |> Repo.one()
+    Redis.delete("changeset")
+
+    block = %__MODULE__{
+      parent: parent,
+      winner: winner,
+      number: 0,
+      changeset_hash: Crypto.hash(changeset)
+    }
+    block = Map.put(block, :block_hash, hash(block))
+
     Repo.insert(block)
-    block
   end
 
-  # defp to_binary(%{
-  #        number: number,
-  #        winner: winner,
-  #        state_changes_hash: state_changes_hash
-  #      }) do
-  #   <<number::size(256)>> <> winner <> state_changes_hash
-  # end
+  defp to_binary(%{
+         number: number,
+         winner: winner,
+         changeset_hash: changeset_hash
+       }) do
+    <<number::size(256)>> <> winner <> changeset_hash
+  end
 end
