@@ -14,9 +14,10 @@ defmodule Models.Block do
     timestamps()
   end
 
-  def best_block(query \\ __MODULE__), do:
-    from(q in query, order_by: q.total_burned)
-    |> Ecto.Query.first
+  def best_block(query \\ __MODULE__),
+    do:
+      from(q in query, order_by: q.total_burned)
+      |> Ecto.Query.first()
 
   def latest(query \\ __MODULE__, count), do: from(q in query, order_by: q.number, limit: ^count)
 
@@ -47,6 +48,7 @@ defmodule Models.Block do
       number: 0,
       changeset_hash: Crypto.hash(changeset)
     }
+
     block = Map.put(block, :block_hash, hash(block))
 
     Repo.insert(block)

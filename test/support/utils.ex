@@ -1,6 +1,6 @@
 defmodule Test.Utils do
-  @default_gas_limit 4_712_388
-  @default_gas_price 100_000_000_000
+  @default_gas_limit 6_721_975
+  @default_gas_price 20_000_000_000
   require Integer
   import Binary
 
@@ -20,49 +20,66 @@ defmodule Test.Utils do
 
   def parse_hex(hex_data), do: Base.decode16!(hex_data, case: :mixed)
 
-  def deploy(contract_file_name) do
-    contract_binary = File.read!(Path.join(test_support_dir(), contract_file_name))
-
-    private_key = Application.get_env(:blacksmith, :private_key)
-    address = private_key_to_address(private_key)
-
-    transaction_count =
-      Ethereumex.WebSocketClient.eth_get_transaction_count("0x" <> Base.encode16(address))
-      |> elem(1)
-      |> parse_hex()
-      |> :binary.decode_unsigned()
-
-    transaction_data =
-      %Blockchain.Transaction{
-        data: contract_binary,
-        gas_limit: @default_gas_limit,
-        gas_price: @default_gas_price,
-        nonce: transaction_count,
-        value: 0
-      }
-      |> Blockchain.Transaction.Signature.sign_transaction(private_key)
-      |> Blockchain.Transaction.serialize()
-      |> ExRLP.encode()
-      |> Base.encode16()
-
-    {:ok, transaction_hash} =
-      Ethereumex.WebSocketClient.eth_send_raw_transaction("0x" <> transaction_data)
-
-    Ethereumex.WebSocketClient.eth_subscribe("newHeads")
-    {:ok, receipt} = wait_for_receipt(transaction_hash)
-
-    {:ok, receipt["contractAddress"]}
+  def checkout_repo() do
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Blacksmith.Repo)
   end
 
+  def deploy_and_fund_staking_contract() do
+    contract_file_name = "EllipitcoinStakingContract"
+    abi = ExW3.load_abi(Path.join(test_support_dir(), contract_file_name <> ".abi"))
+    IO.inspect abi
+  end
+  # def deploy(contract_file_name) do
+  #   auto_mine = Application.get_env(:blacksmith, :ethereumex_auto_mine)
+  #   contract_binary = File.read!(Path.join(test_support_dir(), contract_file_name))
+  #
+  #   private_key = Application.get_env(:blacksmith, :private_key)
+  #   address = private_key_to_address(private_key)
+  #
+  #   transaction_count =
+  #     Ethereumex.WebSocketClient.eth_get_transaction_count("0x" <> Base.encode16(address))
+  #     |> elem(1)
+  #     |> parse_hex()
+  #     |> :binary.decode_unsigned()
+  #
+  #   transaction_data =
+  #     %Blockchain.Transaction{
+  #       data: contract_binary,
+  #       gas_limit: @default_gas_limit,
+  #       gas_price: @default_gas_price,
+  #       nonce: transaction_count,
+  #       value: 0
+  #     }
+  #     |> Blockchain.Transaction.Signature.sign_transaction(private_key)
+  #     |> Blockchain.Transaction.serialize()
+  #     |> ExRLP.encode()
+  #     |> Base.encode16()
+  #
+  #   {:ok, transaction_hash} =
+  #     Ethereumex.WebSocketClient.eth_send_raw_transaction("0x" <> transaction_data)
+  #
+  #   Ethereumex.WebSocketClient.eth_subscribe("newHeads")
+  #   if auto_mine do
+  #     Ethereumex.WebSocketClient.request("evm_mine", [], [])
+  #   end
+  #   {:ok, receipt} = wait_for_receipt(transaction_hash)
+  #
+  #   {:ok, receipt["contractAddress"]}
+  # end
+
   def wait_for_receipt(transaction_hash) do
+    Ethereumex.WebSocketClient.request("evm_mine", [], [])
+
     receive do
       _ ->
         nil
     end
 
     case Ethereumex.WebSocketClient.eth_get_transaction_receipt(transaction_hash) do
-      {:ok, nil} -> wait_for_receipt(transaction_hash)
-      receipt -> receipt
+      {:ok, nil} ->
+      wait_for_receipt(transaction_hash)
+      receipt ->
+        receipt
     end
   end
 

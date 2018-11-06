@@ -5,7 +5,7 @@ defmodule Blacksmith.Factory do
 
   def block_factory do
     %Block{
-      number: 0,
+      number: 0
       # winner: <<0::size(256)>>,
       # state_changes_hash: Crypto.hash(<<>>)
     }

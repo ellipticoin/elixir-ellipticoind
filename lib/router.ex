@@ -38,10 +38,11 @@ defmodule Router do
   end
 
   post "/blocks" do
-    winner = EllipitcoinStakingContract.winner()
+    winner = StakingContractMonitor.winner()
+    IO.inspect winner
     HTTP.SignatureAuth.verify_block_signature(conn, winner)
 
-    Block.apply(conn.params)
+    # Block.apply(conn.params)
     send_resp(conn, 200, "")
   end
 
@@ -56,9 +57,9 @@ defmodule Router do
     send_resp(conn, 200, "{\"blocks\": []}")
   end
 
-
   post "/transactions" do
     HTTP.SignatureAuth.verify_ed25519_signature(conn)
+
     Contract.post(conn.params)
 
     send_resp(conn, 200, "")

@@ -7,15 +7,15 @@ defmodule HTTP.SignatureAuth do
     defexception message: "Invaild Signature", plug_status: 401
   end
 
-  def verify_block_signature(conn) do
-    public_key = conn.params.sender
+  def verify_block_signature(conn, address) do
     signature = get_signature(conn)
     body = Enum.fetch!(conn.assigns.raw_body, 0)
+    message = <<conn.params.number::size(64)>> <> Crypto.hash(body)
 
-    if Crypto.valid_signature_ed25519?(
+    if Crypto.valid_ethereum_signature?(
          signature,
-         body,
-         public_key
+         message,
+         address
        ) do
       conn
     else
