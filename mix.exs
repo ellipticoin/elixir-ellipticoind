@@ -60,7 +60,7 @@ defmodule Blacksmith.Mixfile do
       {:ok, "~> 2.0"},
       {:plug, "~> 1.5"},
       {:ecto_sql, "~> 3.0-rc.1"},
-      {:exw3, "~> 0.4.2"},
+      {:exw3, path: "../exw3"},
       {:keccakf1600, "~> 2.0.0", hex: :keccakf1600_orig},
       {:postgrex, "~> 0.14.0"},
       {:exth_crypto, "~> 0.1.4", override: true},

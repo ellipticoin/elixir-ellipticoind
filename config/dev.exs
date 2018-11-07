@@ -16,7 +16,7 @@ config :ex_wire, private_key, private_key
 # private_key:
 #   <<18, 116, 234, 41, 220, 113, 180, 178, 230, 67, 159, 221, 16, 149, 69, 232, 193, 88, 94, 43,
 # 22, 188, 212, 82, 54, 254, 32, 251, 249, 25, 167, 13>>
-config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
+config :ethereumex, :web3_url, "ws://localhost:8545/"
 config :ethereumex, :client_type, :websocket
 
 config :blacksmith, Blacksmith.Repo,

@@ -39,7 +39,6 @@ defmodule Router do
 
   post "/blocks" do
     winner = StakingContractMonitor.winner()
-    IO.inspect winner
     HTTP.SignatureAuth.verify_block_signature(conn, winner)
 
     # Block.apply(conn.params)

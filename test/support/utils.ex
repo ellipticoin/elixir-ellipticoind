@@ -25,10 +25,69 @@ defmodule Test.Utils do
   end
 
   def deploy_and_fund_staking_contract() do
-    contract_file_name = "EllipitcoinStakingContract"
-    abi = ExW3.load_abi(Path.join(test_support_dir(), contract_file_name <> ".abi"))
-    IO.inspect abi
+    amount = 100
+    random_seed = <<0::256>>
+    ExW3.Contract.start_link()
+    address = Enum.at(ExW3.accounts(), 0)
+    {:ok, token_contract_address} = deploy(:TestnetToken, ["[testnet] DAI Token", "DAI", 3])
+
+    {:ok, staking_contract_address} =
+      deploy(:EllipitcoinStakingContract, [ExW3.to_decimal(token_contract_address), random_seed])
+
+    Enum.each(Enum.take(ExW3.accounts(), 3), fn account ->
+      mint(account, amount)
+      approve(staking_contract_address, amount, account)
+      deposit(amount, address)
+    end)
+
+    {:ok, winner} = winner()
   end
+
+  defp mint(address, amount),
+    do:
+      ExW3.Contract.send(:TestnetToken, :mint, [ExW3.to_decimal(address), amount], %{
+        from: address,
+        gas: 6_721_975
+      })
+
+  defp approve(address, amount, from),
+    do:
+      ExW3.Contract.send(:TestnetToken, :approve, [ExW3.to_decimal(address), amount], %{
+        from: from,
+        gas: 6_721_975
+      })
+
+  defp deposit(amount, address),
+    do:
+      ExW3.Contract.send(:EllipitcoinStakingContract, :deposit, [amount], %{
+        from: address,
+        gas: 6_721_975
+      })
+
+  defp winner(),
+    do: ExW3.Contract.call(:EllipitcoinStakingContract, :winner)
+
+  def deploy(contract_name, args \\ []) do
+    abi_file_name = Path.join(["test", "support", "#{contract_name}.abi"])
+    bin_file_name = Path.join(["test", "support", "#{contract_name}.hex"])
+    abi = ExW3.load_abi(abi_file_name)
+    bin = ExW3.load_bin(bin_file_name)
+    ExW3.Contract.register(contract_name, abi: abi)
+
+    {:ok, address, tx_hash} =
+      ExW3.Contract.deploy(contract_name,
+        bin: bin,
+        args: args,
+        options: %{
+          gas: 6_721_975,
+          from: ExW3.accounts() |> Enum.at(0)
+        }
+      )
+
+    ExW3.Contract.at(contract_name, address)
+    {:ok, address}
+  end
+
   # def deploy(contract_file_name) do
   #   auto_mine = Application.get_env(:blacksmith, :ethereumex_auto_mine)
   #   contract_binary = File.read!(Path.join(test_support_dir(), contract_file_name))
@@ -77,7 +136,8 @@ defmodule Test.Utils do
 
     case Ethereumex.WebSocketClient.eth_get_transaction_receipt(transaction_hash) do
       {:ok, nil} ->
-      wait_for_receipt(transaction_hash)
+        wait_for_receipt(transaction_hash)
+
       receipt ->
         receipt
     end

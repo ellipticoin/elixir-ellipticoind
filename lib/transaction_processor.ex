@@ -44,7 +44,6 @@ defmodule TransactionProccessor do
   end
 
   def handle_cast({:done}, state) do
-    IO.inspect("done processing!")
     {:noreply, state}
   end
 

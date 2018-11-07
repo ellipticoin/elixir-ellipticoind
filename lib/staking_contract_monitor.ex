@@ -16,7 +16,7 @@ defmodule StakingContractMonitor do
   def winner() do
     contract_address = Application.fetch_env!(:blacksmith, :staking_contract_address)
 
-    winner = web3_call(contract_address, :winner, [], [:address])
+    # winner = web3_call(contract_address, :winner, [], [:address])
   end
 
   def handle_info(_block = %{"hash" => _hash}, state) do
