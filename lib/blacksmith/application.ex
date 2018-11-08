@@ -1,14 +1,8 @@
 defmodule Blacksmith.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
-  @moduledoc false
-
+  import Supervisor.Spec
   use Application
 
   def start(_type, _args) do
-    import Supervisor.Spec
-    Process.flag(:trap_exit, true)
-    # List all child processes to be supervised
     :pg2.create("websocket::blocks")
 
     children = [
@@ -29,11 +23,8 @@ defmodule Blacksmith.Application do
       )
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Blacksmith.Supervisor]
     Supervisor.start_link(children, opts)
-    # Do the work you desire here
   end
 
   defp dispatch do

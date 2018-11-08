@@ -11,6 +11,9 @@ defmodule NamedAccounts do
                           |> Base.decode16!(case: :lower)
       @alices_ethereum_private_key "8f515a41d467d7547cbab2eec3948250a4d1ba4f23881ce350cc72fb4a77efff"
                                    |> Base.decode16!(case: :mixed)
+      @alices_ethereum_account ExW3.accounts() |> Enum.at(0)
+      @bobs_ethereum_account ExW3.accounts() |> Enum.at(0)
+      @carols_ethereum_account ExW3.accounts() |> Enum.at(0)
     end
   end
 end

@@ -37,7 +37,7 @@ defmodule Models.Block do
   def forge(winner) do
     TransactionProccessor.proccess_transactions(1)
     TransactionProccessor.wait_until_done()
-    {:ok, changeset} = Redis.get("changeset")
+    {:ok, changeset} = Redis.fetch("changeset", <<>>)
 
     parent = best_block() |> Repo.one()
     Redis.delete("changeset")

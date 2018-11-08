@@ -11,8 +11,11 @@ defmodule Redis do
     {:ok, redis}
   end
 
-  def get(key) do
-    GenServer.call(Redis, {:get, key})
+  def fetch(key, default \\ nil) do
+    case GenServer.call(Redis, {:get, key}) do
+      {:ok, nil} -> {:ok, default}
+      result -> result
+    end
   end
 
   def reset() do

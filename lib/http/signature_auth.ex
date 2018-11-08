@@ -12,27 +12,19 @@ defmodule HTTP.SignatureAuth do
     body = Enum.fetch!(conn.assigns.raw_body, 0)
     message = <<conn.params.number::size(64)>> <> Crypto.hash(body)
 
-    if Crypto.valid_ethereum_signature?(
-         signature,
-         message,
-         address
-       ) do
+    if Ethereum.Helpers.valid_signature?(signature, message, address) do
       conn
     else
       throw(UnauthorizedError)
     end
   end
 
-  def verify_ed25519_signature(conn) do
+  def verify_signature(conn) do
     public_key = conn.params.sender
     signature = get_signature(conn)
     body = Enum.fetch!(conn.assigns.raw_body, 0)
 
-    if Crypto.valid_signature_ed25519?(
-         signature,
-         body,
-         public_key
-       ) do
+    if Crypto.valid_signature_ed25519?(signature, body, public_key) do
       conn
     else
       throw(UnauthorizedError)

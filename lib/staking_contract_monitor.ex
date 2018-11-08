@@ -2,40 +2,46 @@ defmodule StakingContractMonitor do
   use GenServer
   use Utils
   alias ABI.TypeDecoder
+  alias Ethereum.Contracts.EllipticoinStakingContract
+  alias Models.Block
 
-  def start_link(name) do
-    GenServer.start_link(__MODULE__, %{name: name})
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, %{}, opts)
   end
 
   def init(state) do
-    Ethereumex.WebSocketClient.eth_subscribe("newHeads")
+    Ethereum.Helpers.subscribe_to_new_blocks()
 
-    {:ok, state}
+    {:ok, Map.put(state, :enabled,true)}
   end
 
-  def winner() do
-    contract_address = Application.fetch_env!(:blacksmith, :staking_contract_address)
-
-    # winner = web3_call(contract_address, :winner, [], [:address])
+  def disable() do
+    GenServer.call(StakingContractMonitor, :disable)
   end
 
-  def handle_info(_block = %{"hash" => _hash}, state) do
+  def enable() do
+    GenServer.call(StakingContractMonitor, :enable)
+  end
+
+  def handle_call(:enable, _from, state) do
+    {:reply, nil, %{state | enabled: true}}
+  end
+
+  def handle_call(:disable, _from, state) do
+    {:reply, nil, %{state | enabled: false}}
+  end
+
+  def handle_info(_block = %{"hash" => _hash}, state = %{enabled: true}) do
+    {:ok, winner} = EllipticoinStakingContract.winner()
+
+    if winner == Ethereum.Helpers.my_ethereum_address() do
+      Block.forge(winner)
+    end
+
     {:noreply, state}
   end
 
-  defp web3_call(contract_address, method, args, return_type) do
-    abi_encoded_data = ABI.encode("#{method}()", args) |> Base.encode16(case: :lower)
-
-    {:ok, result_bytes} =
-      Ethereumex.WebSocketClient.eth_call(%{
-        data: "0x" <> abi_encoded_data,
-        to: "0x" <> Base.encode16(contract_address)
-      })
-
-    result_bytes
-    |> String.slice(2..-1)
-    |> Base.decode16!(case: :lower)
-    |> TypeDecoder.decode_raw(return_type)
-    |> List.first()
+  def handle_info(_block, state) do
+    {:noreply, state}
   end
 end
