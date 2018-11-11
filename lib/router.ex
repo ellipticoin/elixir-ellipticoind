@@ -38,6 +38,12 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
+  post "/nodes" do
+    P2P.add_peer(conn.params.url)
+
+    send_resp(conn, 200, "")
+  end
+
   post "/blocks" do
     {:ok, winner} = EllipticoinStakingContract.winner()
     HTTP.SignatureAuth.verify_block_signature(conn, winner)

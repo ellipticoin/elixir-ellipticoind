@@ -16,7 +16,6 @@ defmodule Integration.StakingTest do
     StakingContractMonitor.enable()
     Redis.reset()
 
-
     Application.put_env(
       :blacksmith,
       :staking_contract_address,
@@ -27,29 +26,30 @@ defmodule Integration.StakingTest do
       Redis.reset()
     end)
 
-    :ok
+    bypass = Bypass.open
+    join_network(bypass.port)
+    {:ok, bypass: bypass}
   end
 
-  test "a new block is mined on the parent chain and this node is the winner" do
+  test "a new block is mined on the parent chain and this node is the winner", %{
+    bypass: bypass
+  } do
 
+    Bypass.expect_once bypass, "POST", "/blocks", fn conn ->
+      signature = HTTP.SignatureAuth.get_signature(conn)
+      {:ok, body, _} = Plug.Conn.read_body(conn)
+      {:ok, block} = Cbor.decode(body)
+      message = <<block.number::size(64)>> <> Crypto.hash(body)
+      assert block.number == 0
+      address = Ethereum.Helpers.private_key_to_address(@alices_ethereum_private_key)
+      assert Ethereum.Helpers.valid_signature?(signature, message, address)
+      Plug.Conn.resp(conn, 200, "")
+    end
     set_balances(%{
       @alice => 100,
       @bob => 100
     })
     Ethereum.Helpers.mine_block()
-    TransactionProccessor.wait_until_done()
     :timer.sleep(1000)
-  end
-
-  def http_post_signed_block(block, account) do
-    encoded_block = Cbor.encode(block)
-    message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
-    {:ok, signature} = Helpers.sign(account, message)
-
-    HTTPoison.post(
-      @host <> "/blocks",
-      encoded_block,
-      headers(signature)
-    )
   end
 end

@@ -5,6 +5,7 @@
   "binary": {:hex, :binary, "0.0.5", "20d816f7274ea34f1b673b4cff2fdb9ebec9391a7a68c349070d515c66b1b2cf", [:mix], [], "hexpm"},
   "bn": {:hex, :bn, "0.2.1", "06bf8731b05fc96031de7ad5cba40cebf910e97a338798ce67bef8307c45cff3", [:mix], [], "hexpm"},
   "bunt": {:hex, :bunt, "0.2.0", "951c6e801e8b1d2cbe58ebbd3e616a869061ddadcc4863d0a2182541acae9a38", [:mix], [], "hexpm"},
+  "bypass": {:hex, :bypass, "0.9.0", "4cedcd326eeec497e0090a73d351cbd0f11e39329ddf9095931b03da9b6dc417", [:mix], [{:cowboy, "~> 1.0 or ~> 2.0", [hex: :cowboy, repo: "hexpm", optional: false]}, {:plug, "~> 1.0", [hex: :plug, repo: "hexpm", optional: false]}], "hexpm"},
   "cbor": {:hex, :cbor, "0.1.4", "2a2f7d082269b8281fcd15e73c481c90763a546eb2c17c360680a7dc481ca850", [:mix], [], "hexpm"},
   "certifi": {:hex, :certifi, "2.4.2", "75424ff0f3baaccfd34b1214184b6ef616d89e420b258bb0a5ea7d7bc628f7f0", [:rebar3], [{:parse_trans, "~>3.3", [hex: :parse_trans, repo: "hexpm", optional: false]}], "hexpm"},
   "chatterbox": {:git, "https://github.com/tony612/chatterbox.git", "c7c2ab4c3e74618cfa78fdbf6444fac3952d194b", [branch: "my-fix"]},

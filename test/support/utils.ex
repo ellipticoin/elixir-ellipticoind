@@ -125,6 +125,16 @@ defmodule Test.Utils do
     HTTPoison.get(@host <> path <> "?" <> query)
   end
 
+  def join_network(port) do
+    HTTPoison.post(
+      @host <> "/nodes",
+      Cbor.encode(%{
+        url: "http://localhost:#{port}/",
+      }),
+      headers()
+    )
+  end
+
   def http_post_signed(path, message, private_key) do
     signature = Crypto.sign(message, private_key)
 
@@ -151,10 +161,16 @@ defmodule Test.Utils do
     )
   end
 
-  def headers(signature) do
-    %{
-      "Content-Type": "application/cbor",
-      Authorization: "Signature " <> Base.encode16(signature, case: :lower)
-    }
+  def headers(signature \\ nil) do
+    if signature do
+      %{
+        "Content-Type": "application/cbor",
+        Authorization: "Signature " <> Base.encode16(signature, case: :lower)
+      }
+    else
+      %{
+        "Content-Type": "application/cbor",
+      }
+    end
   end
 end

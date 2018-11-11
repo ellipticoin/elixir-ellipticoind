@@ -31,7 +31,7 @@ defmodule HTTP.SignatureAuth do
     end
   end
 
-  defp get_signature(conn) do
+  def get_signature(conn) do
     [authorization] = Plug.Conn.get_req_header(conn, "authorization")
 
     [

@@ -33,6 +33,23 @@ defmodule Models.Block do
   end
 
   def hash(block), do: Crypto.hash(to_binary(block))
+  def as_map(%{
+    parent: parent,
+    number: number,
+    block_hash: block_hash,
+    total_burned: total_burned,
+    winner: winner,
+    changeset_hash: changeset_hash
+  }), do:
+  %{
+    parent_hash: parent.block_hash || <<0::256>>,
+    block_hash: block_hash,
+    total_burned: total_burned || <<0::256>>,
+    number: number,
+    winner: winner,
+    changeset_hash: changeset_hash
+  }
+  def as_cbor(block), do: Cbor.encode(as_map(block))
 
   def forge(winner) do
     TransactionProccessor.proccess_transactions(1)

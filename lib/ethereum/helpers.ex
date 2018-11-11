@@ -42,8 +42,6 @@ defmodule Ethereum.Helpers do
       {:error, _reason} ->
         false
     end
-
-    true
   end
 
   def address_from_private_key(private_key) do
@@ -93,11 +91,14 @@ defmodule Ethereum.Helpers do
   end
 
 
-  def sign(account, message) do
-    message_hex = "0x#{Base.encode16(message, case: :lower)}"
-    {:ok, signature} = Ethereumex.WebSocketClient.eth_sign(account, message_hex)
+  def sign(message, private_key) do
+    message_size = byte_size(message)
+    message_hash = Crypto.hash("\x19Ethereum Signed Message:\n#{message_size}" <> message)
+    {:ok, signature, recovery_id} =
+      :libsecp256k1.ecdsa_sign_compact(message_hash, private_key, :default, <<>>)
 
-    {:ok, hex_to_bytes(signature)}
+    {:ok, public_key} = :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id)
+    {:ok, signature <> <<recovery_id>>}
   end
 
   def take_n_last_bytes(data, n) do

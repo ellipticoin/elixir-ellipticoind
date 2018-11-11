@@ -35,7 +35,8 @@ defmodule StakingContractMonitor do
     {:ok, winner} = EllipticoinStakingContract.winner()
 
     if winner == Ethereum.Helpers.my_ethereum_address() do
-      Block.forge(winner)
+      {:ok, block} = Block.forge(winner)
+      P2P.broadcast_block(block)
     end
 
     {:noreply, state}

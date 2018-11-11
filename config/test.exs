@@ -1,4 +1,5 @@
 use Mix.Config
+config :bypass, adapter: Plug.Adapters.Cowboy2
 config :blacksmith, base_contracts_path: "./base_contracts"
 config :blacksmith, port: 4047
 

@@ -33,8 +33,15 @@ defmodule Blacksmith.Mixfile do
 
   def application do
     [
-      mod: {Blacksmith.Application, []},
+      mod: {Blacksmith.Application, application_args()},
       extra_applications: extra_applications(Mix.env())
+    ]
+  end
+
+  def application_args do
+    [
+      Application.fetch_env!(:blacksmith, :port),
+      Application.fetch_env!(:blacksmith, :ethereum_private_key),
     ]
   end
 
@@ -46,6 +53,7 @@ defmodule Blacksmith.Mixfile do
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:cbor, "~> 0.1"},
       {:abi, "~> 0.1"},
+      {:bypass, "~> 0.8", only: :test},
       {:cors_plug, "~> 1.5"},
       {:cowboy, "~> 2.3"},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
