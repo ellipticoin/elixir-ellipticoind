@@ -11,6 +11,7 @@ defmodule NamedAccounts do
                           |> Base.decode16!(case: :lower)
       @alices_ethereum_private_key Application.fetch_env!(:blacksmith, :alices_ethereum_private_key)
       @bobs_ethereum_private_key Application.fetch_env!(:blacksmith, :bobs_ethereum_private_key)
+      @carols_ethereum_private_key Application.fetch_env!(:blacksmith, :carols_ethereum_private_key)
 
       @alices_ethereum_account ExW3.accounts() |> Enum.at(0)
       @bobs_ethereum_account ExW3.accounts() |> Enum.at(0)

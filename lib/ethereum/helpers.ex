@@ -90,7 +90,6 @@ defmodule Ethereum.Helpers do
     |> elem(1)
   end
 
-
   def sign(message, private_key) do
     message_size = byte_size(message)
     message_hash = Crypto.hash("\x19Ethereum Signed Message:\n#{message_size}" <> message)
@@ -108,4 +107,5 @@ defmodule Ethereum.Helpers do
   end
 
   def hex_to_bytes("0x" <> hex), do: Base.decode16!(hex, case: :lower)
+  def bytes_to_hex(bytes), do: "0x" <> Base.encode16(bytes, case: :lower)
 end

@@ -13,7 +13,7 @@ defmodule VMTest do
     end)
   end
 
-  test "TransactionProccessor proccesses transactions" do
+  test "TransactionProcessor proccesses transactions" do
     counter_code = read_test_wasm("counter.wasm")
 
     TransactionPool.add(%{
@@ -29,8 +29,8 @@ defmodule VMTest do
       ]
     })
 
-    TransactionProccessor.proccess_transactions(1)
-    TransactionProccessor.wait_until_done()
+    TransactionProcessor.proccess_transactions(1)
+    TransactionProcessor.wait_until_done()
 
     TransactionPool.add(%{
       code: counter_code,
@@ -45,8 +45,8 @@ defmodule VMTest do
       ]
     })
 
-    TransactionProccessor.proccess_transactions(1)
-    TransactionProccessor.wait_until_done()
+    TransactionProcessor.proccess_transactions(1)
+    TransactionProcessor.wait_until_done()
 
     assert VM.get(%{
              code: counter_code,

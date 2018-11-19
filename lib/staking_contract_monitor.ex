@@ -1,7 +1,6 @@
 defmodule StakingContractMonitor do
   use GenServer
   use Utils
-  alias ABI.TypeDecoder
   alias Ethereum.Contracts.EllipticoinStakingContract
   alias Models.Block
 
@@ -37,6 +36,7 @@ defmodule StakingContractMonitor do
     if winner == Ethereum.Helpers.my_ethereum_address() do
       {:ok, block} = Block.forge(winner)
       P2P.broadcast_block(block)
+      submit_block(block)
     end
 
     {:noreply, state}
@@ -44,5 +44,21 @@ defmodule StakingContractMonitor do
 
   def handle_info(_block, state) do
     {:noreply, state}
+  end
+
+  defp submit_block(block) do
+    ethereum_private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
+    ethereum_address = ethereum_private_key
+      |> Ethereum.Helpers.address_from_private_key()
+      |> Ethereum.Helpers.bytes_to_hex()
+    {:ok, signature} = EllipticoinStakingContract.last_signature()
+                |> ok
+                |> Ethereum.Helpers.sign(ethereum_private_key)
+
+    EllipticoinStakingContract.submit_block(
+      block.block_hash,
+      signature,
+      ethereum_address
+    )
   end
 end

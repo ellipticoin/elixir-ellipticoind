@@ -42,18 +42,19 @@ defmodule Models.Block do
     changeset_hash: changeset_hash
   }), do:
   %{
-    parent_hash: parent.block_hash || <<0::256>>,
+    parent_hash: (if Ecto.assoc_loaded?(parent), do: (parent.block_hash || <<0::256>>), else: <<0::256>>),
     block_hash: block_hash,
     total_burned: total_burned || <<0::256>>,
     number: number,
     winner: winner,
     changeset_hash: changeset_hash
   }
+  
   def as_cbor(block), do: Cbor.encode(as_map(block))
 
   def forge(winner) do
-    TransactionProccessor.proccess_transactions(1)
-    TransactionProccessor.wait_until_done()
+    TransactionProcessor.proccess_transactions(1)
+    TransactionProcessor.wait_until_done()
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
 
     parent = best_block() |> Repo.one()

@@ -29,8 +29,8 @@ defmodule Models.ContractTest do
         sender: @alice
       })
 
-      TransactionProccessor.proccess_transactions(1)
-      TransactionProccessor.wait_until_done()
+      TransactionProcessor.proccess_transactions(1)
+      TransactionProcessor.wait_until_done()
 
       assert Contract.get(%{
                address: Constants.system_address(),

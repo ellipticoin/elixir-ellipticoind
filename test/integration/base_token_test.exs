@@ -26,8 +26,8 @@ defmodule Integration.BaseTokenTest do
       params: [@bob, 50]
     })
 
-    TransactionProccessor.proccess_transactions(1)
-    TransactionProccessor.wait_until_done()
+    TransactionProcessor.proccess_transactions(1)
+    TransactionProcessor.wait_until_done()
 
     assert get(%{
       private_key: @alices_private_key,

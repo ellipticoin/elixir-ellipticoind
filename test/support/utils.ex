@@ -4,6 +4,7 @@ defmodule Test.Utils do
   @default_gas_price 20_000_000_000
   require Integer
   import Binary
+  alias Models.Block
   alias Ethereum.Contracts.{EllipticoinStakingContract, TestnetToken}
 
   def set_balances(balances) do
@@ -87,6 +88,7 @@ defmodule Test.Utils do
       })
 
     {:ok, response} = http_get(path, query)
+    IO.inspect response.body
     Cbor.decode!(response.body)
   end
 
@@ -144,6 +146,17 @@ defmodule Test.Utils do
       headers(signature),
       timeout: 50_000,
       recv_timeout: 50_000
+    )
+  end
+
+  def post_signed_block(block, private_key) do
+    encoded_block = Block.as_cbor(block)
+    message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
+    {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
+     HTTPoison.post(
+      @host <> "/blocks",
+      encoded_block,
+      headers(signature)
     )
   end
 

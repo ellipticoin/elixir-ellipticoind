@@ -1,4 +1,4 @@
-defmodule TransactionProccessor do
+defmodule TransactionProcessor do
   use GenServer
   alias Redis.PubSub
 

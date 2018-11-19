@@ -10,7 +10,7 @@ defmodule Blacksmith.Application do
       {Redis, name: Redis},
       {Redis.PubSub, name: Redis.PubSub},
       {TransactionPool, name: TransactionPool},
-      {TransactionProccessor, name: TransactionProccessor},
+      {TransactionProcessor, name: TransactionProcessor},
       {StakingContractMonitor, name: StakingContractMonitor},
       {P2P, name: P2P},
       {VM, name: VM},

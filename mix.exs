@@ -33,15 +33,8 @@ defmodule Blacksmith.Mixfile do
 
   def application do
     [
-      mod: {Blacksmith.Application, application_args()},
+      mod: {Blacksmith.Application, []},
       extra_applications: extra_applications(Mix.env())
-    ]
-  end
-
-  def application_args do
-    [
-      Application.fetch_env!(:blacksmith, :port),
-      Application.fetch_env!(:blacksmith, :ethereum_private_key),
     ]
   end
 

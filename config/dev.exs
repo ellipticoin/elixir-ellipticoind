@@ -10,7 +10,7 @@ config :blacksmith, private_key: private_key
 
 config :blacksmith,
   staking_contract_address:
-    "9cEe17E3614aAd1CacF3E003c83350ad6fd761C6" |> Base.decode16!(case: :mixed)
+    "374d622428a60293Ba0E46eABf4e82480e055827" |> Base.decode16!(case: :mixed)
 
 config :ex_wire, private_key, private_key
 # private_key:
