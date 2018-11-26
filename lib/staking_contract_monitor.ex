@@ -1,4 +1,5 @@
 defmodule StakingContractMonitor do
+  require Logger
   use GenServer
   use Utils
   alias Ethereum.Contracts.EllipticoinStakingContract
@@ -9,9 +10,10 @@ defmodule StakingContractMonitor do
   end
 
   def init(state) do
+    IO.inspect "here"
     Ethereum.Helpers.subscribe_to_new_blocks()
 
-    {:ok, Map.put(state, :enabled,true)}
+    {:ok, Map.put(state, :enabled, true)}
   end
 
   def disable() do
@@ -30,7 +32,8 @@ defmodule StakingContractMonitor do
     {:reply, nil, %{state | enabled: false}}
   end
 
-  def handle_info(_block = %{"hash" => _hash}, state = %{enabled: true}) do
+  def handle_info(_block = %{"hash" => _hash, "number" => number}, state = %{enabled: true}) do
+    Logger.info "Received Ethereum Block #{Ethereum.Helpers.hex_to_int(number)}"
     {:ok, winner} = EllipticoinStakingContract.winner()
 
     if winner == Ethereum.Helpers.my_ethereum_address() do

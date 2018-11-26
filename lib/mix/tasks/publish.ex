@@ -6,15 +6,24 @@ defmodule Mix.Tasks.Publish do
     {cwd, 0} = System.cmd("pwd", [])
     cwd = cwd |> String.replace("\n", "")
 
-    IO.inspect(
-      System.cmd("docker", [
-        "run",
-        "-v#{cwd}:/build",
-        "elipticoin-builder",
-        "sh",
-        "-c",
-        "cat /build/config/prod.exs && . /root/.cargo/env && cd build && MIX_ENV=prod mix release --env=prod"
-      ])
-    )
+    System.cmd("docker", [
+      "build",
+      "-t",
+      "ellipticoin-builder",
+      "."
+    ])
+      |> elem(0)
+      |> IO.puts
+
+    System.cmd("docker", [
+      "run",
+      "-v#{cwd}:/build",
+      "ellipticoin-builder",
+      "sh",
+      "-c",
+      "cat /build/config/prod.exs && . /root/.cargo/env && cd build && MIX_ENV=prod mix release --env=prod"
+    ])
+      |> elem(0)
+      |> IO.puts
   end
 end

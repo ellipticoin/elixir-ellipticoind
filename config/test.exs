@@ -16,7 +16,7 @@ config :ex_wire,
 
 config :ethereumex, :web3_url, "ws://localhost:8545/"
 # config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
-config :ethereumex, :client_type, :websocket
+# config :ethereumex, :client_type, :websocket
 config :blacksmith, :ethereumex_auto_mine, true
 
 config :blacksmith, Blacksmith.Repo,

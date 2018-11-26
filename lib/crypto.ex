@@ -8,7 +8,7 @@ defmodule Crypto do
   end
 
   def hash(value) do
-    :keccakf1600.sha3_256(value)
+    :crypto.hash(:sha256, value)
   end
 
   def sign(message, secret_key), do: sign_ed25519(message, secret_key)

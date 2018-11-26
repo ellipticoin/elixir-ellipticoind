@@ -7,13 +7,12 @@ defmodule Ethereum.Helpers do
       |> String.split(".")
       |> List.last()
 
-    abi_file_name = Path.join(["priv", "ethereum_contracts", "#{contract_name}.abi"])
     bin_file_name = Path.join(["priv", "ethereum_contracts", "#{contract_name}.hex"])
-    abi = ExW3.load_abi(abi_file_name)
-    bin = ExW3.load_bin(bin_file_name)
+    abi = ExW3.load_abi(abi_file_name(contract_name))
+    bin = ExW3.load_bin(bin_file_name(contract_name))
     ExW3.Contract.register(module_name, abi: abi)
 
-    {:ok, address, tx_hash} =
+    {:ok, address, _tx_hash} =
       ExW3.Contract.deploy(module_name,
         bin: bin,
         args: args,
@@ -65,11 +64,11 @@ defmodule Ethereum.Helpers do
   end
 
   def subscribe_to_new_blocks() do
-    Ethereumex.WebSocketClient.eth_subscribe("newHeads")
+    # Ethereumex.WebSocketClient.eth_subscribe("newHeads")
   end
 
   def mine_block() do
-    Ethereumex.WebSocketClient.request("evm_mine", [], [])
+    # Ethereumex.WebSocketClient.request("evm_mine", [], [])
   end
 
   def my_ethereum_address() do
@@ -96,7 +95,7 @@ defmodule Ethereum.Helpers do
     {:ok, signature, recovery_id} =
       :libsecp256k1.ecdsa_sign_compact(message_hash, private_key, :default, <<>>)
 
-    {:ok, public_key} = :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id)
+    {:ok, _public_key} = :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id)
     {:ok, signature <> <<recovery_id>>}
   end
 
@@ -107,5 +106,8 @@ defmodule Ethereum.Helpers do
   end
 
   def hex_to_bytes("0x" <> hex), do: Base.decode16!(hex, case: :lower)
+  def hex_to_int(hex), do: hex_to_bytes(hex) |> :binary.decode_unsigned()
   def bytes_to_hex(bytes), do: "0x" <> Base.encode16(bytes, case: :lower)
+  def abi_file_name(contract_name), do: Path.join(["priv", "ethereum_contracts", "#{contract_name}.abi"])
+  defp bin_file_name(contract_name), do: Path.join(["priv", "ethereum_contracts", "#{contract_name}.bin"])
 end

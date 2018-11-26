@@ -11,7 +11,7 @@ defmodule EthereumContracts do
     bin = ExW3.load_bin(bin_file_name)
     ExW3.Contract.register(module_name, abi: abi)
 
-    {:ok, address, tx_hash} =
+    {:ok, address, _tx_hash} =
       ExW3.Contract.deploy(module_name,
         bin: bin,
         args: args,

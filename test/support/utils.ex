@@ -29,7 +29,7 @@ defmodule Test.Utils do
   end
 
   def mine_block_on_parent_chain() do
-    Ethereumex.WebSocketClient.request("evm_mine", [], [])
+    # Ethereumex.WebSocketClient.request("evm_mine", [], [])
   end
 
   def deploy_and_fund_staking_contract() do

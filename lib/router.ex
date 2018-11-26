@@ -6,7 +6,7 @@ defmodule Router do
   end
 
   alias Blacksmith.Plug.CBOR
-  alias Blacksmith.Plug.SignatureAuth
+  alias HTTP.SignatureAuth
   alias Models.Contract
   alias Ethereum.Contracts.EllipticoinStakingContract
 
@@ -46,7 +46,7 @@ defmodule Router do
 
   post "/blocks" do
     {:ok, winner} = EllipticoinStakingContract.winner()
-    HTTP.SignatureAuth.verify_block_signature(conn, winner)
+    SignatureAuth.verify_block_signature(conn, winner)
 
     # Block.apply(conn.params)
     send_resp(conn, 200, "")
@@ -64,7 +64,7 @@ defmodule Router do
   end
 
   post "/transactions" do
-    HTTP.SignatureAuth.verify_signature(conn)
+    SignatureAuth.verify_signature(conn)
 
     Contract.post(conn.params)
 

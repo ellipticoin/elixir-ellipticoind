@@ -1,7 +1,7 @@
 defmodule Blacksmith.Supervisor do
   use Supervisor
 
-  def start_link(opts) do
+  def start_link(_opts) do
     opts = [strategy: :one_for_one, name: Blacksmith.Supervisor]
     Supervisor.start_link(__MODULE__, :ok, opts)
   end

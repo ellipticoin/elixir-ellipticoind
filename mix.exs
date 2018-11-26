@@ -39,10 +39,11 @@ defmodule Blacksmith.Mixfile do
   end
 
   defp extra_applications(:dev), do: extra_applications(:all) ++ [:remix]
-  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug, :sha3]
+  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug]
 
   defp deps do
     [
+      {:artificery, [env: :prod, github: "mana-ethereum/artificery", branch: "hayesgm/allow-extra-args", override: true]},
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:cbor, "~> 0.1"},
       {:abi, "~> 0.1"},
@@ -52,8 +53,8 @@ defmodule Blacksmith.Mixfile do
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
       {:distillery, "~> 2.0", runtime: false},
       {:ecto, "~> 3.0"},
-      {:ex_machina,
-       [github: "thoughtbot/ex_machina", branch: "dependabot/hex/ecto-3.0.0", only: :test]},
+      {:websockex, [env: :prod, github: "mana-ethereum/websockex", branch: "master", override: true]},
+      {:ex_machina, "~> 2.2"},
       {:poison, "~> 4.0", override: true},
       {:httpoison, "~> 1.3"},
       {:libsodium, "~> 0.0.10"},
@@ -61,20 +62,20 @@ defmodule Blacksmith.Mixfile do
       {:ok, "~> 2.0"},
       {:plug, "~> 1.5"},
       {:ecto_sql, "~> 3.0-rc.1"},
-      {:exw3, path: "../exw3"},
+      {:exw3, github: "masonforest/exw3", branch: "websocket-client"},
       {:keccakf1600, "~> 2.0.0", hex: :keccakf1600_orig},
       {:postgrex, "~> 0.14.0"},
       {:exth_crypto, "~> 0.1.4", override: true},
       {:mana, [github: "mana-ethereum/mana", app: false]},
       {:ethereumex,
        [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
-      {:redix, "0.6.0"},
+      {:redix, "0.8.0"},
       {:remix, "~> 0.0.1", only: :dev},
-      {:redix_pubsub, "~> 0.4.2"},
-      # Pull down [this branch](https://github.com/cristianberneanu/rustler)
+      {:redix_pubsub, "~> 0.5.0"},
+      # Use [this branch](https://github.com/cristianberneanu/rustler)
       # Until [this PR](https://github.com/hansihe/rustler/pull/166) is merged
-      {:rustler, [path: "../rustler/rustler_mix", override: true]},
-      {:sha3, "2.0.0"}
+      {:rustler, [path: "./priv/rustler/rustler_mix", override: true]},
+
     ]
   end
 end

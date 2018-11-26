@@ -10,8 +10,9 @@ defmodule Blacksmith.Application do
       {Redis, name: Redis},
       {Redis.PubSub, name: Redis.PubSub},
       {TransactionPool, name: TransactionPool},
+      {Ethereum.Contracts.EllipticoinStakingContract, name: Ethereum.Contracts.EllipticoinStakingContract},
       {TransactionProcessor, name: TransactionProcessor},
-      {StakingContractMonitor, name: StakingContractMonitor},
+      {StakingContractMonitor, []},
       {P2P, name: P2P},
       {VM, name: VM},
       Plug.Adapters.Cowboy2.child_spec(
@@ -25,6 +26,7 @@ defmodule Blacksmith.Application do
     ]
 
     opts = [strategy: :one_for_one, name: Blacksmith.Supervisor]
+    ExW3.Contract.start_link()
     Supervisor.start_link(children, opts)
   end
 

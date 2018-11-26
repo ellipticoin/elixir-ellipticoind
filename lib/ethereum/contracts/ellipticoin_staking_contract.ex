@@ -1,4 +1,23 @@
 defmodule Ethereum.Contracts.EllipticoinStakingContract do
+  import Ethereum.Helpers
+  use GenServer
+
+  def init(args) do
+    {:ok, args}
+  end
+
+  def start_link(opts) do
+    ExW3.Contract.start_link()
+    contract_address = Application.fetch_env!(:blacksmith, :staking_contract_address)
+    abi = ExW3.load_abi(abi_file_name("EllipticoinStakingContract"))
+    ExW3.Contract.register(__MODULE__, abi: abi)
+    ExW3.Contract.at(__MODULE__, bytes_to_hex(contract_address))
+    # IO.inspect bytes_to_hex(contract_address)
+    # IO.inspect ExW3.Contract.call(__MODULE__, :winner)
+    # IO.inspect Ethereum.Contracts.EllipticoinStakingContract.winner()
+    GenServer.start_link(__MODULE__, %{}, opts)
+  end
+
   def deposit(amount, address),
     do:
       ExW3.Contract.send(__MODULE__, :deposit, [amount], %{

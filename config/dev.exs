@@ -10,14 +10,17 @@ config :blacksmith, private_key: private_key
 
 config :blacksmith,
   staking_contract_address:
-    "374d622428a60293Ba0E46eABf4e82480e055827" |> Base.decode16!(case: :mixed)
+    "756d0ABF6235AB135126fe772CDaE195C3DECc0e" |> Base.decode16!(case: :mixed)
 
 config :ex_wire, private_key, private_key
 # private_key:
 #   <<18, 116, 234, 41, 220, 113, 180, 178, 230, 67, 159, 221, 16, 149, 69, 232, 193, 88, 94, 43,
 # 22, 188, 212, 82, 54, 254, 32, 251, 249, 25, 167, 13>>
-config :ethereumex, :web3_url, "ws://localhost:8545/"
+# config :ethereumex, :web3_url, "ws://localhost:8545/"
+# config :ethereumex, :web3_url, "wss://ropsten.infura.io/ws/v3/28d900c929bf4df88e0a4adc9f790e22"
 config :ethereumex, :client_type, :websocket
+config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws/v3/28d900c929bf4df88e0a4adc9f790e22"
+# config :ethereumex, :client_type, :http
 
 config :blacksmith, Blacksmith.Repo,
   adapter: Ecto.Adapters.Postgres,
