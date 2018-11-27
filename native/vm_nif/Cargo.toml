@@ -10,7 +10,7 @@ crate-type = ["dylib"]
 
 [dependencies]
 redis = "0.8.0"
-serde_cbor = { path = "../../../cbor" }
+serde_cbor = "0.9.0"
 vm = { "path" = "../vm" }
 rustler = "0.18.0"
 rustler_codegen = "0.18.0"
