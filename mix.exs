@@ -72,6 +72,7 @@ defmodule Blacksmith.Mixfile do
       {:redix, "0.8.0"},
       {:remix, "~> 0.0.1", only: :dev},
       {:redix_pubsub, "~> 0.5.0"},
+      {:plug_cowboy, "~> 2.0"},
       # Use [this branch](https://github.com/cristianberneanu/rustler)
       # Until [this PR](https://github.com/hansihe/rustler/pull/166) is merged
       {:rustler, [path: "./priv/rustler/rustler_mix", override: true]},

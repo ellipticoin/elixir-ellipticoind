@@ -64,7 +64,7 @@ defmodule Ethereum.Helpers do
   end
 
   def subscribe_to_new_blocks() do
-    # Ethereumex.WebSocketClient.eth_subscribe("newHeads")
+    Ethereumex.WebSocketClient.eth_subscribe("newHeads")
   end
 
   def mine_block() do

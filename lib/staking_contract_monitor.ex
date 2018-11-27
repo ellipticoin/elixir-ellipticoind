@@ -10,7 +10,6 @@ defmodule StakingContractMonitor do
   end
 
   def init(state) do
-    IO.inspect "here"
     Ethereum.Helpers.subscribe_to_new_blocks()
 
     {:ok, Map.put(state, :enabled, true)}
@@ -35,6 +34,7 @@ defmodule StakingContractMonitor do
   def handle_info(_block = %{"hash" => _hash, "number" => number}, state = %{enabled: true}) do
     Logger.info "Received Ethereum Block #{Ethereum.Helpers.hex_to_int(number)}"
     {:ok, winner} = EllipticoinStakingContract.winner()
+    Logger.info "Winner: #{Ethereum.Helpers.bytes_to_hex(winner)}"
 
     if winner == Ethereum.Helpers.my_ethereum_address() do
       {:ok, block} = Block.forge(winner)

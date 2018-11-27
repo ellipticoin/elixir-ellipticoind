@@ -15,7 +15,7 @@ defmodule Blacksmith.Application do
       {StakingContractMonitor, []},
       {P2P, name: P2P},
       {VM, name: VM},
-      Plug.Adapters.Cowboy2.child_spec(
+      Plug.Adapters.Cowboy.child_spec(
         scheme: :http,
         plug: Router,
         options: [
