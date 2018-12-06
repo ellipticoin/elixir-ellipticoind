@@ -7,9 +7,12 @@ defmodule Crypto do
     :libsodium_crypto_sign_ed25519.keypair()
   end
 
-  def hash(value) do
-    :crypto.hash(:sha256, value)
+  def hash(message) do
+    sha256(message)
   end
+
+  def keccak256(message), do: :keccakf1600.sha3_256(message)
+  def sha256(message), do: :crypto.hash(:sha256, message)
 
   def sign(message, secret_key), do: sign_ed25519(message, secret_key)
 

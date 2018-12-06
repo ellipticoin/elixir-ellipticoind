@@ -37,6 +37,7 @@ defmodule StakingContractMonitor do
     Logger.info "Winner: #{Ethereum.Helpers.bytes_to_hex(winner)}"
 
     if winner == Ethereum.Helpers.my_ethereum_address() do
+      Logger.info("Won block #{Ethereum.Helpers.hex_to_int(number)}")
       {:ok, block} = Block.forge(winner)
       P2P.broadcast_block(block)
       submit_block(block)
@@ -54,14 +55,16 @@ defmodule StakingContractMonitor do
     ethereum_address = ethereum_private_key
       |> Ethereum.Helpers.address_from_private_key()
       |> Ethereum.Helpers.bytes_to_hex()
+    last_signature = EllipticoinStakingContract.last_signature()
+                            |> ok
+    IO.inspect (last_signature |> Base.encode16(case: :lower)), label: "last signature"
     {:ok, signature} = EllipticoinStakingContract.last_signature()
                 |> ok
                 |> Ethereum.Helpers.sign(ethereum_private_key)
 
     EllipticoinStakingContract.submit_block(
       block.block_hash,
-      signature,
-      ethereum_address
+      signature
     )
   end
 end

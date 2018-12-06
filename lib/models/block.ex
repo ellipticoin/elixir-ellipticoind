@@ -49,7 +49,7 @@ defmodule Models.Block do
     winner: winner,
     changeset_hash: changeset_hash
   }
-  
+
   def as_cbor(block), do: Cbor.encode(as_map(block))
 
   def forge(winner) do

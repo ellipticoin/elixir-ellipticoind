@@ -7,7 +7,8 @@ defmodule Redis do
   end
 
   def init(_args) do
-    {:ok, redis} = Redix.start_link()
+    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    {:ok, redis} = Redix.start_link(connection_url)
     {:ok, redis}
   end
 

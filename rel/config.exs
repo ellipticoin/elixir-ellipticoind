@@ -2,7 +2,8 @@
 # They can then be used by adding `plugin MyPlugin` to
 # either an environment, or release definition, where
 # `MyPlugin` is the name of the plugin module.
-Path.join(["rel", "plugins", "*.exs"])
+~w(rel plugins *.exs)
+|> Path.join()
 |> Path.wildcard()
 |> Enum.map(&Code.eval_file(&1))
 
@@ -13,7 +14,7 @@ use Mix.Releases.Config,
     default_environment: Mix.env()
 
 # For a full list of config options for both releases
-# and environments, visit https://hexdocs.pm/distillery/configuration.html
+# and environments, visit https://hexdocs.pm/distillery/config/distillery.html
 
 
 # You may define one or more environments in this file,
@@ -30,13 +31,15 @@ environment :dev do
   # dev mode.
   set dev_mode: true
   set include_erts: false
-  set cookie: :"{=xwT[hRc}E0X~gPAxcuqAy.4h>W!XuC!9&gzC,Kz~P=9RQ6zw$U{$4]BB&I(6R;"
+  set cookie: :"p7Hr^:*uOm_{IzLCvOuTHc?JnCmtkdlE)Tq{6fabt@s)1kv`}0gTs<(42EE/`8._"
 end
 
 environment :prod do
   set include_erts: true
   set include_src: false
-  set cookie: :"OoVocNmmQX_A:)pO]%Q)VMZ0cf|:lW_!ow~ba@FJy30W&`K^DJ.x9be&%>gr^=Hm"
+  set cookie: :"|X^}BrYC6%BQYK;Y3o?jWJ]^hXR>0/zz)euGL&qq.V`tTE|HD6EZxr_CtEdPlfsF"
+  set vm_args: "rel/vm.args"
+  set pre_start_hooks: "rel/hooks/pre_start"
 end
 
 # You may define one or more releases in this file.
@@ -47,10 +50,15 @@ end
 release :blacksmith do
   set version: current_version(:blacksmith)
   set applications: [
-    :runtime_tools,
-    :cbor,
-    :libsodium,
-    :rustler,
+    :crypto,
+    :libsecp256k1,
+    :runtime_tools
+  ]
+  set config_providers: [
+    {Mix.Releases.Config.Providers.Elixir, ["${RELEASE_ROOT_DIR}/etc/config.exs"]}
+  ]
+  set overlays: [
+    {:copy, "rel/config/config.exs", "etc/config.exs"}
   ]
 end
 

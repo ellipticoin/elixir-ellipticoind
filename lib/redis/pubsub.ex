@@ -6,7 +6,8 @@ defmodule Redis.PubSub do
   end
 
   def init(_args) do
-    {:ok, pubsub} = Redix.PubSub.start_link()
+    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    {:ok, pubsub} = Redix.PubSub.start_link(connection_url)
 
     channels = [
       :transaction_processor
@@ -33,8 +34,15 @@ defmodule Redis.PubSub do
     {:noreply, state}
   end
 
+  def handle_info({:redix_pubsub, _pid, _from, :subscribed, %{channel: _channel}}, state) do
+    {:noreply, state}
+
+  end
+
+
+
   def handle_info(
-        {:redix_pubsub, _pid, :message, %{channel: channel, payload: payload}},
+        {:redix_pubsub, _pid, _from, :message, %{channel: channel, payload: payload}},
         state = %{subscriptions: subscriptions, pubsub: _pubsub}
       ) do
     Enum.each(subscriptions[String.to_atom(channel)], fn subscriber ->

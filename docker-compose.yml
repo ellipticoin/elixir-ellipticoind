@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+  blacksmith:
+    build: .
+    ports:
+      - "4045:4045"
+    env_file:
+      - config/docker.env
+    depends_on:
+      - postgres
+      - redis
+  postgres:
+    image: postgres:10-alpine
+    # build:
+    #   context: https://github.com/docker-library/postgres.git
+    #   dockerfile: 11/alpine/Dockerfile
+    #   args:
+    #     - POSTGRES_DB=blacksmith
+    volumes:
+      - "./tmp/volumes/postgres:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=blacksmith
+  redis:
+    image: redis:5-alpine
+    volumes:
+      - "./volumes/redis:/data"
+    ports:
+      - "6379:6379"

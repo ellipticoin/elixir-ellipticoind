@@ -1,4 +1,5 @@
 defmodule Ethereum.Helpers do
+  require Integer
   @address_size 20
 
   def deploy(module_name, args \\ []) do
@@ -91,7 +92,7 @@ defmodule Ethereum.Helpers do
 
   def sign(message, private_key) do
     message_size = byte_size(message)
-    message_hash = Crypto.hash("\x19Ethereum Signed Message:\n#{message_size}" <> message)
+    message_hash = Crypto.keccak256("\x19Ethereum Signed Message:\n#{message_size}" <> message)
     {:ok, signature, recovery_id} =
       :libsecp256k1.ecdsa_sign_compact(message_hash, private_key, :default, <<>>)
 
@@ -105,9 +106,12 @@ defmodule Ethereum.Helpers do
     :binary.part(data, length - n, n)
   end
 
-  def hex_to_bytes("0x" <> hex), do: Base.decode16!(hex, case: :lower)
+  def hex_to_bytes("0x" <> hex), do: hex_to_bytes(hex)
+  def hex_to_bytes(hex) when Integer.is_odd(byte_size(hex)),
+    do: hex_to_bytes("0" <> hex)
+  def hex_to_bytes(hex), do: Base.decode16!(hex, case: :lower)
   def hex_to_int(hex), do: hex_to_bytes(hex) |> :binary.decode_unsigned()
   def bytes_to_hex(bytes), do: "0x" <> Base.encode16(bytes, case: :lower)
-  def abi_file_name(contract_name), do: Path.join(["priv", "ethereum_contracts", "#{contract_name}.abi"])
-  defp bin_file_name(contract_name), do: Path.join(["priv", "ethereum_contracts", "#{contract_name}.bin"])
+  def abi_file_name(contract_name), do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.abi"])
+  defp bin_file_name(contract_name), do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.bin"])
 end

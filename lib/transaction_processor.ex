@@ -10,10 +10,11 @@ defmodule TransactionProcessor do
   end
 
   def init(state) do
-    {:ok, redis} = Redix.start_link()
+    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    {:ok, redis} = Redix.start_link(connection_url)
 
     Port.open({:spawn_executable, path_to_executable()},
-      args: ["redis://127.0.0.1/"]
+      args: [connection_url]
     )
 
     {:ok,
@@ -52,9 +53,8 @@ defmodule TransactionProcessor do
     {:noreply, state}
   end
 
-  def path_to_executable() do
-    Path.expand("../priv/native/#{@crate}", __DIR__)
-  end
+  def path_to_executable(), do:
+    Application.app_dir(:blacksmith, ["priv", "native", @crate])
 
   def mode() do
     if(Mix.env() == :prod, do: :release, else: :debug)

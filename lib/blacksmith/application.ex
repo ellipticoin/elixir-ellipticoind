@@ -3,8 +3,8 @@ defmodule Blacksmith.Application do
   use Application
 
   def start(_type, _args) do
-    :pg2.create("websocket::blocks")
-
+    # :pg2.create("websocket::blocks")
+    #
     children = [
       supervisor(Blacksmith.Repo, []),
       {Redis, name: Redis},

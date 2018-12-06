@@ -2,6 +2,7 @@
 extern crate redis;
 extern crate vm;
 
+use std::env;
 use std::sync::Arc;
 use std::{thread, time, process, io};
 
@@ -24,7 +25,10 @@ struct Ctx {
 
 impl Ctx {
     fn new() -> Ctx {
-        let client = Client::open("redis://localhost/").unwrap();
+        let args: Vec<String> = env::args().collect();
+        let connection_string: &str = &args[1];
+        println!("Connection string: {:?}", connection_string);
+        let client = Client::open(connection_string).unwrap();
         Ctx {
             client: Arc::new(client),
         }
