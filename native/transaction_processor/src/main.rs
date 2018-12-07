@@ -27,7 +27,6 @@ impl Ctx {
     fn new() -> Ctx {
         let args: Vec<String> = env::args().collect();
         let connection_string: &str = &args[1];
-        println!("Connection string: {:?}", connection_string);
         let client = Client::open(connection_string).unwrap();
         Ctx {
             client: Arc::new(client),

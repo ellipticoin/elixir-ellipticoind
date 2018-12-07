@@ -39,7 +39,16 @@ environment :prod do
   set include_src: false
   set cookie: :"|X^}BrYC6%BQYK;Y3o?jWJ]^hXR>0/zz)euGL&qq.V`tTE|HD6EZxr_CtEdPlfsF"
   set vm_args: "rel/vm.args"
-  set pre_start_hooks: "rel/hooks/pre_start"
+  set config_providers: [
+    {Mix.Releases.Config.Providers.Elixir, ["${RELEASE_ROOT_DIR}/etc/config.exs"]}
+  ]
+  set commands: [
+    install_deps: "rel/commands/install_deps.sh",
+    migrate: "rel/commands/migrate.sh",
+  ]
+  set overlays: [
+    {:copy, "rel/config/config.exs", "etc/config.exs"}
+  ]
 end
 
 # You may define one or more releases in this file.
@@ -52,13 +61,10 @@ release :blacksmith do
   set applications: [
     :crypto,
     :libsecp256k1,
+    :ethereumex,
+    :evm,
+    :blockchain,
     :runtime_tools
-  ]
-  set config_providers: [
-    {Mix.Releases.Config.Providers.Elixir, ["${RELEASE_ROOT_DIR}/etc/config.exs"]}
-  ]
-  set overlays: [
-    {:copy, "rel/config/config.exs", "etc/config.exs"}
   ]
 end
 

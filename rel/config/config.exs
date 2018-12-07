@@ -1,20 +1,21 @@
 use Mix.Config
 
+config :blacksmith, :ethereum_private_key, "wss://rinkeby.infura.io/ws"
 config :blacksmith, base_contracts_path: "./base_contracts"
-config :blacksmith, port: String.to_integer(System.get_env("PORT") || "4045")
+config :blacksmith, port: 4045
 
 config :blacksmith,
   staking_contract_address:
-    (System.get_env("STAKING_CONTRACT_ADDRESS") || "") |> Base.decode16!(case: :mixed)
+    "756d0ABF6235AB135126fe772CDaE195C3DECc0e" |> Base.decode16!(case: :mixed)
 
-config :ethereumex, :web3_url, System.get_env("WEB3_URL")
+config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
 config :ethereumex, :client_type, :websocket
-config :blacksmith, private_key: (System.get_env("ETHEREUM_PRIVATE_KEY") || "") |> Base.decode16!()
+config :blacksmith, ethereum_private_key: "1274EA29DC71B4B2E6439FDD109545E8C1585E2B16BCD45236FE20FBF919A70D" |> Base.decode16!()
 
-config :blacksmith, :redis_url, System.get_env("REDIS_URL")
+config :blacksmith, :redis_url, "redis://localhost:6379/"
 config :blacksmith, Blacksmith.Repo,
-  username: System.get_env("POSTGRES_USER"),
-  password: System.get_env("POSTGRES_PASS"),
-  database: System.get_env("POSTGRES_DB"),
-  hostname: System.get_env("POSTGRES_HOST"),
+  username: "postgres",
+  password: "",
+  database: "blacksmith",
+  hostname: "localhost",
   pool_size: 15

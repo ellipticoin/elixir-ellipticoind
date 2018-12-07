@@ -57,7 +57,6 @@ defmodule StakingContractMonitor do
       |> Ethereum.Helpers.bytes_to_hex()
     last_signature = EllipticoinStakingContract.last_signature()
                             |> ok
-    IO.inspect (last_signature |> Base.encode16(case: :lower)), label: "last signature"
     {:ok, signature} = EllipticoinStakingContract.last_signature()
                 |> ok
                 |> Ethereum.Helpers.sign(ethereum_private_key)
