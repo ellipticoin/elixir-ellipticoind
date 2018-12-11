@@ -43,6 +43,10 @@ defmodule StakingContractMonitor do
       submit_block(block)
     end
 
+    WebsocketHandler.broadcast(:blocks, %Block{
+      number: Ethereum.Helpers.hex_to_int(number) - 3495737,
+      winner: winner,
+    })
     {:noreply, state}
   end
 

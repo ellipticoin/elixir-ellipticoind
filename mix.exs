@@ -50,7 +50,7 @@ defmodule Blacksmith.Mixfile do
       {:bypass, "~> 0.8", only: :test},
       {:cbor, "~> 0.1"},
       {:cors_plug, "~> 1.5"},
-      {:cowboy, "~> 2.3"},
+      {:cowboy, "~> 2.6"},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
       {:distillery, "~> 2.0", runtime: false},
       {:ecto, "~> 3.0"},

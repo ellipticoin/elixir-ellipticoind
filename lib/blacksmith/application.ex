@@ -3,8 +3,8 @@ defmodule Blacksmith.Application do
   use Application
 
   def start(_type, _args) do
-    # :pg2.create("websocket::blocks")
-    #
+    :pg2.create("websocket::blocks")
+
     children = [
       supervisor(Blacksmith.Repo, []),
       {Redis, name: Redis},
@@ -15,14 +15,14 @@ defmodule Blacksmith.Application do
       {StakingContractMonitor, []},
       {P2P, name: P2P},
       {VM, name: VM},
-      Plug.Adapters.Cowboy.child_spec(
+      {Plug.Cowboy,
         scheme: :http,
         plug: Router,
         options: [
           dispatch: dispatch(),
           port: Application.fetch_env!(:blacksmith, :port)
         ]
-      )
+      }
     ]
 
     opts = [strategy: :one_for_one, name: Blacksmith.Supervisor]
@@ -35,7 +35,7 @@ defmodule Blacksmith.Application do
       {:_,
        [
          {"/websocket/blocks", WebsocketHandler, %{channel: :blocks}},
-         {:_, Plug.Adapters.Cowboy2.Handler, {Router, []}}
+         {:_, Plug.Cowboy.Handler, {Router, []}}
        ]}
     ]
   end

@@ -2,10 +2,13 @@ defmodule WebsocketHandler do
   @behaviour :cowboy_websocket
 
   def init(req, state) do
+    IO.puts "initing!"
     {:cowboy_websocket, req, state}
   end
 
   def websocket_init(state) do
+    IO.puts "websocket_init"
+    IO.inspect state
     channel = state[:channel]
 
     :pg2.join("websocket::#{channel}", self())
@@ -22,8 +25,8 @@ defmodule WebsocketHandler do
   end
 
   def websocket_info({_channel, message}, state) do
-    body = apply(message.__struct__, :to_json, [message])
-    {:reply, {:text, body}, state}
+    body = apply(message.__struct__, :as_cbor, [message])
+    {:reply, {:binary, body}, state}
   end
 
   def handle_info(_info, state) do

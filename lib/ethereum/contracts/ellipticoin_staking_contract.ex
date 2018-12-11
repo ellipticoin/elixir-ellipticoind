@@ -27,12 +27,7 @@ abi_encoded_data = ABI.encode("submitBlock(bytes32,uint8,bytes32,bytes32)", [blo
     contract_address = Application.fetch_env!(:blacksmith, :staking_contract_address)
     ethereum_private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
 
-IO.inspect recovery_id + 27, label: "v"
-IO.inspect r |> Base.encode16(case: :lower), label: "r"
-IO.inspect s |> Base.encode16(case: :lower), label: "s"
     {:ok, transaction_count} = Ethereumex.WebSocketClient.eth_get_transaction_count(Ethereum.Helpers.bytes_to_hex(Ethereum.Helpers.my_ethereum_address()))
-    # IO.inspect Ethereum.Helpers.bytes_to_hex(Ethereum.Helpers.my_ethereum_address())
-    IO.inspect Ethereumex.WebSocketClient.eth_get_balance(Ethereum.Helpers.bytes_to_hex(Ethereum.Helpers.my_ethereum_address()))
     transaction_data = %Blockchain.Transaction{
       data: abi_encoded_data,
       gas_price: 1000000003,
@@ -46,7 +41,7 @@ IO.inspect s |> Base.encode16(case: :lower), label: "s"
     |> ExRLP.encode()
     |> Base.encode16(case: :lower)
 
-    IO.inspect Ethereumex.WebSocketClient.eth_send_raw_transaction("0x" <> transaction_data)
+    Ethereumex.WebSocketClient.eth_send_raw_transaction("0x" <> transaction_data)
   end
   def last_signature() do
     {:ok, v, r, s} = ExW3.Contract.call(__MODULE__, :lastSignature)
