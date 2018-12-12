@@ -1,4 +1,5 @@
 defmodule P2P do
+  import Utils
   alias Models.Block
 
   use GenServer
@@ -8,15 +9,57 @@ defmodule P2P do
   end
 
   def init(state) do
+    peers = load_peers()
+    connect_to_peers(peers)
 
     {:ok,
      Map.merge(state, %{
-       peers: []
+       peers: peers
      })}
+  end
+
+  def connect_to_peers(peers) do
+    EllipticoinClient.start
+    {:ok, %{body: ip}} = HTTPoison.get("http://api.ipify.org")
+
+    peers
+    ["https://davenport.ellipticoin.org:4047"]
+      |> Enum.map(fn peer ->
+        peer
+          |> EllipticoinClient.new()
+          |> EllipticoinClient.connect("http://#{ip}:4047")
+      end)
+  end
+
+  def load_peers() do
+    bootnodes = File.read(bootnodes_path())
+                |> ok
+                |> String.split("\n")
+                |> Enum.drop(-1)
+
+    peers = if Application.fetch_env!(:blacksmith, :bootnode) do
+      bootnodes
+    else
+      peer = bootnodes
+        |> Enum.random()
+        |> EllipticoinClient.new()
+
+      EllipticoinClient.start
+      {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
+      peers
+    end
+  end
+
+  defp bootnodes_path() do
+    Application.app_dir(:blacksmith, ["priv", "bootnodes.txt"])
   end
 
   def add_peer(url) do
     GenServer.cast(__MODULE__, {:add_peer, url})
+  end
+
+  def peers() do
+    GenServer.call(__MODULE__, {:peers})
   end
 
   def broadcast_block(block) do
@@ -39,13 +82,19 @@ defmodule P2P do
     {:noreply, state}
   end
 
+  def handle_call({:peers}, _from, state =%{
+    peers: peers,
+  }) do
+    {:reply, peers, state}
+  end
+
   defp http_post_signed_block(peer, block, private_key) do
     encoded_block = Block.as_cbor(block)
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
     {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
 
     HTTPoison.post(
-      peer <> "blocks",
+      peer <> "/blocks",
       encoded_block,
       headers(signature)
     )

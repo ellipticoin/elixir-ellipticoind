@@ -3,6 +3,12 @@ use Mix.Config
 config :blacksmith, :ethereum_private_key, "wss://rinkeby.infura.io/ws"
 config :blacksmith, base_contracts_path: "./base_contracts"
 config :blacksmith, port: 4045
+config :blacksmith, https: false
+config :blacksmith, keyfile: "priv/ssl/privkey.pem"
+config :blacksmith, certfile: "priv/ssl/fullchain.pem"
+config :blacksmith, dhfile: "priv/ssl/ssl-dhparams.pem"
+
+config :blacksmith, bootnode: false
 
 config :blacksmith,
   staking_contract_address:

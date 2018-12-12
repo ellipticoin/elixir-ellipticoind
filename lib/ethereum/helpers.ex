@@ -33,43 +33,25 @@ defmodule Ethereum.Helpers do
         address
       ) do
     message_size = byte_size(message)
-    message_hash = Crypto.hash("\x19Ethereum Signed Message:\n#{message_size}" <> message)
+    message_hash = Crypto.keccak256("\x19Ethereum Signed Message:\n#{message_size}" <> message)
 
     case :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id) do
       {:ok, public_key} ->
-        address_from_public_key(public_key) == address
+        private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
+        public_key_to_address(public_key) == address
 
       {:error, _reason} ->
         false
     end
   end
 
-  def address_from_private_key(private_key) do
-    private_key
-    |> get_secp256k1_public_key()
-    |> elem(1)
-    |> address_from_public_key()
-  end
-
-  defp address_from_public_key(<<4>> <> public_key) do
-    public_key
-    |> Crypto.hash()
-    |> take_n_last_bytes(@address_size)
-  end
-
-  defp get_secp256k1_public_key(private_key) do
-    case :libsecp256k1.ec_pubkey_create(private_key, :uncompressed) do
-      {:ok, public_key} -> {:ok, public_key}
-      {:error, reason} -> {:error, to_string(reason)}
-    end
-  end
 
   def subscribe_to_new_blocks() do
     Ethereumex.WebSocketClient.eth_subscribe("newHeads")
   end
 
   def mine_block() do
-    # Ethereumex.WebSocketClient.request("evm_mine", [], [])
+    Ethereumex.WebSocketClient.request("evm_mine", [], [])
   end
 
   def my_ethereum_address() do
@@ -79,10 +61,16 @@ defmodule Ethereum.Helpers do
 
   def private_key_to_address(private_key) do
     private_key_to_public_key(private_key)
-    |> ExthCrypto.Key.der_to_raw()
-    |> ExthCrypto.Hash.Keccak.kec()
-    |> EVM.Helpers.take_n_last_bytes(20)
+      |> public_key_to_address()
   end
+
+  def public_key_to_address(public_key) do
+    public_key
+    |> ExthCrypto.Key.der_to_raw()
+    |> Crypto.keccak256()
+    |> take_n_last_bytes(@address_size)
+  end
+
 
   def private_key_to_public_key(private_key) do
     private_key
@@ -96,7 +84,6 @@ defmodule Ethereum.Helpers do
     {:ok, signature, recovery_id} =
       :libsecp256k1.ecdsa_sign_compact(message_hash, private_key, :default, <<>>)
 
-    {:ok, _public_key} = :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id)
     {:ok, signature <> <<recovery_id>>}
   end
 

@@ -6,8 +6,10 @@ defmodule Router do
   end
 
   alias Blacksmith.Plug.CBOR
+  alias Blacksmith.Repo
   alias HTTP.SignatureAuth
   alias Models.Contract
+  alias Models.Block
   alias Ethereum.Contracts.EllipticoinStakingContract
 
   plug(CORSPlug)
@@ -18,11 +20,6 @@ defmodule Router do
     cbor_decoder: Cbor
   )
 
-  # plug(
-  #   SignatureAuth,
-  #   only_methods: ["POST", "PUT"]
-  # )
-  #
   use Plug.ErrorHandler
 
   plug(:match)
@@ -38,29 +35,39 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
-  post "/nodes" do
-    P2P.add_peer(conn.params.url)
+  get "/peers" do
+    send_resp(conn, 200, Cbor.encode(P2P.peers()))
+  end
 
-    send_resp(conn, 200, "")
+  post "/peers" do
+    P2P.add_peer(conn.body_params[:url])
+
+    send_resp(conn, 200, Cbor.encode(""))
   end
 
   post "/blocks" do
     {:ok, winner} = EllipticoinStakingContract.winner()
     SignatureAuth.verify_block_signature(conn, winner)
 
-    # Block.apply(conn.params)
-    send_resp(conn, 200, "")
+    Block.apply(conn.params)
+    send_resp(conn, 200, Cbor.encode(""))
   end
 
   get "/blocks" do
-    _limit =
+    limit =
       if conn.query_params["limit"] do
         Integer.parse(conn.query_params["limit"])
+          |> elem(0)
       else
         nil
       end
 
-    send_resp(conn, 200, Cbor.encode(%{blocks: []}))
+    blocks = Block.latest(limit)
+      |> Repo.all
+      |> Enum.map(&Block.as_map/1)
+
+    IO.inspect Enum.map(blocks, fn block -> block.number end)
+    send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))
   end
 
   post "/transactions" do
@@ -68,7 +75,7 @@ defmodule Router do
 
     Contract.post(conn.params)
 
-    send_resp(conn, 200, "")
+    send_resp(conn, 200, Cbor.encode(""))
   end
 
   def parse_get_request(conn) do

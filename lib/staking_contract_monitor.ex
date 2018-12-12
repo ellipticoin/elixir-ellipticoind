@@ -34,17 +34,18 @@ defmodule StakingContractMonitor do
   def handle_info(_block = %{"hash" => _hash, "number" => number}, state = %{enabled: true}) do
     Logger.info "Received Ethereum Block #{Ethereum.Helpers.hex_to_int(number)}"
     {:ok, winner} = EllipticoinStakingContract.winner()
+    number = Ethereum.Helpers.hex_to_int(number) - 3495737
     Logger.info "Winner: #{Ethereum.Helpers.bytes_to_hex(winner)}"
 
     if winner == Ethereum.Helpers.my_ethereum_address() do
-      Logger.info("Won block #{Ethereum.Helpers.hex_to_int(number)}")
-      {:ok, block} = Block.forge(winner)
+      {:ok, block} = Block.forge(winner, number)
+      Logger.info("Won block #{number}")
       P2P.broadcast_block(block)
       submit_block(block)
     end
 
     WebsocketHandler.broadcast(:blocks, %Block{
-      number: Ethereum.Helpers.hex_to_int(number) - 3495737,
+      number: number,
       winner: winner,
     })
     {:noreply, state}
@@ -57,7 +58,7 @@ defmodule StakingContractMonitor do
   defp submit_block(block) do
     ethereum_private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
     ethereum_address = ethereum_private_key
-      |> Ethereum.Helpers.address_from_private_key()
+      |> Ethereum.Helpers.private_key_to_address()
       |> Ethereum.Helpers.bytes_to_hex()
     last_signature = EllipticoinStakingContract.last_signature()
                             |> ok

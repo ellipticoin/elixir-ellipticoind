@@ -19,7 +19,8 @@ defmodule Models.Block do
       from(q in query, order_by: q.total_burned)
       |> Ecto.Query.first()
 
-  def latest(query \\ __MODULE__, count), do: from(q in query, order_by: q.number, limit: ^count)
+  def latest(query \\ __MODULE__, count), do:
+  from(q in query, order_by: [desc: q.number], limit: ^count)
 
   def changeset(user, params \\ %{}) do
     user
@@ -44,7 +45,7 @@ defmodule Models.Block do
   %{
     parent_hash: (if Ecto.assoc_loaded?(parent), do: (parent.block_hash || <<0::256>>), else: <<0::256>>),
     block_hash: block_hash,
-    total_burned: total_burned || <<0::256>>,
+    total_burned: total_burned || 0,
     number: number,
     winner: winner,
     changeset_hash: changeset_hash
@@ -52,7 +53,13 @@ defmodule Models.Block do
 
   def as_cbor(block), do: Cbor.encode(as_map(block))
 
-  def forge(winner) do
+  def apply(params) do
+    block = struct(__MODULE__, params)
+
+    Repo.insert(block)
+  end
+
+  def forge(winner, number) do
     TransactionProcessor.proccess_transactions(1)
     TransactionProcessor.wait_until_done()
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
@@ -63,7 +70,7 @@ defmodule Models.Block do
     block = %__MODULE__{
       parent: parent,
       winner: winner,
-      number: 0,
+      number: number,
       changeset_hash: Crypto.hash(changeset)
     }
 

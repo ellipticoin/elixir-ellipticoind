@@ -39,7 +39,6 @@ defmodule Blacksmith.Mixfile do
 
   defp extra_applications(:dev), do: extra_applications(:all) ++ [:remix]
   defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug]
-  defp extra_applications(_all), do: []
 
   defp deps do
     [
@@ -49,7 +48,7 @@ defmodule Blacksmith.Mixfile do
       {:binary, "~> 0.0.5"},
       {:bypass, "~> 0.8", only: :test},
       {:cbor, "~> 0.1"},
-      {:cors_plug, "~> 1.5"},
+      {:cors_plug, "~> 2.0"},
       {:cowboy, "~> 2.6"},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
       {:distillery, "~> 2.0", runtime: false},
@@ -60,7 +59,7 @@ defmodule Blacksmith.Mixfile do
       {:ex_machina, "~> 2.2"},
       {:exth_crypto, "~> 0.1.4", override: true},
       {:exw3, github: "masonforest/exw3", branch: "websocket-client"},
-      {:httpoison, "~> 1.3"},
+      {:httpoison, "~> 1.4", override: true},
       {:keccakf1600, hex: :keccakf1600_orig},
       {:libsodium, "~> 0.0.10"},
       {:mana, [github: "mana-ethereum/mana", app: false]},

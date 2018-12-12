@@ -2,13 +2,10 @@ defmodule WebsocketHandler do
   @behaviour :cowboy_websocket
 
   def init(req, state) do
-    IO.puts "initing!"
     {:cowboy_websocket, req, state}
   end
 
   def websocket_init(state) do
-    IO.puts "websocket_init"
-    IO.inspect state
     channel = state[:channel]
 
     :pg2.join("websocket::#{channel}", self())
