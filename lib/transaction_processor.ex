@@ -10,17 +10,28 @@ defmodule TransactionProcessor do
   end
 
   def init(state) do
-    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
-    {:ok, redis} = Redix.start_link(connection_url)
+    redis_connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    postgres_connection_url = postgres_connection_url()
+    {:ok, redis} = Redix.start_link(redis_connection_url)
 
     Port.open({:spawn_executable, path_to_executable()},
-      args: [connection_url]
+      args: [redis_connection_url, postgres_connection_url]
     )
 
     {:ok,
      Map.merge(state, %{
        redis => redis
      })}
+  end
+
+  defp postgres_connection_url() do
+    repo = Application.fetch_env!(:blacksmith, Blacksmith.Repo)
+    username = Keyword.fetch!(repo, :username)
+    hostname = Keyword.fetch!(repo, :hostname)
+    port = if Keyword.fetch(repo, :port) == :error, do: "", else: ":#{Keyword.fetch(repo, :port)}"
+    database = Keyword.fetch!(repo, :database)
+
+    "postgres://#{username}:#{hostname}@#{hostname}:#{port}/#{database}"
   end
 
   def done() do
@@ -53,8 +64,7 @@ defmodule TransactionProcessor do
     {:noreply, state}
   end
 
-  def path_to_executable(), do:
-    Application.app_dir(:blacksmith, ["priv", "native", @crate])
+  def path_to_executable(), do: Application.app_dir(:blacksmith, ["priv", "native", @crate])
 
   def mode() do
     if(Mix.env() == :prod, do: :release, else: :debug)

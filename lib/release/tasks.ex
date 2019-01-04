@@ -6,4 +6,4 @@ defmodule Release.Tasks do
 
     Ecto.Migrator.run(Blacksmith.Repo, path, :up, all: true)
   end
-end  
+end

@@ -2,6 +2,8 @@ use Mix.Config
 config :bypass, adapter: Plug.Adapters.Cowboy2
 config :blacksmith, base_contracts_path: "./base_contracts"
 config :blacksmith, port: 4047
+config :blacksmith, bootnode: true
+config :blacksmith, https: false
 
 config :blacksmith,
   staking_contract_address:
@@ -15,7 +17,7 @@ config :ex_wire,
       22, 188, 212, 82, 54, 254, 32, 251, 249, 25, 167, 13>>
 
 config :ethereumex, :web3_url, "ws://localhost:8545/"
-config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
+# config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
 config :ethereumex, :client_type, :websocket
 config :blacksmith, :redis_url, "redis://127.0.0.1:6379/"
 config :blacksmith, :ethereumex_auto_mine, true
@@ -24,7 +26,7 @@ config :blacksmith, Blacksmith.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   username: "masonf",
   password: "",
-  database: "test_phoenix_dev",
+  database: "blacksmith_test",
   hostname: "localhost",
   pool_size: 10,
   log: false

@@ -12,8 +12,8 @@ defmodule Mix.Tasks.Publish do
       "ellipticoin-builder",
       "."
     ])
-      |> elem(0)
-      |> IO.puts
+    |> elem(0)
+    |> IO.puts()
 
     System.cmd("docker", [
       "run",
@@ -23,7 +23,7 @@ defmodule Mix.Tasks.Publish do
       "-c",
       "cat /build/config/prod.exs && . /root/.cargo/env && cd build && MIX_ENV=prod mix release --env=prod"
     ])
-      |> elem(0)
-      |> IO.puts
+    |> elem(0)
+    |> IO.puts()
   end
 end

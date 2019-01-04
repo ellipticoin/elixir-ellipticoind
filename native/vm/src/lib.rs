@@ -1,10 +1,12 @@
-#![feature(custom_attribute,)]
+#![feature(custom_attribute, plugin)]
 #[macro_use]
 extern crate lazy_static;
 extern crate heck;
 extern crate redis;
 extern crate rustler;
+extern crate serde;
 extern crate serde_cbor;
+extern crate serde_derive;
 extern crate sha3;
 extern crate time;
 extern crate wasmi;
@@ -17,7 +19,7 @@ mod vm;
 pub use ellipticoin_api::EllipticoinAPI;
 
 pub use db::DB;
-pub use transaction::{run_transaction, transaction_from_slice, Transaction};
+pub use transaction::{run_transaction, Transaction};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;
 

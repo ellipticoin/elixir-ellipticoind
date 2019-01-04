@@ -30,9 +30,9 @@ defmodule Integration.BaseTokenTest do
     TransactionProcessor.wait_until_done()
 
     assert get(%{
-      private_key: @alices_private_key,
-      method: :balance_of,
-      params: [@alice]
-    }) == 50
+             private_key: @alices_private_key,
+             method: :balance_of,
+             params: [@alice]
+           }) == 50
   end
 end

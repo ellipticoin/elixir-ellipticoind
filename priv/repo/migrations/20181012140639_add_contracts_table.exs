@@ -3,10 +3,13 @@ defmodule Blacksmith.Repo.Migrations.AddContractsTable do
 
   def change do
     create table("contracts") do
+      add :address, :binary
       add :code,    :binary
-      add :name,    :binary
+      add :name,    :varchar
 
       timestamps()
     end
+
+    create unique_index(:contracts, [:address, :name])
   end
 end

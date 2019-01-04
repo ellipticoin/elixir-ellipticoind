@@ -1,22 +1,20 @@
 use Mix.Config
 
+config :blacksmith, private_key: File.read!("test/support/private_key.pem")
+# Ganache-cli generates a set of private keys based on a mnemonic
+# For testing we use the following mnemonic:
+# ganache-cli -m "theme recall skull maximum glance major nerve situate giant snake glide oblige"
 config :blacksmith,
   ethereum_private_key:
-    Base.decode16!("8f515a41d467d7547cbab2eec3948250a4d1ba4f23881ce350cc72fb4a77efff",
+    Base.decode16!("43622b10a1d41a3ba7b7ce4f26bffca0193c0f1c5ff497b04760e940fceff15d",
       case: :lower
     )
+
 config :blacksmith,
-  alices_ethereum_private_key:
-    Base.decode16!("8f515a41d467d7547cbab2eec3948250a4d1ba4f23881ce350cc72fb4a77efff",
-      case: :lower
-    )
-config :blacksmith,
-  bobs_ethereum_private_key:
-    Base.decode16!("cd795250078342a7881a69261b9ec96536cbc12e14a3f67d7c578f83c3df5d38",
-      case: :lower
-    )
-config :blacksmith,
-  carols_ethereum_private_key:
-    Base.decode16!("0ef18744e62337f3eb9dd90ce1ad32bfe77ed589f1962563c94a46d531d625c4",
-      case: :lower
-    )
+       :testnet_private_keys,
+       [
+         "43622b10a1d41a3ba7b7ce4f26bffca0193c0f1c5ff497b04760e940fceff15d",
+         "523f07ab029c8d9d1d0440703cd1da30c96bc7fb32f53721310f83dca42d57cf",
+         "20b72edfdbad77bf1c10ebc2061a51297fd3da551f44887386bfc10c585baf9f"
+       ]
+       |> Enum.map(&Base.decode16!(&1, case: :lower))

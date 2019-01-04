@@ -1,7 +1,7 @@
 defmodule Blacksmith.Factory do
   use ExMachina.Ecto, repo: Blacksmith.Repo
 
-  alias Models.{Block}
+  alias Blacksmith.Models.Block
 
   def block_factory do
     %Block{

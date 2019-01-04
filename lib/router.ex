@@ -8,8 +8,7 @@ defmodule Router do
   alias Blacksmith.Plug.CBOR
   alias Blacksmith.Repo
   alias HTTP.SignatureAuth
-  alias Models.Contract
-  alias Models.Block
+  alias Blacksmith.Models.{Block, Contract, Transaction}
   alias Ethereum.Contracts.EllipticoinStakingContract
 
   plug(CORSPlug)
@@ -57,22 +56,24 @@ defmodule Router do
     limit =
       if conn.query_params["limit"] do
         Integer.parse(conn.query_params["limit"])
-          |> elem(0)
+        |> elem(0)
       else
         nil
       end
 
-    blocks = Block.latest(limit)
-      |> Repo.all
+    blocks =
+      Block.latest(limit)
+      |> Repo.all()
       |> Enum.map(&Block.as_map/1)
 
-    IO.inspect Enum.map(blocks, fn block -> block.number end)
+    IO.inspect(Enum.map(blocks, fn block -> block.number end))
     send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))
   end
 
   post "/transactions" do
     SignatureAuth.verify_signature(conn)
 
+    Transaction.create(conn.params)
     Contract.post(conn.params)
 
     send_resp(conn, 200, Cbor.encode(""))

@@ -2,8 +2,9 @@ defmodule StakingContractMonitor do
   require Logger
   use GenServer
   use Utils
+  alias Crypto.RSA
   alias Ethereum.Contracts.EllipticoinStakingContract
-  alias Models.Block
+  alias Blacksmith.Models.Block
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %{}, opts)
@@ -32,22 +33,15 @@ defmodule StakingContractMonitor do
   end
 
   def handle_info(_block = %{"hash" => _hash, "number" => number}, state = %{enabled: true}) do
-    Logger.info "Received Ethereum Block #{Ethereum.Helpers.hex_to_int(number)}"
-    {:ok, winner} = EllipticoinStakingContract.winner()
-    number = Ethereum.Helpers.hex_to_int(number) - 3495737
-    Logger.info "Winner: #{Ethereum.Helpers.bytes_to_hex(winner)}"
+    current_block = EllipticoinStakingContract.get_current_block()
 
-    if winner == Ethereum.Helpers.my_ethereum_address() do
-      {:ok, block} = Block.forge(winner, number)
-      Logger.info("Won block #{number}")
+    if current_block.winner == Ethereum.Helpers.my_ethereum_address() do
+      {:ok, block} = Block.forge(current_block)
       P2P.broadcast_block(block)
       submit_block(block)
+      WebsocketHandler.broadcast(:blocks, block)
     end
 
-    WebsocketHandler.broadcast(:blocks, %Block{
-      number: number,
-      winner: winner,
-    })
     {:noreply, state}
   end
 
@@ -56,19 +50,23 @@ defmodule StakingContractMonitor do
   end
 
   defp submit_block(block) do
+    block_hash = block.block_hash
+    block_number = 1
     ethereum_private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
-    ethereum_address = ethereum_private_key
+
+    ethereum_address =
+      ethereum_private_key
       |> Ethereum.Helpers.private_key_to_address()
       |> Ethereum.Helpers.bytes_to_hex()
-    last_signature = EllipticoinStakingContract.last_signature()
-                            |> ok
-    {:ok, signature} = EllipticoinStakingContract.last_signature()
-                |> ok
-                |> Ethereum.Helpers.sign(ethereum_private_key)
 
-    EllipticoinStakingContract.submit_block(
-      block.block_hash,
-      signature
-    )
+    last_signature = EllipticoinStakingContract.last_signature()
+
+    rsa_key =
+      Application.get_env(:blacksmith, :private_key)
+      |> RSA.parse_pem()
+
+    signature = RSA.sign(last_signature, rsa_key)
+
+    EllipticoinStakingContract.submit_block(block_number, block_hash, signature)
   end
 end

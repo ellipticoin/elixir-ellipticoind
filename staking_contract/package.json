@@ -1,0 +1,50 @@
+{
+  "name": "ellipticoin-staking-contract",
+  "version": "0.1.0",
+  "description": "The Ellipitcoin Staking Contract",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ellipticoin/ellipticoin-staking-contract.git"
+  },
+  "keywords": [
+    "ethereum",
+    "ellipticoin",
+    "blockchain"
+  ],
+  "author": "Mason Fischer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ellipticoin/ellipticoin-staking-contract/issues"
+  },
+  "homepage": "https://github.com/ellipticoin/ellipticoin-staking-contract#readme",
+  "dependencies": {
+    "@babel/runtime": "^7.2.0",
+    "openzeppelin-solidity": "github:settlemint/openzeppelin-solidity#solc-nightly"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-transform-runtime": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@babel/register": "^7.0.0",
+    "babel-core": "^6.26.3",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-latest": "^6.24.1",
+    "babel-preset-stage-3": "^6.24.1",
+    "bluebird": "^3.5.3",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "ethereumjs-util": "^6.0.0",
+    "lodash": "^4.17.11",
+    "mkdirp": "^0.5.1",
+    "truffle": "^5.0.0",
+    "ursa": "^0.9.4",
+    "web3": "github:ethereum/web3.js#1.0"
+  }
+}

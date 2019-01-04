@@ -4,7 +4,7 @@ defmodule EllipticoinClient do
 
   def process_response_body(body) do
     body
-      |> Cbor.decode!
+    |> Cbor.decode!()
   end
 
   def new(peer) do
@@ -16,12 +16,11 @@ defmodule EllipticoinClient do
   end
 
   def connect(self, my_address) do
-    IO.puts "Posting to: #{Map.fetch!(self, :peer) <> "/peers"}"
     post(
       Map.fetch!(self, :peer) <> "/peers",
       Cbor.encode(%{url: my_address}),
       [{"Content-Type", "application/cbor"}],
-      hackney: [:insecure],
+      hackney: [:insecure]
     )
   end
 end

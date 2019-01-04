@@ -32,13 +32,9 @@ impl EllipticoinAPI {
         args: RuntimeArgs,
     ) -> Result<Option<RuntimeValue>, Trap> {
         match index {
-            SENDER_FUNC_INDEX => {
-                if let Some(sender) = vm.env.get("sender") {
-                    Ok(Some(vm.write_pointer(sender.to_vec()).into()))
-                } else {
-                    Ok(None)
-                }
-            }
+            SENDER_FUNC_INDEX => Ok(Some(
+                vm.write_pointer(vm.transaction.sender.to_vec()).into(),
+            )),
             BLOCK_HASH_FUNC_INDEX => {
                 let block_hash = vm.db.read("best_block_hash".as_bytes());
 
@@ -47,6 +43,7 @@ impl EllipticoinAPI {
             READ_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.read(key.clone());
+
                 Ok(Some(vm.write_pointer(value).into()))
             }
             WRITE_FUNC_INDEX => {
@@ -65,7 +62,7 @@ impl EllipticoinAPI {
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = EllipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(vm.db, &vm.env, &module);
+                let mut inner_vm = VM::new(vm.db, vm.transaction, &module);
                 let mut args = Vec::new();
                 for arg in args_iter {
                     if arg.is_number() {
@@ -134,7 +131,7 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
                 return Err(InterpreterError::Function(format!(
                     "host module doesn't export function with name {}",
                     field_name
-                )))
+                )));
             }
         };
         Ok(func_ref)

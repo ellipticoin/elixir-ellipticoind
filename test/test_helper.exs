@@ -1,4 +1,5 @@
 Application.ensure_all_started(:cowboy, :ranch)
 ExUnit.start()
 HTTPoison.start()
+Application.ensure_all_started(:bypass)
 Ecto.Adapters.SQL.Sandbox.mode(Blacksmith.Repo, :manual)

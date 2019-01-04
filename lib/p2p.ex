@@ -1,6 +1,6 @@
 defmodule P2P do
   import Utils
-  alias Models.Block
+  alias Blacksmith.Models.Block
 
   use GenServer
 
@@ -10,44 +10,49 @@ defmodule P2P do
 
   def init(state) do
     peers = load_peers()
-    connect_to_peers(peers)
+    # connect_to_peers(peers)
 
     {:ok,
      Map.merge(state, %{
-       peers: peers
+       # peers
+       peers: []
      })}
   end
 
   def connect_to_peers(peers) do
-    EllipticoinClient.start
+    EllipticoinClient.start()
     {:ok, %{body: ip}} = HTTPoison.get("http://api.ipify.org")
 
     peers
+
     ["https://davenport.ellipticoin.org:4047"]
-      |> Enum.map(fn peer ->
-        peer
-          |> EllipticoinClient.new()
-          |> EllipticoinClient.connect("http://#{ip}:4047")
-      end)
+    |> Enum.map(fn peer ->
+      peer
+      |> EllipticoinClient.new()
+      |> EllipticoinClient.connect("http://#{ip}:4047")
+    end)
   end
 
   def load_peers() do
-    bootnodes = File.read(bootnodes_path())
-                |> ok
-                |> String.split("\n")
-                |> Enum.drop(-1)
+    bootnodes =
+      File.read(bootnodes_path())
+      |> ok
+      |> String.split("\n")
+      |> Enum.drop(-1)
 
-    peers = if Application.fetch_env!(:blacksmith, :bootnode) do
-      bootnodes
-    else
-      peer = bootnodes
-        |> Enum.random()
-        |> EllipticoinClient.new()
+    peers =
+      if Application.fetch_env!(:blacksmith, :bootnode) do
+        bootnodes
+      else
+        peer =
+          bootnodes
+          |> Enum.random()
+          |> EllipticoinClient.new()
 
-      EllipticoinClient.start
-      {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
-      peers
-    end
+        EllipticoinClient.start()
+        {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
+        peers
+      end
   end
 
   defp bootnodes_path() do
@@ -70,9 +75,12 @@ defmodule P2P do
     {:noreply, update_in(state[:peers], &[url | &1])}
   end
 
-  def handle_cast({:broadcast_block, block}, state =%{
-    peers: peers,
-  }) do
+  def handle_cast(
+        {:broadcast_block, block},
+        state = %{
+          peers: peers
+        }
+      ) do
     private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
 
     Enum.each(peers, fn peer ->
@@ -82,9 +90,13 @@ defmodule P2P do
     {:noreply, state}
   end
 
-  def handle_call({:peers}, _from, state =%{
-    peers: peers,
-  }) do
+  def handle_call(
+        {:peers},
+        _from,
+        state = %{
+          peers: peers
+        }
+      ) do
     {:reply, peers, state}
   end
 
@@ -100,7 +112,7 @@ defmodule P2P do
     )
   end
 
-  defp headers(signature ) do
+  defp headers(signature) do
     %{
       "Content-Type": "application/cbor",
       Authorization: "Signature " <> Base.encode16(signature, case: :lower)

@@ -8,7 +8,6 @@ defmodule Ethereum.Helpers do
       |> String.split(".")
       |> List.last()
 
-    bin_file_name = Path.join(["priv", "ethereum_contracts", "#{contract_name}.hex"])
     abi = ExW3.load_abi(abi_file_name(contract_name))
     bin = ExW3.load_bin(bin_file_name(contract_name))
     ExW3.Contract.register(module_name, abi: abi)
@@ -45,7 +44,6 @@ defmodule Ethereum.Helpers do
     end
   end
 
-
   def subscribe_to_new_blocks() do
     Ethereumex.WebSocketClient.eth_subscribe("newHeads")
   end
@@ -56,12 +54,12 @@ defmodule Ethereum.Helpers do
 
   def my_ethereum_address() do
     Application.fetch_env!(:blacksmith, :ethereum_private_key)
-      |> private_key_to_address
+    |> private_key_to_address
   end
 
   def private_key_to_address(private_key) do
     private_key_to_public_key(private_key)
-      |> public_key_to_address()
+    |> public_key_to_address()
   end
 
   def public_key_to_address(public_key) do
@@ -70,7 +68,6 @@ defmodule Ethereum.Helpers do
     |> Crypto.keccak256()
     |> take_n_last_bytes(@address_size)
   end
-
 
   def private_key_to_public_key(private_key) do
     private_key
@@ -81,6 +78,7 @@ defmodule Ethereum.Helpers do
   def sign(message, private_key) do
     message_size = byte_size(message)
     message_hash = Crypto.keccak256("\x19Ethereum Signed Message:\n#{message_size}" <> message)
+
     {:ok, signature, recovery_id} =
       :libsecp256k1.ecdsa_sign_compact(message_hash, private_key, :default, <<>>)
 
@@ -94,11 +92,17 @@ defmodule Ethereum.Helpers do
   end
 
   def hex_to_bytes("0x" <> hex), do: hex_to_bytes(hex)
+
   def hex_to_bytes(hex) when Integer.is_odd(byte_size(hex)),
     do: hex_to_bytes("0" <> hex)
-  def hex_to_bytes(hex), do: Base.decode16!(hex, case: :lower)
+
+  def hex_to_bytes(hex), do: Base.decode16!(hex, case: :mixed)
   def hex_to_int(hex), do: hex_to_bytes(hex) |> :binary.decode_unsigned()
   def bytes_to_hex(bytes), do: "0x" <> Base.encode16(bytes, case: :lower)
-  def abi_file_name(contract_name), do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.abi"])
-  defp bin_file_name(contract_name), do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.bin"])
+
+  def abi_file_name(contract_name),
+    do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.abi"])
+
+  defp bin_file_name(contract_name),
+    do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.hex"])
 end

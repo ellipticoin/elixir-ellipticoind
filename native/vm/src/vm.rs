@@ -3,23 +3,23 @@ use self::memory_units::Pages;
 use db::DB;
 use ellipticoin_api::*;
 use helpers::*;
-use std::collections::HashMap;
 use std::mem::transmute;
+use transaction::Transaction;
 use wasmi::RuntimeValue;
 use wasmi::*;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub db: &'a DB,
-    pub env: &'a HashMap<String, Vec<u8>>,
+    pub transaction: &'a Transaction,
 }
 
 impl<'a> VM<'a> {
-    pub fn new(db: &'a DB, env: &'a HashMap<String, Vec<u8>>, main: &'a ModuleRef) -> VM<'a> {
+    pub fn new(db: &'a DB, transaction: &'a Transaction, main: &'a ModuleRef) -> VM<'a> {
         VM {
             instance: main,
             db: db,
-            env: env,
+            transaction: transaction,
         }
     }
 
@@ -33,25 +33,30 @@ impl<'a> VM<'a> {
     }
 
     pub fn read(&mut self, key: Vec<u8>) -> Vec<u8> {
-        let contract_address = self.env.get("address").unwrap().to_vec();
-        let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
+        // let contract_address = self.env.get("address").unwrap().to_vec();
+        // let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
+
+        let contract_address = &self.transaction.contract_address;
+        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
 
-        let key = [contract_address.clone(), contract_name, key].concat();
+        let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
         let result = self.db.read(key.as_slice());
 
         result
     }
 
     pub fn write(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        let contracts_address = self.env.get("address").unwrap().to_vec();
-        let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
+        // let contracts_address = self.env.get("address").unwrap().to_vec();
+        // let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
+        let contract_address = &self.transaction.contract_address;
+        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
-        let contract_name_len = contract_name.clone().len();
+        let contract_name_len = contract_name.len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        let key = [contracts_address, contract_name, key].concat();
+        let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
         self.db.write(key.as_slice(), value.as_slice());
     }
 

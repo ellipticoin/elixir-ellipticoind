@@ -36,10 +36,7 @@ defmodule Redis.PubSub do
 
   def handle_info({:redix_pubsub, _pid, _from, :subscribed, %{channel: _channel}}, state) do
     {:noreply, state}
-
   end
-
-
 
   def handle_info(
         {:redix_pubsub, _pid, _from, :message, %{channel: channel, payload: payload}},

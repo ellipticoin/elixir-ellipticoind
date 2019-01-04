@@ -1,5 +1,6 @@
-defmodule Models.Block do
+defmodule Blacksmith.Models.Block do
   use Ecto.Schema
+  require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
   alias Blacksmith.Repo
@@ -19,8 +20,14 @@ defmodule Models.Block do
       from(q in query, order_by: q.total_burned)
       |> Ecto.Query.first()
 
-  def latest(query \\ __MODULE__, count), do:
-  from(q in query, order_by: [desc: q.number], limit: ^count)
+  def latest(query \\ __MODULE__, count),
+    do: from(q in query, order_by: [desc: q.number], limit: ^count)
+
+  def log(message, block) do
+    Logger.info("#{message}:")
+    Logger.info("Number: #{block.number}")
+    Logger.info("Winner: #{Ethereum.Helpers.bytes_to_hex(block.winner)}")
+  end
 
   def changeset(user, params \\ %{}) do
     user
@@ -34,32 +41,38 @@ defmodule Models.Block do
   end
 
   def hash(block), do: Crypto.hash(to_binary(block))
+
   def as_map(%{
-    parent: parent,
-    number: number,
-    block_hash: block_hash,
-    total_burned: total_burned,
-    winner: winner,
-    changeset_hash: changeset_hash
-  }), do:
-  %{
-    parent_hash: (if Ecto.assoc_loaded?(parent), do: (parent.block_hash || <<0::256>>), else: <<0::256>>),
-    block_hash: block_hash,
-    total_burned: total_burned || 0,
-    number: number,
-    winner: winner,
-    changeset_hash: changeset_hash
-  }
+        parent: parent,
+        number: number,
+        block_hash: block_hash,
+        total_burned: total_burned,
+        winner: winner,
+        changeset_hash: changeset_hash
+      }),
+      do: %{
+        parent_hash:
+          if(Ecto.assoc_loaded?(parent), do: parent.block_hash || <<0::256>>, else: <<0::256>>),
+        block_hash: block_hash,
+        total_burned: total_burned || 0,
+        number: number,
+        winner: winner,
+        changeset_hash: changeset_hash
+      }
 
   def as_cbor(block), do: Cbor.encode(as_map(block))
 
   def apply(params) do
     block = struct(__MODULE__, params)
 
-    Repo.insert(block)
+    {:ok, block} = Repo.insert(block)
+
+    log("Applied Block", block)
+
+    {:ok, block}
   end
 
-  def forge(winner, number) do
+  def forge(current_block) do
     TransactionProcessor.proccess_transactions(1)
     TransactionProcessor.wait_until_done()
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
@@ -69,14 +82,19 @@ defmodule Models.Block do
 
     block = %__MODULE__{
       parent: parent,
-      winner: winner,
-      number: number,
+      winner: current_block.winner,
+      number: current_block.number + 1,
       changeset_hash: Crypto.hash(changeset)
+      # transactions: []
     }
 
     block = Map.put(block, :block_hash, hash(block))
 
-    Repo.insert(block)
+    {:ok, block} = Repo.insert(block)
+
+    log("Forged Block", block)
+
+    {:ok, block}
   end
 
   defp to_binary(%{

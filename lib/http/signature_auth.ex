@@ -1,4 +1,6 @@
 defmodule HTTP.SignatureAuth do
+  alias Crypto.Ed25519
+
   defmodule UnauthorizedError do
     @moduledoc """
     Error raised when a signature is invalid
@@ -24,7 +26,7 @@ defmodule HTTP.SignatureAuth do
     signature = get_signature(conn)
     body = Enum.fetch!(conn.assigns.raw_body, 0)
 
-    if Crypto.valid_signature_ed25519?(signature, body, public_key) do
+    if Ed25519.valid_signature?(signature, body, public_key) do
       conn
     else
       throw(UnauthorizedError)

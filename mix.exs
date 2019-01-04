@@ -38,15 +38,21 @@ defmodule Blacksmith.Mixfile do
   end
 
   defp extra_applications(:dev), do: extra_applications(:all) ++ [:remix]
-  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug]
+  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug, :krypto]
 
   defp deps do
     [
-      {:abi, "~> 0.1"},
-      {:artificery, [env: :prod, github: "mana-ethereum/artificery", branch: "hayesgm/allow-extra-args", override: true]},
+      {:abi, [github: "omisego/abi", branch: "encode_dynamic_types", override: true]},
+      {:artificery,
+       [
+         env: :prod,
+         github: "mana-ethereum/artificery",
+         branch: "hayesgm/allow-extra-args",
+         override: true
+       ]},
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:binary, "~> 0.0.5"},
-      {:bypass, "~> 0.8", only: :test},
+      {:bypass, "~> 1.0", only: :test},
       {:cbor, "~> 0.1"},
       {:cors_plug, "~> 2.0"},
       {:cowboy, "~> 2.6"},
@@ -55,15 +61,17 @@ defmodule Blacksmith.Mixfile do
       {:ecto, "~> 3.0"},
       {:ecto_sql, "~> 3.0-rc.1"},
       {:ethereumex,
-      [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
+       [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
       {:ex_machina, "~> 2.2"},
       {:exth_crypto, "~> 0.1.4", override: true},
       {:exw3, github: "masonforest/exw3", branch: "websocket-client"},
       {:httpoison, "~> 1.4", override: true},
-      {:keccakf1600, hex: :keccakf1600_orig},
+      {:krypto, "~> 0.1.1"},
       {:libsodium, "~> 0.0.10"},
       {:mana, [github: "mana-ethereum/mana", app: false]},
       {:ok, "~> 2.0"},
+      {:phoenix, "~> 1.4.0"},
+      {:phoenix_ecto, "~> 4.0"},
       {:plug, "~> 1.5"},
       {:plug_cowboy, "~> 2.0"},
       {:poison, "~> 4.0", override: true},
@@ -71,10 +79,9 @@ defmodule Blacksmith.Mixfile do
       {:redix, "0.8.0"},
       {:redix_pubsub, "~> 0.5.0"},
       {:remix, "~> 0.0.1", only: :dev},
-      # Until [this PR](https://github.com/hansihe/rustler/pull/166) is merged
-      # Use [this branch](https://github.com/cristianberneanu/rustler)
-      {:rustler, [path: "./priv/rustler/rustler_mix", override: true]},
-      {:websockex, [env: :prod, github: "mana-ethereum/websockex", branch: "master", override: true]},
+      {:rustler, path: "../rustler/rustler_mix"},
+      {:websockex,
+       [env: :prod, github: "mana-ethereum/websockex", branch: "master", override: true]}
     ]
   end
 end

@@ -2,18 +2,32 @@ defmodule Test.Utils do
   @host "http://localhost:4047"
   @default_gas_limit 6_721_975
   @default_gas_price 20_000_000_000
+  use Utils
   require Integer
   import Binary
-  alias Models.Block
+  import Ethereum.Helpers
+  alias Crypto.Ed25519
+  alias Crypto.RSA
+  alias Blacksmith.Models.{Block, Contract}
+  alias Blacksmith.Repo
   alias Ethereum.Contracts.{EllipticoinStakingContract, TestnetToken}
 
   def set_balances(balances) do
-    token_balance_address =
+    token_contract_address =
       Constants.system_address() <> (Constants.base_token_name() |> pad_trailing(32))
 
     for {address, balance} <- balances do
-      Redis.set_binary(token_balance_address <> address, <<balance::little-size(64)>>)
+      Redis.set_binary(token_contract_address <> address, <<balance::little-size(64)>>)
     end
+  end
+
+  def insert_tesetnet_contracts do
+    %Contract{
+      address: <<0::256>>,
+      name: "BaseToken",
+      code: Contract.base_contract_code(:BaseToken)
+    }
+    |> Repo.insert!()
   end
 
   def parse_hex("0x" <> hex_data), do: parse_hex(hex_data)
@@ -28,32 +42,67 @@ defmodule Test.Utils do
     Ecto.Adapters.SQL.Sandbox.mode(Blacksmith.Repo, {:shared, self()})
   end
 
-  def mine_block_on_parent_chain() do
-    # Ethereumex.WebSocketClient.request("evm_mine", [], [])
-  end
-
-  def deploy_and_fund_staking_contract() do
+  def fund_staking_contract() do
     starting_stake = 100
-    random_seed = <<0::256>>
-    ExW3.Contract.start_link()
-    address = Enum.at(ExW3.accounts(), 0)
-
-    {:ok, token_contract_address} =
-      Ethereum.Helpers.deploy(TestnetToken, ["[testnet] DAI Token", "DAI", 3])
-
-    {:ok, staking_contract_address} =
-      Ethereum.Helpers.deploy(EllipticoinStakingContract, [
-        ExW3.to_decimal(token_contract_address),
-        random_seed
-      ])
+    staking_contract_address = EllipticoinStakingContract.address()
 
     Enum.each(Enum.take(ExW3.accounts(), 3), fn account ->
       TestnetToken.mint(account, starting_stake)
       TestnetToken.approve(staking_contract_address, starting_stake, account)
       EllipticoinStakingContract.deposit(starting_stake, account)
     end)
+  end
 
-    {:ok, staking_contract_address}
+  def set_public_moduli() do
+    {:ok, body} = File.read("staking_contract/test/support/test_private_keys.txt")
+
+    rsa_public_keys =
+      body
+      |> String.trim("\n")
+      |> String.split("\n\n")
+      |> Enum.map(&RSA.parse_pem/1)
+      |> Enum.map(&RSA.private_key_to_public_key/1)
+
+    testnet_private_keys = Application.get_env(:blacksmith, :testnet_private_keys)
+
+    Enum.take(testnet_private_keys, 3)
+    |> Enum.with_index()
+    |> Enum.each(fn {testnet_private_key, index} ->
+      public_key = Enum.fetch!(rsa_public_keys, index)
+      {:RSAPublicKey, modulus_integer, exponent} = public_key
+      modulus = :binary.encode_unsigned(modulus_integer)
+      EllipticoinStakingContract.set_rsa_public_modulus(modulus, testnet_private_key)
+    end)
+  end
+
+  @doc """
+  Deployment should probably be rewritten in Elixir. Currently there
+  aren't any libraries for linking bytecode in Elixir so we deploy with
+  truffle instead :/
+  """
+
+  def deploy_test_contracts() do
+    {result, 0} =
+      System.cmd(
+        "truffle",
+        ["migrate", "--reset"],
+        cd: "staking_contract",
+        stderr_to_stdout: true
+      )
+
+    staking_contract_address =
+      Regex.scan(~r/contract address:\s+(0x[\da-fA-F]+)/, result)
+      |> Enum.at(-1)
+      |> Enum.at(1)
+
+    EllipticoinStakingContract.at(staking_contract_address)
+
+    token_contract_address =
+      EllipticoinStakingContract.token()
+      |> Utils.ok()
+      |> Ethereum.Helpers.bytes_to_hex()
+
+    TestnetToken.at(token_contract_address)
   end
 
   def read_test_wasm(file_name) do
@@ -88,7 +137,6 @@ defmodule Test.Utils do
       })
 
     {:ok, response} = http_get(path, query)
-    IO.inspect response.body
     Cbor.decode!(response.body)
   end
 
@@ -108,7 +156,7 @@ defmodule Test.Utils do
     } = Enum.into(options, defaults)
 
     path = "/transactions"
-    sender = Crypto.public_key_from_private_key_ed25519(private_key)
+    sender = Ed25519.public_key_from_private_key(private_key)
 
     transaction =
       Cbor.encode(%{
@@ -129,9 +177,9 @@ defmodule Test.Utils do
 
   def join_network(port) do
     HTTPoison.post(
-      @host <> "/nodes",
+      @host <> "/peers",
       Cbor.encode(%{
-        url: "http://localhost:#{port}/",
+        url: "http://localhost:#{port}"
       }),
       headers()
     )
@@ -153,7 +201,8 @@ defmodule Test.Utils do
     encoded_block = Block.as_cbor(block)
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
     {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
-     HTTPoison.post(
+
+    HTTPoison.post(
       @host <> "/blocks",
       encoded_block,
       headers(signature)
@@ -182,7 +231,7 @@ defmodule Test.Utils do
       }
     else
       %{
-        "Content-Type": "application/cbor",
+        "Content-Type": "application/cbor"
       }
     end
   end

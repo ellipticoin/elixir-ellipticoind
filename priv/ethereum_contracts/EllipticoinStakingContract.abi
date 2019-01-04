@@ -1,1 +1,349 @@
-[{"constant":true,"inputs":[],"name":"addressesLength","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x0150b530"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balances","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x27e235e3"},{"constant":false,"inputs":[{"name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function","signature":"0x2e1a7d4d"},{"constant":true,"inputs":[],"name":"lastSignatureBytes","outputs":[{"name":"","type":"bytes"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x4785e94f"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x70a08231"},{"constant":false,"inputs":[],"name":"push","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function","signature":"0x8035f0ce"},{"constant":false,"inputs":[{"name":"_blockHash","type":"bytes32"},{"name":"v","type":"uint8"},{"name":"r","type":"bytes32"},{"name":"s","type":"bytes32"}],"name":"submitBlock","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function","signature":"0x891ac334"},{"constant":true,"inputs":[],"name":"totalStake","outputs":[{"name":"_totalStake","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function","signature":"0x8b0e9f3f"},{"constant":false,"inputs":[{"name":"amount","type":"uint256"}],"name":"deposit","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function","signature":"0xb6b55f25"},{"constant":true,"inputs":[],"name":"lastSignature","outputs":[{"name":"v","type":"uint8"},{"name":"r","type":"bytes32"},{"name":"s","type":"bytes32"}],"payable":false,"stateMutability":"view","type":"function","signature":"0xc6678826"},{"constant":true,"inputs":[],"name":"winner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function","signature":"0xdfbf53ae"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"addresses","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function","signature":"0xedf26d9b"},{"constant":true,"inputs":[],"name":"blockHash","outputs":[{"name":"","type":"bytes32"}],"payable":false,"stateMutability":"view","type":"function","signature":"0xf22a195e"},{"constant":true,"inputs":[],"name":"token","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function","signature":"0xfc0c546a"},{"inputs":[{"name":"_token","type":"address"},{"name":"randomSeed","type":"bytes32"}],"payable":false,"stateMutability":"nonpayable","type":"constructor","signature":"constructor"}]
+[
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "addressesLength",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x0150b530"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "getRSAPublicModulus",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x24e62ecb"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "balances",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x27e235e3"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x2e1a7d4d"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_data",
+        "type": "bytes"
+      },
+      {
+        "name": "_s",
+        "type": "bytes"
+      },
+      {
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "verifyRSASignature",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x4100088d"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "blockNumber",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x57e871e7"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x70a08231"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "rsaPublicModuli",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x80307004"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "push",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x8035f0ce"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "totalStake",
+    "outputs": [
+      {
+        "name": "_totalStake",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0x8b0e9f3f"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "deposit",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xb6b55f25"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "lastSignature",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xc6678826"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "publicModulus",
+        "type": "bytes"
+      }
+    ],
+    "name": "setRSAPublicModulus",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0xcea8f02a"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "addresses",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xedf26d9b"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "blockHash",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xf22a195e"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "token",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xfc0c546a"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "name": "randomSeed",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor",
+    "signature": "constructor"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_blockNumber",
+        "type": "uint256"
+      },
+      {
+        "name": "_blockHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "submitBlock",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function",
+    "signature": "0x6af5cb23"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "winner",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function",
+    "signature": "0xdfbf53ae"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_bytes",
+        "type": "bytes"
+      }
+    ],
+    "name": "bytesToUint",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "pure",
+    "type": "function",
+    "signature": "0x02d06d05"
+  }
+]
