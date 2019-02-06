@@ -1,11 +1,8 @@
 defmodule Test.Utils do
   @host "http://localhost:4047"
-  @default_gas_limit 6_721_975
-  @default_gas_price 20_000_000_000
   use Utils
   require Integer
   import Binary
-  import Ethereum.Helpers
   alias Crypto.Ed25519
   alias Crypto.RSA
   alias Blacksmith.Models.{Block, Contract}
@@ -17,11 +14,14 @@ defmodule Test.Utils do
       Constants.system_address() <> (Constants.base_token_name() |> pad_trailing(32))
 
     for {address, balance} <- balances do
-      Redis.set_binary(token_contract_address <> address, <<balance::little-size(64)>>)
+      Redis.set_binary(
+        token_contract_address <> "balances" <> address,
+        <<balance::little-size(64)>>
+      )
     end
   end
 
-  def insert_tesetnet_contracts do
+  def insert_contracts do
     %Contract{
       address: <<0::256>>,
       name: "BaseToken",
@@ -69,7 +69,7 @@ defmodule Test.Utils do
     |> Enum.with_index()
     |> Enum.each(fn {testnet_private_key, index} ->
       public_key = Enum.fetch!(rsa_public_keys, index)
-      {:RSAPublicKey, modulus_integer, exponent} = public_key
+      {:RSAPublicKey, modulus_integer, _exponent} = public_key
       modulus = :binary.encode_unsigned(modulus_integer)
       EllipticoinStakingContract.set_rsa_public_modulus(modulus, testnet_private_key)
     end)
@@ -81,7 +81,7 @@ defmodule Test.Utils do
   truffle instead :/
   """
 
-  def deploy_test_contracts() do
+  def deploy_ethereum_contracts() do
     {result, 0} =
       System.cmd(
         "truffle",
@@ -116,13 +116,13 @@ defmodule Test.Utils do
 
   def get(options \\ []) do
     defaults = %{
-      address: Constants.system_address(),
-      contract_name: Constants.base_token_name()
+      address: <<0::256>>,
+      contract_name: :BaseToken
     }
 
     %{
-      method: method,
-      params: params,
+      function: function,
+      arguments: arguments,
       address: address,
       contract_name: contract_name
     } = Enum.into(options, defaults)
@@ -132,43 +132,40 @@ defmodule Test.Utils do
 
     query =
       Plug.Conn.Query.encode(%{
-        method: method,
-        params: Base.encode16(Cbor.encode(params))
+        function: function,
+        arguments: Base.encode16(Cbor.encode(arguments))
       })
 
     {:ok, response} = http_get(path, query)
     Cbor.decode!(response.body)
   end
 
-  def post(options \\ []) do
+  def post(transaction, private_key) do
+    http_post_signed(
+      "/transactions",
+      Cbor.encode(build_transaction(transaction, private_key)),
+      private_key
+    )
+  end
+
+  def build_signed_transaction(options, private_key) do
+    sender = Ed25519.public_key_from_private_key(private_key)
+    transaction = build_transaction(options, private_key)
+    signature = Crypto.sign(transaction, private_key)
+    Map.put(transaction, :signature, signature)
+  end
+
+  def build_transaction(options \\ [], private_key) do
     defaults = %{
-      address: Constants.system_address(),
-      contract_name: Constants.base_token_name()
+      address: <<0::256>>,
+      contract_name: :BaseToken
     }
 
-    %{
-      private_key: private_key,
-      nonce: nonce,
-      method: method,
-      params: params,
-      address: address,
-      contract_name: contract_name
-    } = Enum.into(options, defaults)
-
-    path = "/transactions"
     sender = Ed25519.public_key_from_private_key(private_key)
 
-    transaction =
-      Cbor.encode(%{
-        sender: sender,
-        nonce: nonce,
-        method: method,
-        params: params,
-        address: address,
-        contract_name: contract_name
-      })
-
-    http_post_signed(path, transaction, private_key)
+    options
+    |> Enum.into(defaults)
+    |> Map.put(:sender, sender)
   end
 
   def http_get(path, query) do

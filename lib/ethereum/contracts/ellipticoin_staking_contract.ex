@@ -144,7 +144,7 @@ defmodule Ethereum.Contracts.EllipticoinStakingContract do
       ])
 
   def winner(),
-    do: ExW3.Contract.call(__MODULE__, :winner)
+    do: ok(ExW3.Contract.call(__MODULE__, :winner))
 
   def balance_of(address),
     do: ExW3.Contract.call(__MODULE__, :balanceOf, [ExW3.to_decimal(address)])
@@ -156,7 +156,7 @@ defmodule Ethereum.Contracts.EllipticoinStakingContract do
     do: ExW3.Contract.call(__MODULE__, :blockHash)
 
   def block_number(),
-    do: ExW3.Contract.call(__MODULE__, :blockNumber)
+    do: ok(ExW3.Contract.call(__MODULE__, :blockNumber))
 
   def total_stake(),
     do: ExW3.Contract.call(__MODULE__, :totalStake)

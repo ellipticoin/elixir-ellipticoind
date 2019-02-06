@@ -42,6 +42,13 @@ defmodule TransactionProcessor do
     GenServer.cast(__MODULE__, {:proccess_transactions, duration})
   end
 
+  def proccess_block(transactions) do
+    encoded_transactions = Enum.map(transactions, &Cbor.encode/1)
+    Redis.push("block", encoded_transactions)
+    Redis.publish(@channel, ["proccess_block"])
+    wait_until_done()
+  end
+
   def wait_until_done() do
     PubSub.subscribe(@channel, self())
 

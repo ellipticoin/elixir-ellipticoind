@@ -3,12 +3,15 @@ defmodule Blacksmith.Repo.Migrations.CreateTransactions do
 
   def change do
     create table(:transactions) do
-      add :nonce, :integer
-      add :sender, :binary
       add :block_id, references(:blocks, on_delete: :nothing)
+      add :contract_id, references(:contracts, on_delete: :nothing)
+      add :sender, :binary
+      add :nonce, :integer
       add :function, :varchar
       add :arguments, :binary
-      add :contract_id, references(:contracts, on_delete: :nothing)
+      add :return_code, :integer
+      add :return_value, :binary
+      add :signature, :binary
 
       timestamps()
     end

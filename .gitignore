@@ -27,5 +27,6 @@ blacksmith-*.tar
 
 config/*.secret.ex
 config/*.secret.exs
+config/*.pem
 staking_contract/node_modules
 staking_contract/build

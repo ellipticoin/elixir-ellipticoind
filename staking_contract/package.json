@@ -40,11 +40,12 @@
     "bluebird": "^3.5.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
+    "dotenv": "^6.2.0",
     "ethereumjs-util": "^6.0.0",
     "lodash": "^4.17.11",
     "mkdirp": "^0.5.1",
-    "truffle": "^5.0.0",
-    "ursa": "^0.9.4",
-    "web3": "github:ethereum/web3.js#1.0"
+    "truffle": "^5.0.3",
+    "truffle-hdwallet-provider": "^1.0.3",
+    "ursa": "^0.9.4"
   }
 }

@@ -6,8 +6,8 @@ use wasmi::*;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
-const READ_FUNC_INDEX: usize = 2;
-const WRITE_FUNC_INDEX: usize = 3;
+const GET_MEMORY_FUNC_INDEX: usize = 2;
+const SET_MEMORY_FUNC_INDEX: usize = 3;
 const THROW_FUNC_INDEX: usize = 4;
 const CALL_FUNC_INDEX: usize = 5;
 const LOG_WRITE: usize = 6;
@@ -40,13 +40,13 @@ impl EllipticoinAPI {
 
                 Ok(Some(vm.write_pointer(block_hash.to_vec()).into()))
             }
-            READ_FUNC_INDEX => {
+            GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.read(key.clone());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
-            WRITE_FUNC_INDEX => {
+            SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
                 vm.write(key, value);
@@ -99,13 +99,13 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
                 Signature::new(&[][..], Some(ValueType::I32)),
                 BLOCK_HASH_FUNC_INDEX,
             ),
-            "_read" => FuncInstance::alloc_host(
+            "_get_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32][..], Some(ValueType::I32)),
-                READ_FUNC_INDEX,
+                GET_MEMORY_FUNC_INDEX,
             ),
-            "_write" => FuncInstance::alloc_host(
+            "_set_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32, ValueType::I32][..], None),
-                WRITE_FUNC_INDEX,
+                SET_MEMORY_FUNC_INDEX,
             ),
             "throw" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32][..], None),

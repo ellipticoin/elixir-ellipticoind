@@ -10,26 +10,22 @@ defmodule P2P do
 
   def init(state) do
     peers = load_peers()
-    # connect_to_peers(peers)
+    connect_to_peers(peers)
 
     {:ok,
      Map.merge(state, %{
-       # peers
-       peers: []
+       peers: peers
      })}
   end
 
   def connect_to_peers(peers) do
-    EllipticoinClient.start()
-    {:ok, %{body: ip}} = HTTPoison.get("http://api.ipify.org")
+    node_url = Application.fetch_env!(:blacksmith, :node_url)
 
     peers
-
-    ["https://davenport.ellipticoin.org:4047"]
     |> Enum.map(fn peer ->
       peer
       |> EllipticoinClient.new()
-      |> EllipticoinClient.connect("http://#{ip}:4047")
+      |> EllipticoinClient.connect(node_url)
     end)
   end
 
@@ -39,6 +35,7 @@ defmodule P2P do
       |> ok
       |> String.split("\n")
       |> Enum.drop(-1)
+      |> List.delete(Application.fetch_env!(:blacksmith, :node_url))
 
     peers =
       if Application.fetch_env!(:blacksmith, :bootnode) do
@@ -84,6 +81,7 @@ defmodule P2P do
     private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
 
     Enum.each(peers, fn peer ->
+      IO.puts "Broadcasting to: #{peer}"
       http_post_signed_block(peer, block, private_key)
     end)
 
@@ -105,7 +103,7 @@ defmodule P2P do
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
     {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
 
-    HTTPoison.post(
+    IO.inspect HTTPoison.post(
       peer <> "/blocks",
       encoded_block,
       headers(signature)

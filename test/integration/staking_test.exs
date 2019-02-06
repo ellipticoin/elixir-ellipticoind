@@ -5,14 +5,15 @@ defmodule Integration.StakingTest do
   use NamedAccounts
   use ExUnit.Case
   alias Ethereum.Contracts.EllipticoinStakingContract
-  alias Blacksmith.Models.Block
+  alias Blacksmith.Models.{Block, Transaction}
 
   setup do
     checkout_repo()
     insert(:block)
 
     StakingContractMonitor.disable()
-    deploy_test_contracts()
+    insert_contracts()
+    deploy_ethereum_contracts()
     fund_staking_contract()
     set_public_moduli()
     StakingContractMonitor.enable()
@@ -47,37 +48,65 @@ defmodule Integration.StakingTest do
       @bob => 100
     })
 
-    post(%{
-      private_key: @alices_private_key,
-      nonce: 1,
-      method: :transfer,
-      params: [@bob, 50]
-    })
+    post(
+      %{
+        nonce: 1,
+        function: :transfer,
+        arguments: [@bob, 50]
+      },
+      @alices_private_key
+    )
 
     Ethereum.Helpers.mine_block()
-    :timer.sleep(1000)
 
     assert ok(EllipticoinStakingContract.block_hash()) ==
-             Base.decode16!("800158ADD9277781E26EC461D4322CC0F56DF4EB8BDED7E812576D79CE204C8E")
+             Base.decode16!("4C35CD192DB35E0A0EC48D6E09CADCE4FB85A7129661B77AF5D4BB547C6BC5E8")
 
     assert EllipticoinStakingContract.last_signature() |> Crypto.hash() ==
              Base.decode16!("486E35B33A96373A94EBA0FE70BE81A29B4C56DEF33B0DBAD132EBE104535A2D")
 
     assert get(%{
              private_key: @alices_private_key,
-             method: :balance_of,
-             params: [@alice]
+             function: :balance_of,
+             arguments: [@alice]
            }) == 50
+  end
 
-    # Bob is the winner of the second block
+  test "a new block is mined on the parent chain and another node is the winner" do
+    Application.put_env(:blacksmith, :ethereum_private_key, @bobs_ethereum_private_key)
+
+    set_balances(%{
+      @alice => 100,
+      @bob => 100
+    })
+
+    transaction =
+      Transaction.new(
+        %{
+          nonce: 1,
+          function: :transfer,
+          arguments: [@bob, 50]
+        },
+        @alices_private_key
+      )
+
     post_signed_block(
       %Block{
         number: 2,
         block_hash: <<0::256>>,
         changeset_hash: <<0::256>>,
-        winner: <<0::256>>
+        winner: <<0::256>>,
+        transactions: [transaction]
       },
-      @carols_ethereum_private_key
+      @alices_ethereum_private_key
     )
+
+    assert get(%{
+             private_key: @alices_private_key,
+             function: :balance_of,
+             arguments: [@alice]
+           }) == 50
+
+    Application.put_env(:blacksmith, :ethereum_private_key, @alices_ethereum_private_key)
   end
 end

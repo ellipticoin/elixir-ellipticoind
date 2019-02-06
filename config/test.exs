@@ -1,10 +1,12 @@
 use Mix.Config
+config :logger, level: :warn
 config :bypass, adapter: Plug.Adapters.Cowboy2
 config :blacksmith, base_contracts_path: "./base_contracts"
 config :blacksmith, port: 4047
 config :blacksmith, bootnode: true
 config :blacksmith, https: false
 
+config :blacksmith, node_url: "http://localhost:4047/"
 config :blacksmith,
   staking_contract_address:
     "5D00cDb13faB0D5802A82904e841D0E3eE2b6065" |> Base.decode16!(case: :mixed)

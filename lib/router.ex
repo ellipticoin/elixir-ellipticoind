@@ -7,7 +7,7 @@ defmodule Router do
 
   alias Blacksmith.Plug.CBOR
   alias Blacksmith.Repo
-  alias HTTP.SignatureAuth
+  alias HTTP.{SignatureAuth, EthereumBlockSignatureAuth}
   alias Blacksmith.Models.{Block, Contract, Transaction}
   alias Ethereum.Contracts.EllipticoinStakingContract
 
@@ -45,11 +45,12 @@ defmodule Router do
   end
 
   post "/blocks" do
-    {:ok, winner} = EllipticoinStakingContract.winner()
-    SignatureAuth.verify_block_signature(conn, winner)
+    IO.puts "recieved block"
+    winner = EllipticoinStakingContract.winner()
+    EthereumBlockSignatureAuth.verify_signature(conn, winner)
 
     Block.apply(conn.params)
-    send_resp(conn, 200, Cbor.encode(""))
+    send_resp(conn, 200, "")
   end
 
   get "/blocks" do
@@ -73,21 +74,20 @@ defmodule Router do
   post "/transactions" do
     SignatureAuth.verify_signature(conn)
 
-    Transaction.create(conn.params)
-    Contract.post(conn.params)
+    Transaction.post(conn.params)
 
     send_resp(conn, 200, Cbor.encode(""))
   end
 
   def parse_get_request(conn) do
-    params = Cbor.decode!(Base.decode16!(conn.query_params["params"]))
+    arguments = Cbor.decode!(Base.decode16!(conn.query_params["arguments"]))
     address = Base.decode16!(conn.path_params["address"], case: :lower)
 
     %{
       address: address,
-      method: String.to_atom(conn.query_params["method"]),
-      params: params,
-      contract_name: conn.path_params["contract_name"]
+      function: String.to_atom(conn.query_params["function"]),
+      arguments: arguments,
+      contract_name: String.to_atom(conn.path_params["contract_name"])
     }
   end
 

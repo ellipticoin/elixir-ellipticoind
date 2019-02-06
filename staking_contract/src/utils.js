@@ -7,6 +7,7 @@ import _ from "lodash";
 import BigNumber from "bignumber.js";
 import Transaction from "ethereumjs-tx";
 import util from "ethereumjs-util";
+var Web3 = require('web3');
 import { generatePrivateKey, createPrivateKey } from "ursa";
 
 export const bytesToHex = (bytes) => `0x${bytes.toString("hex")}`;
@@ -14,8 +15,44 @@ export const hexToBytes = (hex) => new Buffer(hex.substring(2), "hex");
 
 export const defaultContractOptions = {
   gasPrice: 100000000000,
-  gasLimit: 4712388,
+  gasLimit: 5000000,
 }
+const {
+  PRIVATE_KEY,
+  WEB3_URL,
+  BLACKSMITH_PRIVATE_KEYS,
+} = process.env;
+const blacksmithPrivateKeys = BLACKSMITH_PRIVATE_KEYS.split(",").map((privateKey) => Buffer.from(privateKey, "hex"));
+
+
+export async function fundAndRegisterWithStakingContract(stakingAddress, amount) {
+  var web3 = new Web3(WEB3_URL);
+  const tokenFile = fs.readFileSync('./build/contracts/TestnetToken.json', "utf8");
+  const stakingFile = fs.readFileSync('./build/contracts/EllipticoinStakingContract.json', "utf8");
+  const tokenAbi = JSON.parse(tokenFile).abi;
+  const stakingAbi = JSON.parse(stakingFile).abi;
+  const stakingContract = new web3.eth.Contract(stakingAbi, stakingAddress);
+  const tokenAddress = await stakingContract.methods.token().call();
+  const tokenContract = new web3.eth.Contract(tokenAbi, tokenAddress);
+  const privateKeysFile = fs.readFileSync('test/support/test_private_keys.txt', 'utf8');
+  const privateKeys = privateKeysFile.trim().split("\n\n").map((pem) => createPrivateKey(pem));
+  await Promise.map(blacksmithPrivateKeys, async (privateKey, index) => {
+    let address = "0x" + util.privateToAddress(Buffer.from(privateKey, "hex")).toString("hex");
+    await submitTransaction(tokenContract.methods.mint(address, amount).encodeABI(), tokenAddress, privateKey, web3);
+    await submitTransaction(tokenContract.methods.approve(stakingAddress, amount).encodeABI(), tokenAddress, privateKey, web3);
+    await submitTransaction(stakingContract.methods.deposit(amount).encodeABI(), stakingAddress, privateKey, web3);
+    await submitTransaction(
+      stakingContract.methods.setRSAPublicModulus(
+        "0x" + privateKeys[index].getModulus().toString("hex")
+      ).encodeABI(),
+      stakingAddress,
+      privateKey,
+      web3
+    );
+    console.log(await stakingContract.methods.getRSAPublicModulus(address).call())
+  });
+}
+
 
 export function abiEncode(web3, parameters) {
   let parametersWithType = _.reduce(parameters, (result, value) => {
@@ -230,5 +267,6 @@ export async function submitTransaction(data, to = null, privateKey, web3) {
    tx.sign(privateKey);
    var serializedTx = tx.serialize();
    return await web3.eth
-    .sendSignedTransaction("0x" + serializedTx.toString("hex"));
+    .sendSignedTransaction("0x" + serializedTx.toString("hex"))
+    // .then((address) => console.log(address));
 }

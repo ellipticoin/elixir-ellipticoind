@@ -36,7 +36,6 @@ defmodule Ethereum.Helpers do
 
     case :libsecp256k1.ecdsa_recover_compact(message_hash, signature, :uncompressed, recovery_id) do
       {:ok, public_key} ->
-        private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
         public_key_to_address(public_key) == address
 
       {:error, _reason} ->
@@ -50,6 +49,7 @@ defmodule Ethereum.Helpers do
 
   def mine_block() do
     Ethereumex.WebSocketClient.request("evm_mine", [], [])
+    :timer.sleep(1000)
   end
 
   def my_ethereum_address() do

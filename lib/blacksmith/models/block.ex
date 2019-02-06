@@ -4,9 +4,11 @@ defmodule Blacksmith.Models.Block do
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
   alias Blacksmith.Repo
+  alias Blacksmith.Models.{Contract, Transaction}
 
   schema "blocks" do
     belongs_to(:parent, __MODULE__)
+    has_many(:transactions, Transaction)
     field(:number, :integer)
     field(:total_burned, :integer)
     field(:winner, :binary)
@@ -24,9 +26,10 @@ defmodule Blacksmith.Models.Block do
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
   def log(message, block) do
-    Logger.info("#{message}:")
-    Logger.info("Number: #{block.number}")
-    Logger.info("Winner: #{Ethereum.Helpers.bytes_to_hex(block.winner)}")
+    Logger.info(
+      "#{message}: " <>
+        "Number=#{block.number} " <> "Winner=#{Ethereum.Helpers.bytes_to_hex(block.winner)}"
+    )
   end
 
   def changeset(user, params \\ %{}) do
@@ -48,6 +51,7 @@ defmodule Blacksmith.Models.Block do
         block_hash: block_hash,
         total_burned: total_burned,
         winner: winner,
+        transactions: transactions,
         changeset_hash: changeset_hash
       }),
       do: %{
@@ -57,44 +61,114 @@ defmodule Blacksmith.Models.Block do
         total_burned: total_burned || 0,
         number: number,
         winner: winner,
-        changeset_hash: changeset_hash
+        changeset_hash: changeset_hash,
+        transactions:
+          if(Ecto.assoc_loaded?(transactions),
+            do: Enum.map(transactions, &Transaction.as_map/1),
+            else: []
+          )
       }
 
-  def as_cbor(block), do: Cbor.encode(as_map(block))
+  def apply(%{winner: winner, number: number, transactions: transactions}) do
+    {:ok, block} =
+      insert(%{
+        winner: winner,
+        number: number
+      })
 
-  def apply(params) do
-    block = struct(__MODULE__, params)
+    if !Enum.empty?(transactions) do
+      Enum.map(transactions, fn transaction ->
+        contract_name = Map.get(transaction, :contract_name)
+        code = Contract.base_contract_code(contract_name)
 
-    {:ok, block} = Repo.insert(block)
+        Map.put(transaction, :code, code)
+        |> Map.delete(:signature)
+      end)
+        |> TransactionProcessor.proccess_block()
+
+      insert_done_transactions(block)
+    end
 
     log("Applied Block", block)
 
     {:ok, block}
   end
 
-  def forge(current_block) do
+  def forge(%{winner: winner, block_number: block_number}) do
     TransactionProcessor.proccess_transactions(1)
     TransactionProcessor.wait_until_done()
-    {:ok, changeset} = Redis.fetch("changeset", <<>>)
 
-    parent = best_block() |> Repo.one()
-    Redis.delete("changeset")
+    {:ok, block} =
+      insert(%{
+        winner: winner,
+        number: block_number
+      })
 
-    block = %__MODULE__{
-      parent: parent,
-      winner: current_block.winner,
-      number: current_block.number + 1,
-      changeset_hash: Crypto.hash(changeset)
-      # transactions: []
-    }
-
-    block = Map.put(block, :block_hash, hash(block))
-
-    {:ok, block} = Repo.insert(block)
-
+    insert_done_transactions(block)
     log("Forged Block", block)
 
     {:ok, block}
+  end
+
+  def insert(options) do
+    {:ok, changeset} = Redis.fetch("changeset", <<>>)
+    parent = best_block() |> Repo.one()
+    Redis.delete("changeset")
+
+    block =
+      struct(
+        __MODULE__,
+        Map.merge(
+          %{
+            parent: parent,
+            changeset_hash: Crypto.hash(changeset)
+          },
+          options
+        )
+      )
+
+    block = Map.put(block, :block_hash, hash(block))
+    Repo.insert(block)
+  end
+
+  def insert_done_transactions(block) do
+    {:ok, transactions} = Redis.get_list("transactions::done")
+    {:ok, results} = Redis.get_list("results")
+
+    Enum.zip(transactions, results)
+    |> Enum.map(fn {transaction_bytes, result_bytes} ->
+      transaction = Cbor.decode!(transaction_bytes)
+
+      {
+        %{
+          contract_address: contract_address,
+          contract_name: contract_name
+        },
+        transaction
+      } = Map.split(transaction, [:contract_name, :contract_address])
+
+      contract =
+        Repo.get_by(Contract, %{
+          address: contract_address,
+          name: contract_name
+        })
+
+      <<return_code::integer-size(32), return_value::binary>> = result_bytes
+
+      transaction =
+        Map.merge(
+          transaction,
+          %{
+            contract_id: contract.id,
+            block_id: block.id,
+            return_code: return_code,
+            return_value: Cbor.decode!(return_value)
+          }
+        )
+
+      Transaction.changeset(%Transaction{}, transaction)
+      |> Repo.insert!()
+    end)
   end
 
   defp to_binary(%{
@@ -104,4 +178,6 @@ defmodule Blacksmith.Models.Block do
        }) do
     <<number::size(256)>> <> winner <> changeset_hash
   end
+
+  def as_cbor(block), do: Cbor.encode(as_map(block))
 end

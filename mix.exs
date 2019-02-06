@@ -79,7 +79,7 @@ defmodule Blacksmith.Mixfile do
       {:redix, "0.8.0"},
       {:redix_pubsub, "~> 0.5.0"},
       {:remix, "~> 0.0.1", only: :dev},
-      {:rustler, path: "../rustler/rustler_mix"},
+      {:rustler, "0.19.0"},
       {:websockex,
        [env: :prod, github: "mana-ethereum/websockex", branch: "master", override: true]}
     ]

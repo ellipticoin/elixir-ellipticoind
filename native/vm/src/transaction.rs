@@ -2,7 +2,7 @@ use ellipticoin_api::EllipticoinAPI;
 use heck::SnakeCase;
 use redis::Connection;
 use serde_cbor::Value;
-use serde_derive::Deserialize;
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
@@ -32,7 +32,7 @@ lazy_static! {
 use serde_cbor::to_vec;
 pub use wasmi::RuntimeValue;
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,

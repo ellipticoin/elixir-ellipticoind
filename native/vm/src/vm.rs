@@ -33,15 +33,11 @@ impl<'a> VM<'a> {
     }
 
     pub fn read(&mut self, key: Vec<u8>) -> Vec<u8> {
-        // let contract_address = self.env.get("address").unwrap().to_vec();
-        // let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
-
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
         let result = self.db.read(key.as_slice());
 
@@ -49,8 +45,6 @@ impl<'a> VM<'a> {
     }
 
     pub fn write(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        // let contracts_address = self.env.get("address").unwrap().to_vec();
-        // let mut contract_name = self.env.get("contract_name").unwrap().to_vec();
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 

@@ -11,28 +11,27 @@ const web3 = new Web3(process.env.WEB3_URL);
 const fs = require("fs");
 const privateKey = new Buffer(process.env.PRIVATE_KEY, "hex");
 const blacksmithPrivateKeys = process.env.BLACKSMITH_PRIVATE_KEYS.split(",").map((key) => new Buffer(key, "hex"));
-const stakingContractAddress = "0x374d622428a60293Ba0E46eABf4e82480e055827";
-const stakingContractABIFilename = "dist/EllipitcoinStakingContract.abi";
-const tokenContractAddress = "0xF8CADdFC462a7e211e95dbA22bdD8a40eE77EFe5";
-const tokenContractABIFilename = "dist/TestnetToken.abi";
+const stakingContractAddress = "0xFd111e1B20c2C8A1BBF0B3bCd348A0aa88EBa901";
+const stakingContractABIFilename = "build/contracts/EllipticoinStakingContract.json";
+const tokenContractAddress = "0xa67d9E7390CFc5e413Ab42419ade8fD8BC1f2fF3"
+const tokenContractABIFilename = "build/contracts/TestnetToken.json";
 const amount = 100 * (10 ** 3);
 
 
 let address = "0x" + util.privateToAddress(privateKey).toString("hex");
 
 async function run() {
-  const stakingAbi = JSON.parse(fs.readFileSync(stakingContractABIFilename));
+  const stakingAbi = JSON.parse(fs.readFileSync(stakingContractABIFilename)).abi;
   const stakingContract = new web3.eth.Contract(stakingAbi, stakingContractAddress)
-  const tokenAbi = JSON.parse(fs.readFileSync(tokenContractABIFilename));
+  const tokenAbi = JSON.parse(fs.readFileSync(tokenContractABIFilename)).abi;
   const tokenContract = new web3.eth.Contract(tokenAbi, tokenContractAddress)
 
+  console.log(await stakingContract.methods.token().call());
   blacksmithPrivateKeys.forEach(async (privateKey) => {
     let address = "0x" + util.privateToAddress(privateKey).toString("hex");
     await submitTransaction(tokenContract.methods.mint(address, amount).encodeABI(), tokenContractAddress, privateKey, web3);
     await submitTransaction(tokenContract.methods.approve(stakingContractAddress, amount).encodeABI(), tokenContractAddress, privateKey, web3);
-    await tokenContract.methods.allowance(address, stakingContractAddress).call();
-    await stakingContract.methods.token().call();
-    let result = await submitTransaction(stakingContract.methods.deposit(amount).encodeABI(), stakingContractAddress, privateKey, web3);
+    await submitTransaction(stakingContract.methods.deposit(amount).encodeABI(), stakingContractAddress, privateKey, web3);
     console.log(`Deposited ${amount / (10 **3)} tokens into ${address}`);
   });
 }

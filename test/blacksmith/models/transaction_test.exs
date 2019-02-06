@@ -1,14 +1,18 @@
 defmodule Models.TransactionTest do
   import Test.Utils
 
-  alias Blacksmith.Models.{Contract,Transaction}
+  alias Blacksmith.Models.{Contract, Transaction}
   use ExUnit.Case
   use NamedAccounts
   use OK.Pipe
 
   setup_all do
+    StakingContractMonitor.disable()
     checkout_repo()
-    insert_tesetnet_contracts()
+    insert_contracts()
+    deploy_ethereum_contracts()
+    fund_staking_contract()
+    set_public_moduli()
     Redis.reset()
 
     on_exit(fn ->
@@ -34,6 +38,7 @@ defmodule Models.TransactionTest do
 
       TransactionProcessor.proccess_transactions(100)
       TransactionProcessor.wait_until_done()
+
       assert Contract.get(%{
                address: <<0::256>>,
                contract_name: :BaseToken,
@@ -47,7 +52,7 @@ defmodule Models.TransactionTest do
                contract_name: :BaseToken,
                function: :balance_of,
                arguments: [@bob],
-               sender: @alice,
+               sender: @alice
              })
              ~>> Cbor.decode!() == 150
     end

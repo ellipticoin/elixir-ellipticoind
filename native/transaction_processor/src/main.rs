@@ -3,11 +3,11 @@ extern crate serde_cbor;
 extern crate serde_derive;
 extern crate vm;
 
-use serde_cbor::from_slice;
+use serde_cbor::{from_slice, to_vec};
 use std::env;
 use std::{io, process, thread, time};
 
-use vm::{run_transaction, Commands, ControlFlow, PubSubCommands, Transaction};
+use vm::{Commands, ControlFlow, PubSubCommands, Transaction};
 
 fn main() {
     exit_on_close();
@@ -22,11 +22,27 @@ fn main() {
                 let conn = client.get_connection().unwrap();
                 proccess_transactions(&conn, duration.parse().unwrap());
                 ControlFlow::Continue
-            }
-            _ => ControlFlow::Continue,
+            },
+            ["proccess_block"] => {
+                let conn = client.get_connection().unwrap();
+                proccess_block(&conn);
+                ControlFlow::Continue
+            },
+            message => {
+                ControlFlow::Continue
+            },
         }
     })
     .unwrap();
+}
+
+fn proccess_block(conn: &vm::Connection) {
+
+    for transaction in get_next_transaction(conn, "block") {
+        run_transaction(conn, transaction);
+    }
+
+    let _: () = conn.publish("transaction_processor", "done").unwrap();
 }
 
 fn proccess_transactions(conn: &vm::Connection, duration_u64: u64) {
@@ -34,20 +50,50 @@ fn proccess_transactions(conn: &vm::Connection, duration_u64: u64) {
     let duration = time::Duration::from_millis(duration_u64);
 
     while start.elapsed() < duration {
-        match get_next_transaction(conn) {
-            Some(transaction) => {
-                run_transaction(&transaction, conn);
-                ()
-            }
+        match get_next_transaction(conn, "transactions::queued") {
+            Some(transaction) => run_transaction(conn, transaction),
             None => thread::sleep(time::Duration::from_millis(10)),
         };
     }
     let _: () = conn.publish("transaction_processor", "done").unwrap();
 }
 
-fn get_next_transaction(conn: &vm::Connection) -> Option<Transaction> {
+fn run_transaction(conn: &vm::Connection, transaction: vm::Transaction){
+    let result = vm::run_transaction(&transaction, conn);
+    save_result(conn, transaction, result);
+}
+
+fn save_result(
+    conn: &vm::Connection,
+    transaction: Transaction,
+    result: Vec<u8>,
+    ) {
+        let transaction_bytes = to_vec(&transaction).unwrap();
+        let _: () = redis::pipe()
+            .atomic()
+            .cmd("LREM")
+            .arg("transactions::processing")
+            .arg(0)
+            .arg(transaction_bytes.as_slice())
+            .ignore()
+            .cmd("RPUSH")
+            .arg("transactions::done")
+            .arg(transaction_bytes.as_slice())
+            .ignore()
+            .cmd("RPUSH")
+            .arg("results")
+            .arg(result)
+            .ignore()
+            .query(conn)
+            .unwrap();
+}
+
+fn get_next_transaction(
+    conn: &vm::Connection,
+    source: &str,
+    ) -> Option<Transaction> {
     let transaction_bytes: Vec<u8> = conn
-        .rpoplpush("transactions::queued", "transactions::processing")
+        .rpoplpush(source, "transactions::processing")
         .unwrap();
 
     if transaction_bytes.len() == 0 {
