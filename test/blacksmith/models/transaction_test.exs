@@ -37,7 +37,6 @@ defmodule Models.TransactionTest do
       })
 
       TransactionProcessor.proccess_transactions(100)
-      TransactionProcessor.wait_until_done()
 
       assert Contract.get(%{
                address: <<0::256>>,

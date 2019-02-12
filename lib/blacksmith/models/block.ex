@@ -1,10 +1,13 @@
 defmodule Blacksmith.Models.Block do
+  @transaction_processing_time 1
   use Ecto.Schema
   require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
   alias Blacksmith.Repo
   alias Blacksmith.Models.{Contract, Transaction}
+  alias Ethereum.Contracts.EllipticoinStakingContract
+  alias Crypto.RSA
 
   schema "blocks" do
     belongs_to(:parent, __MODULE__)
@@ -94,17 +97,19 @@ defmodule Blacksmith.Models.Block do
     {:ok, block}
   end
 
-  def forge(%{winner: winner, block_number: block_number}) do
-    TransactionProcessor.proccess_transactions(1)
-    TransactionProcessor.wait_until_done()
+  def forge() do
+    TransactionProcessor.proccess_transactions(@transaction_processing_time)
 
     {:ok, block} =
       insert(%{
-        winner: winner,
-        number: block_number
+        winner: EllipticoinStakingContract.winner(),
+        number: EllipticoinStakingContract.block_number() + 1
       })
 
     insert_done_transactions(block)
+    P2P.broadcast_block(block)
+    submit_block(block)
+    WebsocketHandler.broadcast(:blocks, block)
     log("Forged Block", block)
 
     {:ok, block}
@@ -169,6 +174,20 @@ defmodule Blacksmith.Models.Block do
       Transaction.changeset(%Transaction{}, transaction)
       |> Repo.insert!()
     end)
+  end
+
+  defp submit_block(block) do
+    block_hash = block.block_hash
+    block_number = block.number
+    last_signature = EllipticoinStakingContract.last_signature()
+
+    rsa_key =
+      Application.get_env(:blacksmith, :private_key)
+      |> RSA.parse_pem()
+
+    signature = RSA.sign(last_signature, rsa_key)
+
+    EllipticoinStakingContract.submit_block(block_number, block_hash, signature)
   end
 
   defp to_binary(%{

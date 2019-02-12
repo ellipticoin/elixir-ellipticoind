@@ -2,15 +2,19 @@ defmodule Models.BlockTest do
   import Blacksmith.Factory
   import Test.Utils
 
-  alias Blacksmith.Models.{Block, Transaction, Contract}
+  alias Blacksmith.Models.{Block, Transaction}
   use ExUnit.Case, async: true
   use NamedAccounts
   use OK.Pipe
 
   setup do
     checkout_repo()
+    StakingContractMonitor.disable()
     insert_contracts()
-    Redis.reset()
+    deploy_ethereum_contracts()
+    fund_staking_contract()
+    set_public_moduli()
+    StakingContractMonitor.enable()
 
     on_exit(fn ->
       Redis.reset()
@@ -35,10 +39,7 @@ defmodule Models.BlockTest do
       })
 
       {:ok, block} =
-        Block.forge(%{
-          winner: <<0::256>>,
-          block_number: 1
-        })
+        Block.forge()
 
       assert block.number == 1
       assert block.parent == genisis_block
@@ -47,7 +48,7 @@ defmodule Models.BlockTest do
                "0212F77EA6539811CCBD42064B8D0399DAF114F06B4C36C56AE0B26E36DDCFEE"
 
       assert Base.encode16(block.block_hash) ==
-               "7F50AB9AD65D94D5E626237B6E4D986A62D7C1061EF6805676987F7A3B793D3C"
+               "4C35CD192DB35E0A0EC48D6E09CADCE4FB85A7129661B77AF5D4BB547C6BC5E8"
     end
   end
 end

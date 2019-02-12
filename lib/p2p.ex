@@ -37,19 +37,18 @@ defmodule P2P do
       |> Enum.drop(-1)
       |> List.delete(Application.fetch_env!(:blacksmith, :node_url))
 
-    peers =
-      if Application.fetch_env!(:blacksmith, :bootnode) do
+    if Application.fetch_env!(:blacksmith, :bootnode) do
+      bootnodes
+    else
+      peer =
         bootnodes
-      else
-        peer =
-          bootnodes
-          |> Enum.random()
-          |> EllipticoinClient.new()
+        |> Enum.random()
+        |> EllipticoinClient.new()
 
-        EllipticoinClient.start()
-        {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
-        peers
-      end
+      EllipticoinClient.start()
+      {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
+      peers
+    end
   end
 
   defp bootnodes_path() do
@@ -81,7 +80,6 @@ defmodule P2P do
     private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
 
     Enum.each(peers, fn peer ->
-      IO.puts "Broadcasting to: #{peer}"
       http_post_signed_block(peer, block, private_key)
     end)
 
@@ -103,7 +101,7 @@ defmodule P2P do
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
     {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
 
-    IO.inspect HTTPoison.post(
+    HTTPoison.post(
       peer <> "/blocks",
       encoded_block,
       headers(signature)

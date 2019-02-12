@@ -149,7 +149,6 @@ defmodule Test.Utils do
   end
 
   def build_signed_transaction(options, private_key) do
-    sender = Ed25519.public_key_from_private_key(private_key)
     transaction = build_transaction(options, private_key)
     signature = Crypto.sign(transaction, private_key)
     Map.put(transaction, :signature, signature)

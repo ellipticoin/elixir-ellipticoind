@@ -1,6 +1,4 @@
 defmodule HTTP.EthereumBlockSignatureAuth do
-  alias Crypto.Ed25519
-
   defmodule UnauthorizedError do
     @moduledoc """
     Error raised when a signature is invalid

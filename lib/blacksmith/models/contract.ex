@@ -1,6 +1,4 @@
 defmodule Blacksmith.Models.Contract do
-  @system_address Constants.system_address()
-
   use Ecto.Schema
   import Ecto.Changeset
   alias Blacksmith.Ecto.Types
@@ -10,25 +8,6 @@ defmodule Blacksmith.Models.Contract do
     field(:code, :binary)
     field(:name, Types.Atom)
     timestamps()
-  end
-
-  def post(%{
-        address: <<0::256>>,
-        contract_name: contract_name,
-        function: function,
-        arguments: arguments,
-        sender: sender
-      }) do
-    # TransactionPool.add(%{
-    #   code: system_code(contract_name),
-    #   env: %{
-    #     sender: sender,
-    #     address: @system_address,
-    #     contract_name: contract_name
-    #   },
-    #   method: method,
-    #   params: params
-    # })
   end
 
   def get(%{

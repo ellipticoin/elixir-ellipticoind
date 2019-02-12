@@ -60,6 +60,8 @@ defmodule Blacksmith.Mixfile do
       {:distillery, "~> 2.0", runtime: false},
       {:ecto, "~> 3.0"},
       {:ecto_sql, "~> 3.0-rc.1"},
+      # {:ethereumex,
+      #  [path: "../ethereumex", override: true]},
       {:ethereumex,
        [github: "masonforest/ethereumex", branch: "websocket-client", override: true]},
       {:ex_machina, "~> 2.2"},

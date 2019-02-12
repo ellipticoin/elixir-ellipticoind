@@ -45,7 +45,6 @@ defmodule Router do
   end
 
   post "/blocks" do
-    IO.puts "recieved block"
     winner = EllipticoinStakingContract.winner()
     EthereumBlockSignatureAuth.verify_signature(conn, winner)
 
@@ -67,7 +66,6 @@ defmodule Router do
       |> Repo.all()
       |> Enum.map(&Block.as_map/1)
 
-    IO.inspect(Enum.map(blocks, fn block -> block.number end))
     send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))
   end
 

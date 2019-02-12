@@ -60,7 +60,7 @@ defmodule Blacksmith.Models.Transaction do
 
     signature = Crypto.sign(transaction, private_key)
     {contract_address, options} = Map.pop(options, :contract_address)
-    {contract_name, options} = Map.pop(options, :contract_name)
+    {contract_name, _options} = Map.pop(options, :contract_name)
 
     contract =
       Repo.get_by(Contract, %{

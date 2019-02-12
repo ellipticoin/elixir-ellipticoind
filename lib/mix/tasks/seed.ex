@@ -2,7 +2,6 @@ defmodule Mix.Tasks.Seed do
   alias Blacksmith.Models.Contract
   alias Blacksmith.Repo
   use Mix.Task
-  import Mix.Ecto
 
   @shortdoc "Seeds the database"
   def run(_) do

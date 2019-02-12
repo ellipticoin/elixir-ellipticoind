@@ -40,6 +40,7 @@ defmodule TransactionProcessor do
 
   def proccess_transactions(duration) do
     GenServer.cast(__MODULE__, {:proccess_transactions, duration})
+    wait_until_done()
   end
 
   def proccess_block(transactions) do
