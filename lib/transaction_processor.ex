@@ -34,28 +34,16 @@ defmodule TransactionProcessor do
     "postgres://#{username}:#{hostname}@#{hostname}:#{port}/#{database}"
   end
 
-  def done() do
-    GenServer.cast(__MODULE__, {:done})
-  end
-
   def proccess_transactions(duration) do
     GenServer.cast(__MODULE__, {:proccess_transactions, duration})
-    wait_until_done()
+    PubSub.receive_message(@channel, "done")
   end
 
   def proccess_block(transactions) do
     encoded_transactions = Enum.map(transactions, &Cbor.encode/1)
     Redis.push("block", encoded_transactions)
     Redis.publish(@channel, ["proccess_block"])
-    wait_until_done()
-  end
-
-  def wait_until_done() do
-    PubSub.subscribe(@channel, self())
-
-    receive do
-      {:pubsub, "transaction_processor", "done"} -> nil
-    end
+    PubSub.receive_message(@channel, "done")
   end
 
   def handle_cast({:proccess_transactions, duration}, state) do
@@ -63,7 +51,7 @@ defmodule TransactionProcessor do
     {:noreply, state}
   end
 
-  def handle_cast({:done}, state) do
+  def handle_info({:pubsub, _channel, _message}, state) do
     {:noreply, state}
   end
 

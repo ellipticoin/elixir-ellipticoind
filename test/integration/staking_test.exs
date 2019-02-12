@@ -9,28 +9,20 @@ defmodule Integration.StakingTest do
 
   setup do
     checkout_repo()
-    insert(:block)
-
-    StakingContractMonitor.disable()
     insert_contracts()
-    deploy_ethereum_contracts()
-    fund_staking_contract()
-    set_public_moduli()
-    StakingContractMonitor.enable()
-    Redis.reset()
+    insert(:block)
+    setup_staking_contract()
 
     on_exit(fn ->
       Redis.reset()
     end)
+  end
 
+  test "a new block is mined on the parent chain and this node is the winner" do
     bypass = Bypass.open()
     join_network(bypass.port)
     {:ok, bypass: bypass}
-  end
 
-  test "a new block is mined on the parent chain and this node is the winner", %{
-    bypass: bypass
-  } do
     Bypass.expect_once(bypass, "POST", "/blocks", fn conn ->
       signature = HTTP.SignatureAuth.get_signature(conn)
       {:ok, body, _} = Plug.Conn.read_body(conn)

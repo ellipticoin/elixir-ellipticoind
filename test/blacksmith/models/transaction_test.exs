@@ -7,13 +7,9 @@ defmodule Models.TransactionTest do
   use OK.Pipe
 
   setup_all do
-    StakingContractMonitor.disable()
     checkout_repo()
     insert_contracts()
-    deploy_ethereum_contracts()
-    fund_staking_contract()
-    set_public_moduli()
-    Redis.reset()
+    setup_staking_contract()
 
     on_exit(fn ->
       Redis.reset()

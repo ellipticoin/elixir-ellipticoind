@@ -26,8 +26,25 @@ defmodule Redis.PubSub do
      }}
   end
 
+  def receive_message(channel, message) do
+    subscribe(channel, self())
+    receive_message_loop(message)
+    unsubscribe(channel, self())
+  end
+
+  def receive_message_loop(message) do
+    receive do
+      {:pubsub, "transaction_processor", ^message} -> message
+      {:pubsub, "transaction_processor", _message} -> receive_message_loop(message)
+    end
+  end
+
   def subscribe(channel, pid) do
     GenServer.cast(__MODULE__, {:subscribe, channel, pid})
+  end
+
+  def unsubscribe(channel, pid) do
+    GenServer.cast(__MODULE__, {:unsubscribe, channel, pid})
   end
 
   def handle_info({:redix_pubsub, _pid, :subscribed, %{channel: _channel}}, state) do
@@ -35,6 +52,10 @@ defmodule Redis.PubSub do
   end
 
   def handle_info({:redix_pubsub, _pid, _from, :subscribed, %{channel: _channel}}, state) do
+    {:noreply, state}
+  end
+
+  def handle_info({:redix_pubsub, _pid, _from, :unsubscribed, %{channel: _channel}}, state) do
     {:noreply, state}
   end
 
@@ -53,8 +74,18 @@ defmodule Redis.PubSub do
         {:subscribe, channel, pid},
         state = %{pubsub: pubsub}
       ) do
-    Redix.PubSub.subscribe(pubsub, channel, self())
+      Redix.PubSub.subscribe(pubsub, channel, self())
     state = update_in(state, [:subscriptions, String.to_atom(channel)], &[pid | &1])
+    {:noreply, state}
+  end
+
+  def handle_cast(
+        {:unsubscribe, channel, pid},
+        state = %{pubsub: pubsub}
+      ) do
+
+    Redix.PubSub.unsubscribe(pubsub, channel, self())
+    state = update_in(state, [:subscriptions, String.to_atom(channel)], &List.delete(&1, pid))
     {:noreply, state}
   end
 end

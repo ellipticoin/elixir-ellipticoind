@@ -76,6 +76,21 @@ defmodule Test.Utils do
   end
 
   @doc """
+  We disable the staking contract monitor when setting up the smart contracts
+  because new blocks are created when the contracts are deployed. This
+  triggers the staking contract monitor which will fail because the staking
+  contracts aren't setup yet.
+  """
+
+  def setup_staking_contract() do
+    Supervisor.terminate_child(Blacksmith.Supervisor, StakingContractMonitor)
+    deploy_ethereum_contracts()
+    fund_staking_contract()
+    set_public_moduli()
+    Supervisor.restart_child(Blacksmith.Supervisor, StakingContractMonitor)
+  end
+
+  @doc """
   Deployment should probably be rewritten in Elixir. Currently there
   aren't any libraries for linking bytecode in Elixir so we deploy with
   truffle instead :/

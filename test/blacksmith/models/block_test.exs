@@ -9,12 +9,8 @@ defmodule Models.BlockTest do
 
   setup do
     checkout_repo()
-    StakingContractMonitor.disable()
     insert_contracts()
-    deploy_ethereum_contracts()
-    fund_staking_contract()
-    set_public_moduli()
-    StakingContractMonitor.enable()
+    setup_staking_contract()
 
     on_exit(fn ->
       Redis.reset()
