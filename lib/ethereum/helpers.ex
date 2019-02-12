@@ -64,7 +64,7 @@ defmodule Ethereum.Helpers do
 
   def public_key_to_address(public_key) do
     public_key
-    |> ExthCrypto.Key.der_to_raw()
+    |> der_to_raw()
     |> Crypto.keccak256()
     |> take_n_last_bytes(@address_size)
   end
@@ -102,6 +102,9 @@ defmodule Ethereum.Helpers do
 
   def abi_file_name(contract_name),
     do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.abi"])
+
+  defp der_to_raw(<<0x04, public_key::binary()>>), do:
+    public_key
 
   defp bin_file_name(contract_name),
     do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.hex"])
