@@ -30,29 +30,21 @@ defmodule P2P do
   end
 
   def load_peers() do
-    bootnodes =
-      File.read(bootnodes_path())
-      |> ok
-      |> String.split("\n")
-      |> Enum.drop(-1)
-      |> List.delete(Application.fetch_env!(:blacksmith, :node_url))
-
     if Application.fetch_env!(:blacksmith, :bootnode) do
-      bootnodes
+      Application.fetch_env!(:blacksmith, :bootnodes)
+      |> List.delete(Application.fetch_env!(:blacksmith, :node_url))
     else
       peer =
-        bootnodes
+        Application.fetch_env!(:blacksmith, :bootnodes)
         |> Enum.random()
         |> EllipticoinClient.new()
 
       EllipticoinClient.start()
       {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
+
       peers
     end
-  end
-
-  defp bootnodes_path() do
-    Application.app_dir(:blacksmith, ["priv", "bootnodes.txt"])
+    |> MapSet.new()
   end
 
   def add_peer(url) do
@@ -60,7 +52,7 @@ defmodule P2P do
   end
 
   def peers() do
-    GenServer.call(__MODULE__, {:peers})
+    MapSet.to_list(GenServer.call(__MODULE__, {:peers}))
   end
 
   def broadcast_block(block) do
@@ -68,7 +60,7 @@ defmodule P2P do
   end
 
   def handle_cast({:add_peer, url}, state) do
-    {:noreply, update_in(state[:peers], &[url | &1])}
+    {:noreply, update_in(state[:peers], &MapSet.put(&1, url))}
   end
 
   def handle_cast(
@@ -103,10 +95,8 @@ defmodule P2P do
 
     HTTPotion.post(
       peer <> "/blocks",
-      [
-        body: encoded_block,
-        headers: headers(signature)
-      ]
+      body: encoded_block,
+      headers: headers(signature)
     )
   end
 

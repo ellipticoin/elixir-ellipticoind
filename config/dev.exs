@@ -11,8 +11,13 @@ config :blacksmith, dhfile: "priv/ssl/ssl-dhparams.pem"
 config :blacksmith, bootnode: true
 
 config :blacksmith,
-  staking_contract_address:
-    "0x8141b366d4af1fe6752F1eeD3F2918559f1cb295"
+  bootnodes:
+    Path.join([Path.dirname(__DIR__), "priv", "bootnodes.txt"])
+    |> File.read!()
+    |> String.split("\n")
+
+config :blacksmith,
+  staking_contract_address: "0x8141b366d4af1fe6752F1eeD3F2918559f1cb295"
 
 config :ethereumex, :client_type, :websocket
 config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws/v3/28d900c929bf4df88e0a4adc9f790e22"

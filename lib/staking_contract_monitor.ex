@@ -23,6 +23,6 @@ defmodule StakingContractMonitor do
     {:noreply, state}
   end
 
-  defp winner?(), do:
-    EllipticoinStakingContract.winner() == Ethereum.Helpers.my_ethereum_address()
+  defp winner?(),
+    do: EllipticoinStakingContract.winner() == Ethereum.Helpers.my_ethereum_address()
 end

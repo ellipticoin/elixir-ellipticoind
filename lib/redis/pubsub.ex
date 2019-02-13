@@ -74,7 +74,7 @@ defmodule Redis.PubSub do
         {:subscribe, channel, pid},
         state = %{pubsub: pubsub}
       ) do
-      Redix.PubSub.subscribe(pubsub, channel, self())
+    Redix.PubSub.subscribe(pubsub, channel, self())
     state = update_in(state, [:subscriptions, String.to_atom(channel)], &[pid | &1])
     {:noreply, state}
   end
@@ -83,7 +83,6 @@ defmodule Redis.PubSub do
         {:unsubscribe, channel, pid},
         state = %{pubsub: pubsub}
       ) do
-
     Redix.PubSub.unsubscribe(pubsub, channel, self())
     state = update_in(state, [:subscriptions, String.to_atom(channel)], &List.delete(&1, pid))
     {:noreply, state}

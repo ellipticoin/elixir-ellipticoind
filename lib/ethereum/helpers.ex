@@ -103,10 +103,8 @@ defmodule Ethereum.Helpers do
   def abi_file_name(contract_name),
     do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.abi"])
 
-  defp der_to_raw(<<0x04, public_key::binary()>>), do:
-    public_key
-  defp der_to_raw(public_key), do:
-    public_key
+  defp der_to_raw(<<0x04, public_key::binary()>>), do: public_key
+  defp der_to_raw(public_key), do: public_key
 
   defp bin_file_name(contract_name),
     do: Application.app_dir(:blacksmith, ["priv", "ethereum_contracts", "#{contract_name}.hex"])

@@ -87,7 +87,7 @@ defmodule Blacksmith.Models.Block do
         Map.put(transaction, :code, code)
         |> Map.delete(:signature)
       end)
-        |> TransactionProcessor.proccess_block()
+      |> TransactionProcessor.proccess_block()
 
       insert_done_transactions(block)
     end

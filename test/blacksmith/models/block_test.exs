@@ -34,8 +34,7 @@ defmodule Models.BlockTest do
         sender: @alice
       })
 
-      {:ok, block} =
-        Block.forge()
+      {:ok, block} = Block.forge()
 
       assert block.number == 1
       assert block.parent == genisis_block
