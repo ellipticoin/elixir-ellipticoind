@@ -38,7 +38,7 @@ defmodule Blacksmith.Mixfile do
   end
 
   defp extra_applications(:dev), do: extra_applications(:all) ++ [:remix]
-  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug, :krypto]
+  defp extra_applications(_all), do: [:cowboy, :ranch, :redix, :plug]
 
   defp deps do
     [
@@ -67,8 +67,7 @@ defmodule Blacksmith.Mixfile do
       {:ex_machina, "~> 2.2"},
       {:exth_crypto, "~> 0.1.4", override: true},
       {:exw3, github: "masonforest/exw3", branch: "websocket-client"},
-      {:httpoison, "~> 1.4", override: true},
-      {:krypto, "~> 0.1.1"},
+      {:httpotion, "~> 3.1.0"},
       {:libsodium, "~> 0.0.10"},
       {:mana, [github: "mana-ethereum/mana", app: false]},
       {:ok, "~> 2.0"},

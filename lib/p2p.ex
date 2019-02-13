@@ -101,17 +101,19 @@ defmodule P2P do
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
     {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
 
-    HTTPoison.post(
+    HTTPotion.post(
       peer <> "/blocks",
-      encoded_block,
-      headers(signature)
+      [
+        body: encoded_block,
+        headers: headers(signature)
+      ]
     )
   end
 
   defp headers(signature) do
-    %{
+    [
       "Content-Type": "application/cbor",
       Authorization: "Signature " <> Base.encode16(signature, case: :lower)
-    }
+    ]
   end
 end
