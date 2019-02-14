@@ -92,6 +92,7 @@ defmodule Blacksmith.Models.Block do
       insert_done_transactions(block)
     end
 
+    WebsocketHandler.broadcast(:blocks, block)
     log("Applied Block", block)
 
     {:ok, block}
