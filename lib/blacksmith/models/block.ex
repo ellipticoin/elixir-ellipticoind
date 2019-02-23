@@ -45,9 +45,13 @@ defmodule Blacksmith.Models.Block do
        }) do
     from(b in __MODULE__,
       where:
-        b.ethereum_block_hash == ^ethereum_block_hash and
-          b.ethereum_block_number == ^ethereum_block_number and
-          b.ethereum_difficulty == ^ethereum_difficulty
+        b.ethereum_block_number == ^ethereum_block_number
+        # TO deal with ethereum uncles blocks and
+        # reorginzations we'll need some way to
+        # to revert state in ellipticoin. For now just use the
+        # first block we receieve
+        #b.ethereum_block_hash == ^ethereum_block_hash and
+        #  b.ethereum_difficulty == ^ethereum_difficulty
     )
     |> Repo.exists?()
   end
