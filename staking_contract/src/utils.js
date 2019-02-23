@@ -15,7 +15,7 @@ export const hexToBytes = (hex) => new Buffer(hex.substring(2), "hex");
 
 export const defaultContractOptions = {
   gasPrice: 100000000000,
-  gasLimit: 5000000,
+  gasLimit: 10000000,
 }
 const {
   PRIVATE_KEY,
@@ -49,7 +49,6 @@ export async function fundAndRegisterWithStakingContract(stakingAddress, amount)
       privateKey,
       web3
     );
-    console.log(await stakingContract.methods.getRSAPublicModulus(address).call())
   });
 }
 

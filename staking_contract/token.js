@@ -18,10 +18,10 @@ var web3 = new Web3(WEB3_URL);
 const blacksmithPrivateKeys = process.env.BLACKSMITH_PRIVATE_KEYS.split(",").map((privateKey) => Buffer.from(privateKey, "hex"));
 
 async function run() {
-  const stakingFile = fs.readFileSync('./build/contracts/EllipticoinStakingContract.json', "utf8");
-  const stakingAbi = JSON.parse(stakingFile).abi;
-  const stakingContract = new web3.eth.Contract(stakingAbi, "0xEB66858CDF9eCA400Cc2e676D3fC447a97e806Af");
-  await fundAndRegisterWithStakingContract(stakingContract._address, 100);
+  // const stakingFile = fs.readFileSync('./build/contracts/EllipticoinStakingContract.json', "utf8");
+  // const stakingAbi = JSON.parse(stakingFile).abi;
+  // const stakingContract = new web3.eth.Contract(stakingAbi, "0xEB66858CDF9eCA400Cc2e676D3fC447a97e806Af");
+  await fundAndRegisterWithStakingContract("0x5d4f41b89458920f142fcfc83876605893ff21da", 100);
   console.log(`totalStake: ${await stakingContract.methods.totalStake().call()}`)
   console.log(await stakingContract.methods.getRSAPublicModulus("0x28af5461cad683041bd3666851f2c066277088a5"))
 }

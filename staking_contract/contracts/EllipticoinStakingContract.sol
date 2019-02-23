@@ -1,15 +1,18 @@
 pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./Depositable.sol";
+import "./Bridge.sol";
 import "./RSAPublicModuliRegistry.sol";
 import "./utils/ECDSA.sol";
 
 contract EllipticoinStakingContract is Depositable, ECDSA, RSAPublicModuliRegistry {
   bytes32 public blockHash;
+  Bridge public bridge;
   uint public blockNumber;
   bytes public lastSignature;
 
-  constructor(ERC20 _token, bytes memory randomSeed) Depositable(_token) public {
+  constructor(ERC20 _token, Bridge _bridge, bytes memory randomSeed) Depositable(_token) public {
+    bridge = _bridge;
     lastSignature = randomSeed;
   }
 
@@ -18,7 +21,6 @@ contract EllipticoinStakingContract is Depositable, ECDSA, RSAPublicModuliRegist
     bytes32 _blockHash,
     bytes memory signature
   ) public {
-    require(msg.sender == winner());
     require(verifyRSASignature(lastSignature, signature, msg.sender));
     blockNumber = _blockNumber;
     blockHash = _blockHash;

@@ -9,6 +9,9 @@ defmodule Blacksmith.Repo.Migrations.AddBlocksTable do
       add :winner, :binary
       add :changeset_hash, :binary
       add :block_hash, :binary
+      add :ethereum_block_hash, :binary
+      add :ethereum_block_number, :integer
+      add :ethereum_difficulty, :integer
 
       timestamps()
     end

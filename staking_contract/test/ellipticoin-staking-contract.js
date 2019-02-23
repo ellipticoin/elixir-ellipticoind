@@ -6,6 +6,7 @@
  * `ganache-cli -m "medal junk auction menu dice pony version coyote grief dream dinosaur obscure"`
  */
 const TestToken = artifacts.require("./utils/TestToken.sol");
+const Bridge = artifacts.require("./Bridge.sol");
 const RSA = artifacts.require("utils/RSA.sol");
 const EllipticoinStakingContract = artifacts.require("./EllipticoinStakingContract.sol");
 const { generatePrivateKey } = require('ursa');
@@ -45,11 +46,14 @@ contract("EllipticoinStakingContract", (accounts) => {
   let carol;
   let privateKeys;
   let token;
+  let bridge;
 
   beforeEach(async () => {
     token = await TestToken.new();
+    bridge = await Bridge.new();
     contract = await EllipticoinStakingContract.new(
       token.address,
+      bridge.address,
       bytesToHex(randomSeed)
     );
 
@@ -79,32 +83,6 @@ contract("EllipticoinStakingContract", (accounts) => {
           }),
         "revert",
       );
-    });
-
-    it("fails if the sender isn't the winner of this block", async () => {
-      await setup(token, contract, [
-          [alice, 100],
-          [bob, 100],
-          [carol, 100],
-      ]);
-
-      let blockNumber = 1;
-      let blockHash = crypto.createHash('sha256').digest();
-      let lastSignature = await contract.lastSignature.call();
-      //
-      // The winner of the first block in our tests is
-      // alice so signing with bob should fail
-      const signature = privateKeys[alice].hashAndSign("sha256", lastSignature);
-
-      await assert.isRejected(
-        contract.submitBlock(
-          blockNumber,
-          bytesToHex(blockHash),
-          bytesToHex(signature), {
-            from: bob,
-          }),
-          "revert",
-        );
     });
 
     it("sets `lastestBlockHash` to the `blockHash` that was submitted", async () => {

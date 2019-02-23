@@ -7,6 +7,7 @@ defmodule Blacksmith.Models.Block do
   alias Blacksmith.Repo
   alias Blacksmith.Models.{Contract, Transaction}
   alias Ethereum.Contracts.EllipticoinStakingContract
+  import Ethereum.Helpers, only: [my_ethereum_address: 0]
   alias Crypto.RSA
 
   schema "blocks" do
@@ -17,6 +18,9 @@ defmodule Blacksmith.Models.Block do
     field(:winner, :binary)
     field(:changeset_hash, :binary)
     field(:block_hash, :binary)
+    field(:ethereum_block_number, :integer)
+    field(:ethereum_block_hash, :binary)
+    field(:ethereum_difficulty, :integer)
     timestamps()
   end
 
@@ -28,12 +32,46 @@ defmodule Blacksmith.Models.Block do
   def latest(query \\ __MODULE__, count),
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
+  def should_forge?(block_info) do
+    block_info.winner == my_ethereum_address() &&
+      !block_exists?(block_info) &&
+      validate_ethereum_block_number(block_info)
+  end
+
+  defp block_exists?(%{
+         ethereum_difficulty: ethereum_difficulty,
+         ethereum_block_hash: ethereum_block_hash,
+         ethereum_block_number: ethereum_block_number
+       }) do
+    from(b in __MODULE__,
+      where:
+        b.ethereum_block_hash == ^ethereum_block_hash and
+          b.ethereum_block_number == ^ethereum_block_number and
+          b.ethereum_difficulty == ^ethereum_difficulty
+    )
+    |> Repo.exists?()
+  end
+
+  defp validate_ethereum_block_number(%{
+         ethereum_block_number: ethereum_block_number
+       }) do
+    best_ethereum_block_number =
+      best_block(from(b in __MODULE__, select: b.ethereum_block_number))
+      |> Repo.one()
+
+    is_nil(best_ethereum_block_number) ||
+      ethereum_block_number > best_ethereum_block_number
+  end
+
   def log(message, block) do
     Logger.info(
       "#{message}: " <>
         "Number=#{block.number} " <> "Winner=#{Ethereum.Helpers.bytes_to_hex(block.winner)}"
     )
   end
+
+  defp winner?(),
+    do: EllipticoinStakingContract.winner() == Ethereum.Helpers.my_ethereum_address()
 
   def changeset(user, params \\ %{}) do
     user
@@ -42,7 +80,10 @@ defmodule Blacksmith.Models.Block do
       :number,
       :changeset_hash,
       :block_hash,
-      :winner
+      :winner,
+      :ethereum_difficulty,
+      :ethereum_block_hash,
+      :ethereum_block_number,
     ])
   end
 
@@ -55,7 +96,11 @@ defmodule Blacksmith.Models.Block do
         total_burned: total_burned,
         winner: winner,
         transactions: transactions,
-        changeset_hash: changeset_hash
+        changeset_hash: changeset_hash,
+        ethereum_block_number: ethereum_block_number,
+        ethereum_block_hash: ethereum_block_hash, 
+        ethereum_difficulty: ethereum_difficulty,
+
       }),
       do: %{
         parent_hash:
@@ -69,15 +114,15 @@ defmodule Blacksmith.Models.Block do
           if(Ecto.assoc_loaded?(transactions),
             do: Enum.map(transactions, &Transaction.as_map/1),
             else: []
-          )
+          ),
+        ethereum_block_number: ethereum_block_number,
+        ethereum_block_hash: ethereum_block_hash, 
+        ethereum_difficulty: ethereum_difficulty,
       }
 
-  def apply(%{winner: winner, number: number, transactions: transactions}) do
-    {:ok, block} =
-      insert(%{
-        winner: winner,
-        number: number
-      })
+  def apply(params) do
+    {transactions, params} = Map.pop(params, :transactions)
+    {:ok, block} = insert(params)
 
     if !Enum.empty?(transactions) do
       Enum.map(transactions, fn transaction ->
@@ -98,15 +143,9 @@ defmodule Blacksmith.Models.Block do
     {:ok, block}
   end
 
-  def forge() do
+  def forge(block_info) do
     TransactionProcessor.proccess_transactions(@transaction_processing_time)
-
-    {:ok, block} =
-      insert(%{
-        winner: EllipticoinStakingContract.winner(),
-        number: EllipticoinStakingContract.block_number() + 1
-      })
-
+    {:ok, block} = insert(block_info)
     insert_done_transactions(block)
     P2P.broadcast_block(block)
     submit_block(block)

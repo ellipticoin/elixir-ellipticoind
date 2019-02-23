@@ -28,7 +28,7 @@ fn main() {
                 proccess_block(&conn);
                 ControlFlow::Continue
             },
-            message => {
+            _ => {
                 ControlFlow::Continue
             },
         }

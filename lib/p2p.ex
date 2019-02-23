@@ -1,5 +1,4 @@
 defmodule P2P do
-  import Utils
   alias Blacksmith.Models.Block
 
   use GenServer
