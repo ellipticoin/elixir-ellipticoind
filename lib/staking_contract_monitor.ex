@@ -10,6 +10,7 @@ defmodule StakingContractMonitor do
 
   import Ethereum.Helpers,
     only: [
+      my_ethereum_address: 0,
       hex_to_int: 1,
       hex_to_bytes: 1
     ]
@@ -43,10 +44,14 @@ defmodule StakingContractMonitor do
       number: block_number() + 1,
     }
 
-    if Block.valid_next_block?(block_info) do
+    if winner?() && Block.valid_next_block?(block_info) do
       Block.forge(block_info)
     end
 
     {:noreply, state}
+  end
+
+  defp winner?() do
+    winner() == my_ethereum_address()
   end
 end

@@ -7,7 +7,6 @@ defmodule Blacksmith.Models.Block do
   alias Blacksmith.Repo
   alias Blacksmith.Models.{Contract, Transaction}
   alias Ethereum.Contracts.EllipticoinStakingContract
-  import Ethereum.Helpers, only: [my_ethereum_address: 0]
   alias Crypto.RSA
 
   schema "blocks" do
@@ -33,8 +32,7 @@ defmodule Blacksmith.Models.Block do
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
   def valid_next_block?(block_info) do
-    block_info.winner == my_ethereum_address() &&
-      !block_exists?(block_info) &&
+    !block_exists?(block_info) &&
       validate_ethereum_block_number(block_info)
   end
 

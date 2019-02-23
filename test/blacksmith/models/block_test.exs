@@ -37,20 +37,9 @@ defmodule Models.BlockTest do
                ethereum_block_number: 0,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,
-               winner: my_ethereum_address()
              }) == false
     end
 
-    test "it returns false if we're not the winner of this block" do
-      genisis_block = insert(:block)
-
-      assert Block.valid_next_block?(%{
-               ethereum_block_number: genisis_block.number + 1,
-               ethereum_block_hash: <<0::256>>,
-               ethereum_difficulty: 0,
-               winner: <<0::256>>
-             }) == false
-    end
 
     test "it returns true if this block should be forged" do
       genisis_block = insert(:block)
@@ -59,7 +48,6 @@ defmodule Models.BlockTest do
                ethereum_block_number: genisis_block.number + 1,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,
-               winner: my_ethereum_address()
              }) == true
     end
 

@@ -87,7 +87,6 @@ defmodule Integration.StakingTest do
         number: 2,
         block_hash: <<0::256>>,
         changeset_hash: <<0::256>>,
-        winner: <<0::256>>,
         transactions: [transaction],
         ethereum_block_number: 1,
         ethereum_block_hash: <<0::256>>,
