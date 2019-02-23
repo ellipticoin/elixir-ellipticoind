@@ -48,8 +48,12 @@ defmodule Router do
     winner = EllipticoinStakingContract.winner()
     EthereumBlockSignatureAuth.verify_signature(conn, winner)
 
-    Block.apply(conn.params)
-    send_resp(conn, 200, "")
+    if Block.valid_next_block?(conn.params) do
+      Block.apply(conn.params)
+      send_resp(conn, 201, "")
+    else
+      send_resp(conn, 400, "Invalid block")
+    end
   end
 
   get "/blocks" do

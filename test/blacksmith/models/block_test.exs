@@ -18,11 +18,11 @@ defmodule Models.BlockTest do
     end)
   end
 
-  describe "Block.should_forge?/1" do
+  describe "Block.valid_next_block?/1" do
     test "it returns false if the we've already forged this block" do
       genisis_block = insert(:block)
 
-      assert Block.should_forge?(%{
+      assert Block.valid_next_block?(%{
                ethereum_block_number: genisis_block.ethereum_block_number,
                ethereum_block_hash: genisis_block.ethereum_block_hash,
                ethereum_difficulty: genisis_block.ethereum_difficulty,
@@ -33,7 +33,7 @@ defmodule Models.BlockTest do
     test "it returns false if the ethereum block number is less than the current best ethereum block number" do
       insert(:block, ethereum_block_number: 1)
 
-      assert Block.should_forge?(%{
+      assert Block.valid_next_block?(%{
                ethereum_block_number: 0,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,
@@ -44,7 +44,7 @@ defmodule Models.BlockTest do
     test "it returns false if we're not the winner of this block" do
       genisis_block = insert(:block)
 
-      assert Block.should_forge?(%{
+      assert Block.valid_next_block?(%{
                ethereum_block_number: genisis_block.number + 1,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,
@@ -55,7 +55,7 @@ defmodule Models.BlockTest do
     test "it returns true if this block should be forged" do
       genisis_block = insert(:block)
 
-      assert Block.should_forge?(%{
+      assert Block.valid_next_block?(%{
                ethereum_block_number: genisis_block.number + 1,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,
@@ -64,7 +64,7 @@ defmodule Models.BlockTest do
     end
 
     test "it returns true if this block should be forged and there's no genisis block" do
-      assert Block.should_forge?(%{
+      assert Block.valid_next_block?(%{
                ethereum_block_number: 0,
                ethereum_block_hash: <<0::256>>,
                ethereum_difficulty: 0,

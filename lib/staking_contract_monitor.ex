@@ -43,7 +43,7 @@ defmodule StakingContractMonitor do
       number: block_number() + 1,
     }
 
-    if Block.should_forge?(block_info) do
+    if Block.valid_next_block?(block_info) do
       Block.forge(block_info)
     end
 

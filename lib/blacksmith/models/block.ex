@@ -32,7 +32,7 @@ defmodule Blacksmith.Models.Block do
   def latest(query \\ __MODULE__, count),
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
-  def should_forge?(block_info) do
+  def valid_next_block?(block_info) do
     block_info.winner == my_ethereum_address() &&
       !block_exists?(block_info) &&
       validate_ethereum_block_number(block_info)

@@ -88,7 +88,12 @@ defmodule Integration.StakingTest do
         block_hash: <<0::256>>,
         changeset_hash: <<0::256>>,
         winner: <<0::256>>,
-        transactions: [transaction]
+        transactions: [transaction],
+        ethereum_block_number: 1,
+        ethereum_block_hash: <<0::256>>,
+        ethereum_difficulty: 0,
+        winner: @bobs_ethereum_private_key
+          |> Ethereum.Helpers.private_key_to_address()
       },
       @alices_ethereum_private_key
     )
