@@ -1,31 +1,25 @@
 use Mix.Config
 config :logger, level: :warn
 config :bypass, adapter: Plug.Adapters.Cowboy2
-config :blacksmith, base_contracts_path: "./base_contracts"
-config :blacksmith, port: 4047
-config :blacksmith, bootnode: true
-config :blacksmith, https: false
+config :node, base_contracts_path: "./priv/base_contracts"
+config :node, port: 4047
+config :node, transaction_processing_time: 1
+config :node, mining_target_time: 1
+config :node, enable_miner: false
+config :node, bootnode: true
+config :node, https: false
+config :node, private_key: File.read!("./config/private_key.pem")
+config :node, p2p_transport: P2P.Transport.Test
+config :node, P2P.Transport.Test,
+  private_key: File.read!("./config/private_key.pem"),
+  port: 4045,
+  bootnodes: File.read!("./priv/bootnodes.txt")
+    |> String.split("\n", trim: true)
+config :node, node_url: "http://localhost:4047/"
+config :node, :redis_url, "redis://127.0.0.1:6379/"
+config :node, bootnodes: ["http://localhost:4047/"]
 
-config :blacksmith, node_url: "http://localhost:4047/"
-
-config :blacksmith,
-  staking_contract_address:
-    "5D00cDb13faB0D5802A82904e841D0E3eE2b6065" |> Base.decode16!(case: :mixed)
-
-config :blacksmith, auto_forge: true
-
-config :ex_wire,
-  private_key:
-    <<18, 116, 234, 41, 220, 113, 180, 178, 230, 67, 159, 221, 16, 149, 69, 232, 193, 88, 94, 43,
-      22, 188, 212, 82, 54, 254, 32, 251, 249, 25, 167, 13>>
-
-config :ethereumex, :web3_url, "ws://localhost:8545/"
-config :ethereumex, :client_type, :websocket
-config :blacksmith, :redis_url, "redis://127.0.0.1:6379/"
-config :blacksmith, :ethereumex_auto_mine, true
-config :blacksmith, bootnodes: ["http://localhost:4047/"]
-
-config :blacksmith, Blacksmith.Repo,
+config :node, Node.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   username: "masonf",
   password: "",

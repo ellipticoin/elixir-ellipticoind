@@ -1,15 +1,15 @@
 defmodule Router do
+  require Logger
   use Plug.Router
 
   if Mix.env() == :dev do
-    use Plug.Debugger, otp_app: :blacksmith
+    use Plug.Debugger, otp_app: :node
   end
 
-  alias Blacksmith.Plug.CBOR
-  alias Blacksmith.Repo
-  alias HTTP.{SignatureAuth, EthereumBlockSignatureAuth}
-  alias Blacksmith.Models.{Block, Contract, Transaction}
-  alias Ethereum.Contracts.EllipticoinStakingContract
+  alias Node.Plug.CBOR
+  alias Node.Repo
+  alias HTTP.SignatureAuth
+  alias Node.Models.{Block, Contract, Transaction}
 
   plug(CORSPlug)
 
@@ -34,20 +34,7 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
-  get "/peers" do
-    send_resp(conn, 200, Cbor.encode(P2P.peers()))
-  end
-
-  post "/peers" do
-    P2P.add_peer(conn.body_params[:url])
-
-    send_resp(conn, 200, Cbor.encode(""))
-  end
-
   post "/blocks" do
-    winner = EllipticoinStakingContract.winner()
-    EthereumBlockSignatureAuth.verify_signature(conn, winner)
-
     if Block.valid_next_block?(conn.params) do
       Block.apply(conn.params)
       send_resp(conn, 201, "")

@@ -1,4 +1,5 @@
 defmodule TransactionPool do
+  alias Node.Models.Transaction
   use GenServer
 
   def start_link(opts) do
@@ -15,16 +16,16 @@ defmodule TransactionPool do
      })}
   end
 
-  def add(transaction) when is_map(transaction) do
-    add(Cbor.encode(transaction))
-  end
-
   def add(transaction) do
     GenServer.call(__MODULE__, {:add, transaction})
   end
 
   def handle_call({:add, transaction}, {_pid, _reference}, state) do
-    Redis.push("transactions::queued", transaction)
+    transaction_bytes = transaction
+      |> Transaction.with_code()
+      |> Cbor.encode()
+
+    Redis.push("transactions::queued", [transaction_bytes])
 
     {:reply, {:ok, nil}, state}
   end

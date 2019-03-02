@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Seed do
-  alias Blacksmith.Models.Contract
-  alias Blacksmith.Repo
+  alias Node.Models.Contract
+  alias Node.Repo
   use Mix.Task
 
   @shortdoc "Seeds the database"

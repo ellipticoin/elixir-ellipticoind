@@ -1,4 +1,4 @@
-defmodule Blacksmith.Plug.RawBody do
+defmodule Node.Plug.RawBody do
   def init(options), do: options
 
   def call(conn, _options) do

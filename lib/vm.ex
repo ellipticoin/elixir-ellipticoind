@@ -1,9 +1,9 @@
 defmodule VM do
   use GenServer
-  use Rustler, otp_app: :blacksmith, crate: :vm_nif
+  use Rustler, otp_app: :node, crate: :vm_nif
 
   def current_block_hash(_redis_url), do: exit(:nif_not_loaded)
-  def run(transaction), do: run(Application.fetch_env!(:blacksmith, :redis_url), transaction)
+  def run(transaction), do: run(Application.fetch_env!(:node, :redis_url), transaction)
   def run(_redis_url, _transaction), do: exit(:nif_not_loaded)
 
   def start_link(opts) do

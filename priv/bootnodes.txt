@@ -1,3 +1,3 @@
-https://davenport.ellipticoin.org:4047
-https://fritz.ellipticoin.org:4047
-https://joyce.ellipticoin.org:4047
+davenport.ellipticoin.org:4461
+joyce.ellipticoin.org:4461
+fritz.ellipticoin.org:4461

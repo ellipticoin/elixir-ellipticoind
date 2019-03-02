@@ -1,4 +1,4 @@
-defmodule Blacksmith.Plug.CBOR do
+defmodule Node.Plug.CBOR do
   @moduledoc """
   Parses CBOR request body.
   CBOR arrays are parsed into a `"_cbor"` key to allow

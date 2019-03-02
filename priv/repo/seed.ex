@@ -1,16 +1,13 @@
-def system_code(file_name) do
-  File.read!(Application.get_env(:blacksmith, :base_contracts_path) <> "/" <> file_name)
-end
 Enum.each([
   "BaseToken",
   "BaseApi",
   "UserContracts",
-  "HumanReadableNameRegistery",
+  "HumanReadableNameRegistry",
 ], fn(contract_name) ->
-  %Blacksmith.Models.Contract{
-    address: <<0::265>>,
+  %Node.Models.Contract{
+    address: <<0::256>>,
     name: contract_name,
-    code: system_code(contract_name),
+    code: File.read!(Application.get_env(:node, :base_contracts_path) <> "/" <> Macro.underscore(contract_name) <> ".wasm"),
   }
-  |> Blacksmith.Repo.insert!()
+  |> Node.Repo.insert!()
 end)

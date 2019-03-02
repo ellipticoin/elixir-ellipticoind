@@ -1,27 +1,28 @@
 use Mix.Config
 
-config :blacksmith, :ethereum_private_key, "wss://rinkeby.infura.io/ws"
-config :blacksmith, base_contracts_path: "./base_contracts"
-config :blacksmith, port: 4045
-config :blacksmith, https: false
-config :blacksmith, keyfile: "priv/ssl/privkey.pem"
-config :blacksmith, certfile: "priv/ssl/fullchain.pem"
-config :blacksmith, dhfile: "priv/ssl/ssl-dhparams.pem"
+config :logger, level: :info
+config :node, transaction_processing_time: 1000
+config :node, mining_target_time: 1000
+config :node, base_contracts_path: "./priv/base_contracts"
+config :node, port: 4460
+config :node, https: false
+config :node, enable_miner: true
+config :node, keyfile: "priv/ssl/privkey.pem"
+config :node, certfile: "priv/ssl/fullchain.pem"
+config :node, dhfile: "priv/ssl/ssl-dhparams.pem"
+config :node, private_key: "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==" |> Base.decode64!()
+config :node, P2P.Transport.Noise,
+  private_key: "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==" |> Base.decode64!(),
+  port: (if System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
+  bootnodes:  File.read!("lib/node-0.1.0/priv/bootnodes.txt")
+   |> String.split("\n", trim: true)
 
-config :blacksmith, bootnode: false
-
-config :blacksmith,
-  staking_contract_address:
-    "756d0ABF6235AB135126fe772CDaE195C3DECc0e" |> Base.decode16!(case: :mixed)
-
-config :ethereumex, :web3_url, "wss://rinkeby.infura.io/ws"
-config :ethereumex, :client_type, :websocket
-config :blacksmith, ethereum_private_key: "1274EA29DC71B4B2E6439FDD109545E8C1585E2B16BCD45236FE20FBF919A70D" |> Base.decode16!()
-
-config :blacksmith, :redis_url, "redis://localhost:6379/"
-config :blacksmith, Blacksmith.Repo,
-  username: "postgres",
+config :node, bootnode: false
+config :node, :redis_url, "redis://localhost:6379/"
+config :node, Node.Repo,
+  username: "masonf",
   password: "",
-  database: "blacksmith",
+  database: "node",
   hostname: "localhost",
-  pool_size: 15
+  pool_size: 15,
+  loggers: []

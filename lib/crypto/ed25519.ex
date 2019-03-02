@@ -10,7 +10,7 @@ defmodule Crypto.Ed25519 do
     end
   end
 
-  def public_key_from_private_key(private_key) do
+  def private_key_to_public_key(private_key) do
     :libsodium_crypto_sign_ed25519.sk_to_pk(private_key)
   end
 

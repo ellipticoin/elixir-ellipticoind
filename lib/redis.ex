@@ -7,7 +7,7 @@ defmodule Redis do
   end
 
   def init(_args) do
-    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    connection_url = Application.fetch_env!(:node, :redis_url)
     Redix.start_link(connection_url)
   end
 
@@ -129,14 +129,16 @@ defmodule Redis do
   end
 
   def handle_cast({:push, key, value}, redis) do
-    Redix.command(
-      redis,
-      List.flatten([
-        "LPUSH",
-        key,
-        value
-      ])
-    )
+    if !Enum.empty?(value) do
+      Redix.command(
+        redis,
+        List.flatten([
+          "LPUSH",
+          key,
+          value
+        ])
+      )
+    end
 
     {:noreply, redis}
   end

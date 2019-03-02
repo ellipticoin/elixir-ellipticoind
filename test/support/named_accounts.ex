@@ -1,20 +1,17 @@
 defmodule NamedAccounts do
   defmacro __using__(_) do
     quote do
-      @alice "509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a"
-             |> Base.decode16!(case: :lower)
-      @alices_private_key "01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a"
-                          |> Base.decode16!(case: :lower)
-      @bob "027da28b6a46ec1124e7c3c33677b71f4ac4eae2485ff8cb33346aac54c11a30"
-           |> Base.decode16!(case: :lower)
-      @alices_private_key "01a596e2624497da63a15ef7dbe31f5ca2ebba5bed3d30f3319ef22c481022fd509c3480af8118842da87369eb616eb7b158724927c212b676c41ce6430d334a"
-                          |> Base.decode16!(case: :lower)
-      @alices_ethereum_private_key Application.fetch_env!(:blacksmith, :testnet_private_keys)
-                                   |> Enum.at(0)
-      @bobs_ethereum_private_key Application.fetch_env!(:blacksmith, :testnet_private_keys)
-                                 |> Enum.at(1)
-      @carols_ethereum_private_key Application.fetch_env!(:blacksmith, :testnet_private_keys)
-                                   |> Enum.at(2)
+      @alices_private_key "p4fmhRFGhGMDYXHKrzmh/nDHd8LqX4oBi6Frih91/fAvYzenSQKZ2Ttc+mUTcS/IPZr92EHhKcwsshyUw0w5Wg=="
+                          |> Base.decode64!()
+
+      @alice @alices_private_key
+             |> Crypto.private_key_to_public_key()
+
+      @bobs_private_key "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA=="
+                        |> Base.decode64!()
+
+      @bob @bobs_private_key
+           |> Crypto.private_key_to_public_key()
     end
   end
 end

@@ -56,14 +56,10 @@ end
 # when running `mix release`, the first release in the file
 # will be used by default
 
-release :blacksmith do
-  set version: current_version(:blacksmith)
+release :node do
+  set version: current_version(:node)
   set applications: [
     :crypto,
-    :libsecp256k1,
-    :ethereumex,
-    :evm,
-    :blockchain,
     :runtime_tools
   ]
 end

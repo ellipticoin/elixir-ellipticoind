@@ -9,18 +9,6 @@ defmodule HTTP.SignatureAuth do
     defexception message: "Invaild Signature", plug_status: 401
   end
 
-  def verify_block_signature(conn, address) do
-    signature = get_signature(conn)
-    body = Enum.fetch!(conn.assigns.raw_body, 0)
-    message = <<conn.params.number::size(64)>> <> Crypto.hash(body)
-
-    if Ethereum.Helpers.valid_signature?(signature, message, address) do
-      conn
-    else
-      throw(UnauthorizedError)
-    end
-  end
-
   def verify_signature(conn) do
     public_key = conn.params.sender
     signature = get_signature(conn)

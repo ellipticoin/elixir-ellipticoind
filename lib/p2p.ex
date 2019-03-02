@@ -1,108 +1,47 @@
 defmodule P2P do
-  alias Blacksmith.Models.Block
-
+  require Logger
+  alias Node.Models.Block
   use GenServer
 
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, %{}, opts)
+    GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(state) do
-    peers = load_peers()
-    connect_to_peers(peers)
-
-    {:ok,
-     Map.merge(state, %{
-       peers: peers
-     })}
+  def init(init_arg) do
+    transport().subscribe(self())
+    {:ok, %{}}
   end
 
-  def connect_to_peers(peers) do
-    node_url = Application.fetch_env!(:blacksmith, :node_url)
+  def broadcast(%{__struct__: _} = message),
+    do:
+      apply(message.__struct__, :as_binary, [message])
+        |> broadcast()
 
-    peers
-    |> Enum.map(fn peer ->
-      peer
-      |> EllipticoinClient.new()
-      |> EllipticoinClient.connect(node_url)
-    end)
+  def broadcast(message),
+    do:
+      transport()
+        |> apply(:broadcast, [message])
+
+  def subscribe(),
+    do:
+      transport()
+        |> apply(:subscribe)
+
+  def receive(message) do
+    Miner.cancel()
+
+    Cbor.decode!(message)
+      |> Block.apply()
+
+    block = Cbor.decode!(message)
+    Logger.info("Applied block #{block.number}")
   end
 
-  def load_peers() do
-    if Application.fetch_env!(:blacksmith, :bootnode) do
-      Application.fetch_env!(:blacksmith, :bootnodes)
-      |> List.delete(Application.fetch_env!(:blacksmith, :node_url))
-    else
-      peer =
-        Application.fetch_env!(:blacksmith, :bootnodes)
-        |> Enum.random()
-        |> EllipticoinClient.new()
-
-      EllipticoinClient.start()
-      {:ok, %{body: peers}} = EllipticoinClient.get_peers(peer)
-
-      peers
-    end
-    |> MapSet.new()
-  end
-
-  def add_peer(url) do
-    GenServer.cast(__MODULE__, {:add_peer, url})
-  end
-
-  def peers() do
-    MapSet.to_list(GenServer.call(__MODULE__, {:peers}))
-  end
-
-  def broadcast_block(block) do
-    GenServer.cast(__MODULE__, {:broadcast_block, block})
-  end
-
-  def handle_cast({:add_peer, url}, state) do
-    {:noreply, update_in(state[:peers], &MapSet.put(&1, url))}
-  end
-
-  def handle_cast(
-        {:broadcast_block, block},
-        state = %{
-          peers: peers
-        }
-      ) do
-    private_key = Application.fetch_env!(:blacksmith, :ethereum_private_key)
-
-    Enum.each(peers, fn peer ->
-      http_post_signed_block(peer, block, private_key)
-    end)
-
+  def handle_info({:p2p, from, message}, state) do
+    __MODULE__.receive(message)
     {:noreply, state}
   end
 
-  def handle_call(
-        {:peers},
-        _from,
-        state = %{
-          peers: peers
-        }
-      ) do
-    {:reply, peers, state}
-  end
-
-  defp http_post_signed_block(peer, block, private_key) do
-    encoded_block = Block.as_cbor(block)
-    message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
-    {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
-
-    HTTPotion.post(
-      peer <> "/blocks",
-      body: encoded_block,
-      headers: headers(signature)
-    )
-  end
-
-  defp headers(signature) do
-    [
-      "Content-Type": "application/cbor",
-      Authorization: "Signature " <> Base.encode16(signature, case: :lower)
-    ]
-  end
+  defp transport(), do:
+    Application.fetch_env!(:node, :p2p_transport)
 end

@@ -4,10 +4,8 @@ defmodule Test.Utils do
   require Integer
   import Binary
   alias Crypto.Ed25519
-  alias Crypto.RSA
-  alias Blacksmith.Models.{Block, Contract}
-  alias Blacksmith.Repo
-  alias Ethereum.Contracts.{EllipticoinStakingContract, TestnetToken}
+  alias Node.Models.{Block, Contract}
+  alias Node.Repo
 
   def set_balances(balances) do
     token_contract_address =
@@ -24,10 +22,32 @@ defmodule Test.Utils do
   def insert_contracts do
     %Contract{
       address: <<0::256>>,
-      name: "BaseToken",
+      name: :BaseToken,
       code: Contract.base_contract_code(:BaseToken)
     }
     |> Repo.insert!()
+  end
+
+  def poll_for_next_block() do
+    best_block= Block.best() |> Repo.one()
+    poll_for_next_block(best_block)
+  end
+
+  def poll_for_next_block(previous_block) do
+    best_block= Block.best() |> Repo.one()
+
+    cond do
+      is_nil(previous_block) and is_nil(best_block) ->
+        :timer.sleep(100)
+        poll_for_next_block(best_block)
+      is_nil(previous_block) and !is_nil(best_block) ->
+        best_block
+      best_block.number > previous_block.number ->
+        best_block
+      true ->
+        :timer.sleep(100)
+        poll_for_next_block(best_block)
+    end
   end
 
   def parse_hex("0x" <> hex_data), do: parse_hex(hex_data)
@@ -38,86 +58,8 @@ defmodule Test.Utils do
   def parse_hex(hex_data), do: Base.decode16!(hex_data, case: :mixed)
 
   def checkout_repo() do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Blacksmith.Repo)
-    Ecto.Adapters.SQL.Sandbox.mode(Blacksmith.Repo, {:shared, self()})
-  end
-
-  def fund_staking_contract() do
-    starting_stake = 100
-    staking_contract_address = EllipticoinStakingContract.address()
-
-    Enum.each(Enum.take(ExW3.accounts(), 3), fn account ->
-      TestnetToken.mint(account, starting_stake)
-      TestnetToken.approve(staking_contract_address, starting_stake, account)
-      EllipticoinStakingContract.deposit(starting_stake, account)
-    end)
-  end
-
-  def set_public_moduli() do
-    {:ok, body} = File.read("staking_contract/test/support/test_private_keys.txt")
-
-    rsa_public_keys =
-      body
-      |> String.trim("\n")
-      |> String.split("\n\n")
-      |> Enum.map(&RSA.parse_pem/1)
-      |> Enum.map(&RSA.private_key_to_public_key/1)
-
-    testnet_private_keys = Application.get_env(:blacksmith, :testnet_private_keys)
-
-    Enum.take(testnet_private_keys, 3)
-    |> Enum.with_index()
-    |> Enum.each(fn {testnet_private_key, index} ->
-      public_key = Enum.fetch!(rsa_public_keys, index)
-      {:RSAPublicKey, modulus_integer, _exponent} = public_key
-      modulus = :binary.encode_unsigned(modulus_integer)
-      EllipticoinStakingContract.set_rsa_public_modulus(modulus, testnet_private_key)
-    end)
-  end
-
-  @doc """
-  We disable the staking contract monitor when setting up the smart contracts
-  because new blocks are created when the contracts are deployed. This
-  triggers the staking contract monitor which will fail because the staking
-  contracts aren't setup yet.
-  """
-
-  def setup_staking_contract() do
-    Supervisor.terminate_child(Blacksmith.Supervisor, StakingContractMonitor)
-    deploy_ethereum_contracts()
-    fund_staking_contract()
-    set_public_moduli()
-    Supervisor.restart_child(Blacksmith.Supervisor, StakingContractMonitor)
-  end
-
-  @doc """
-  Deployment should probably be rewritten in Elixir. Currently there
-  aren't any libraries for linking bytecode in Elixir so we deploy with
-  truffle instead :/
-  """
-
-  def deploy_ethereum_contracts() do
-    {result, 0} =
-      System.cmd(
-        "truffle",
-        ["migrate", "--reset"],
-        cd: "staking_contract",
-        stderr_to_stdout: true
-      )
-
-    staking_contract_address =
-      Regex.scan(~r/contract address:\s+(0x[\da-fA-F]+)/, result)
-      |> Enum.at(-1)
-      |> Enum.at(1)
-
-    EllipticoinStakingContract.at(staking_contract_address)
-
-    token_contract_address =
-      EllipticoinStakingContract.token()
-      |> Utils.ok()
-      |> Ethereum.Helpers.bytes_to_hex()
-
-    TestnetToken.at(token_contract_address)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Node.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Node.Repo, {:shared, self()})
   end
 
   def read_test_wasm(file_name) do
@@ -175,7 +117,7 @@ defmodule Test.Utils do
       contract_name: :BaseToken
     }
 
-    sender = Ed25519.public_key_from_private_key(private_key)
+    sender = Ed25519.private_key_to_public_key(private_key)
 
     options
     |> Enum.into(defaults)
@@ -209,9 +151,9 @@ defmodule Test.Utils do
   end
 
   def post_signed_block(block, private_key) do
-    encoded_block = Block.as_cbor(block)
+    encoded_block = Block.as_binary(block)
     message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
-    {:ok, signature} = Ethereum.Helpers.sign(message, private_key)
+    {:ok, signature} = Crypto.sign(message, private_key)
 
     HTTPoison.post(
       @host <> "/blocks",

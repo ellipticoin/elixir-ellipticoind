@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Benchmark do
 
   @shortdoc "Runs benchmarks"
   def run(_) do
-    Application.ensure_all_started(:blacksmith)
+    Application.ensure_all_started(:node)
     constructor(@sender, 1_000_000)
 
     Benchee.run(

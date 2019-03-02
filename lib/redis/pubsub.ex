@@ -6,11 +6,13 @@ defmodule Redis.PubSub do
   end
 
   def init(_args) do
-    connection_url = Application.fetch_env!(:blacksmith, :redis_url)
+    connection_url = Application.fetch_env!(:node, :redis_url)
     {:ok, pubsub} = Redix.PubSub.start_link(connection_url)
 
     channels = [
-      :transaction_processor
+      :hashcash_runner,
+      :libp2p,
+      :transaction_processor,
     ]
 
     subscriptions =
@@ -26,21 +28,32 @@ defmodule Redis.PubSub do
      }}
   end
 
-  def receive_message(channel, message) do
+  def receive_message(channel, filter) do
     subscribe(channel, self())
-    receive_message_loop(message)
+    arguments = receive_message_loop(channel, filter)
     unsubscribe(channel, self())
+    arguments
   end
 
-  def receive_message_loop(message) do
+  def receive_message_loop(channel, filter) do
     receive do
-      {:pubsub, "transaction_processor", ^message} -> message
-      {:pubsub, "transaction_processor", _message} -> receive_message_loop(message)
+      {:pubsub, ^channel, message} ->
+        if String.starts_with?(message, filter) do
+          message
+            |> String.split(" ")
+            |> List.delete_at(0)
+            |> Enum.map(&Base.decode64!/1)
+        else
+          receive_message_loop(channel, filter)
+        end
+
+      {:pubsub, ^channel, _message} ->
+        receive_message_loop(channel, filter)
     end
   end
 
   def subscribe(channel, pid) do
-    GenServer.cast(__MODULE__, {:subscribe, channel, pid})
+    GenServer.call(__MODULE__, {:subscribe, channel, pid})
   end
 
   def unsubscribe(channel, pid) do
@@ -70,13 +83,14 @@ defmodule Redis.PubSub do
     {:noreply, state}
   end
 
-  def handle_cast(
+  def handle_call(
         {:subscribe, channel, pid},
+        _from,
         state = %{pubsub: pubsub}
       ) do
     Redix.PubSub.subscribe(pubsub, channel, self())
     state = update_in(state, [:subscriptions, String.to_atom(channel)], &[pid | &1])
-    {:noreply, state}
+    {:reply, nil, state}
   end
 
   def handle_cast(
