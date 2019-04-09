@@ -67,6 +67,7 @@ fn run_for<F: Fn()>(duration_u64: u64, function: F) {
 
 fn run_transaction(conn: &vm::Connection, transaction: vm::Transaction) {
     let result = vm::run_transaction(&transaction, conn);
+    // println!("{:?}", result);
     save_result(&conn, transaction, result);
 }
 
@@ -95,6 +96,7 @@ fn get_next_transaction(conn: &vm::Connection, source: &str) -> Option<Transacti
     let transaction_bytes: Vec<u8> = conn.rpoplpush(source, "transactions::processing").unwrap();
 
     if transaction_bytes.len() == 0 {
+        println!("None");
         None
     } else {
         Some(from_slice::<Transaction>(&transaction_bytes).expect("from_slice failed"))

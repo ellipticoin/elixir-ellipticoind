@@ -10,6 +10,6 @@ crate-type = ["cdylib"]
 panic = "abort"
 
 [dependencies]
-wasm-rpc = { path = "../rust-wasm-rpc/wasm-rpc" }
-wasm-rpc-macros = { path = "../rust-wasm-rpc/wasm-rpc-macros" }
-wee_alloc = "0.4.2"
+wasm-rpc = { path = "../../../../../../rust-wasm-rpc/wasm-rpc" }
+wasm-rpc-macros = { path = "../../../../../../rust-wasm-rpc/wasm-rpc-macros" }
+#wee_alloc = "0.4.2"

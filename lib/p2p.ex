@@ -7,7 +7,7 @@ defmodule P2P do
     GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(init_arg) do
+  def init(_init_arg) do
     transport().subscribe(self())
     {:ok, %{}}
   end
@@ -37,7 +37,7 @@ defmodule P2P do
     Logger.info("Applied block #{block.number}")
   end
 
-  def handle_info({:p2p, from, message}, state) do
+  def handle_info({:p2p, _from, message}, state) do
     __MODULE__.receive(message)
     {:noreply, state}
   end

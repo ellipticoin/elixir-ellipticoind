@@ -1,5 +1,4 @@
 defmodule Node.Application do
-  import Supervisor.Spec
   use Application
 
   def start(_type, _args) do

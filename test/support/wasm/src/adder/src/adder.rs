@@ -1,5 +1,9 @@
-use wasm_rpc::Error;
+use wasm_rpc_macros::{export};
+use wasm_rpc::error::Error;
 
-pub fn add(a: u32, b: u32) -> Result<u32, Error> {
-    Ok(a + b)
+#[export]
+mod adder {
+    pub fn add(a: u64, b: u64) -> Result<u64, Error> {
+        Ok(a + b)
+    }
 }

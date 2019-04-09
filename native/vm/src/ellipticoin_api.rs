@@ -6,11 +6,13 @@ use wasmi::*;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
-const GET_MEMORY_FUNC_INDEX: usize = 2;
-const SET_MEMORY_FUNC_INDEX: usize = 3;
-const THROW_FUNC_INDEX: usize = 4;
-const CALL_FUNC_INDEX: usize = 5;
-const LOG_WRITE: usize = 6;
+const _BLOCK_NUMBER_FUNC_INDEX: usize = 2;
+const BLOCK_WINNER_FUNC_INDEX: usize = 3;
+const GET_MEMORY_FUNC_INDEX: usize = 4;
+const SET_MEMORY_FUNC_INDEX: usize = 5;
+const THROW_FUNC_INDEX: usize = 6;
+const CALL_FUNC_INDEX: usize = 7;
+const LOG_WRITE: usize = 8;
 
 pub struct EllipticoinAPI;
 
@@ -78,7 +80,12 @@ impl EllipticoinAPI {
                 let result = inner_vm.read_pointer(result_ptr).clone();
                 Ok(Some(vm.write_pointer(result.to_vec()).into()))
             }
-            LOG_WRITE => Ok(None),
+            LOG_WRITE => {
+                let _log_level = vm.read_pointer(args.nth(0));
+                let message = vm.read_pointer(args.nth(0));
+                println!("{:?}", String::from_utf8(message));
+                Ok(None)
+            }
             _ => panic!("unknown function index"),
         }
     }
@@ -91,19 +98,27 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
         _signature: &Signature,
     ) -> Result<FuncRef, InterpreterError> {
         let func_ref = match field_name {
-            "_sender" => FuncInstance::alloc_host(
+            "__sender" => FuncInstance::alloc_host(
                 Signature::new(&[][..], Some(ValueType::I32)),
                 SENDER_FUNC_INDEX,
             ),
-            "_block_hash" => FuncInstance::alloc_host(
+            "__block_hash" => FuncInstance::alloc_host(
                 Signature::new(&[][..], Some(ValueType::I32)),
                 BLOCK_HASH_FUNC_INDEX,
             ),
-            "_get_memory" => FuncInstance::alloc_host(
+            "__block_number" => FuncInstance::alloc_host(
+                Signature::new(&[][..], Some(ValueType::I32)),
+                BLOCK_HASH_FUNC_INDEX,
+            ),
+            "__block_winner" => FuncInstance::alloc_host(
+                Signature::new(&[][..], Some(ValueType::I32)),
+                BLOCK_WINNER_FUNC_INDEX,
+            ),
+            "__get_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32][..], Some(ValueType::I32)),
                 GET_MEMORY_FUNC_INDEX,
             ),
-            "_set_memory" => FuncInstance::alloc_host(
+            "__set_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32, ValueType::I32][..], None),
                 SET_MEMORY_FUNC_INDEX,
             ),
@@ -123,7 +138,7 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
                 ),
                 CALL_FUNC_INDEX,
             ),
-            "log_write" => FuncInstance::alloc_host(
+            "__log_write" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32, ValueType::I32][..], None),
                 LOG_WRITE,
             ),

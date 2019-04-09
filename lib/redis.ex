@@ -52,7 +52,7 @@ defmodule Redis do
   end
 
   def push(key, value) do
-    GenServer.cast(Redis, {:push, key, value})
+    GenServer.call(Redis, {:push, key, value})
   end
 
   def pop(key) do
@@ -128,7 +128,7 @@ defmodule Redis do
     {:noreply, redis}
   end
 
-  def handle_cast({:push, key, value}, redis) do
+  def handle_call({:push, key, value}, _from, redis) do
     if !Enum.empty?(value) do
       Redix.command(
         redis,
@@ -140,7 +140,7 @@ defmodule Redis do
       )
     end
 
-    {:noreply, redis}
+    {:reply, nil, redis}
   end
 
   def handle_call({:get_map, key, struct}, _from, redis) do

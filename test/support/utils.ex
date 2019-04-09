@@ -28,6 +28,10 @@ defmodule Test.Utils do
     |> Repo.insert!()
   end
 
+  def test_wasm_path(name) do
+      "test/support/wasm/src/#{name}/target/wasm32-unknown-unknown/debug/#{name}.wasm"
+  end
+
   def poll_for_next_block() do
     best_block= Block.best() |> Repo.one()
     poll_for_next_block(best_block)

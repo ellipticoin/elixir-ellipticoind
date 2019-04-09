@@ -24,13 +24,13 @@ fn main() {
 }
 //
 // Used for testing
-// fn sleep_random() {
-//     let mut rng = rand::thread_rng();
-//     let random_number: u64 = rng.gen_range(0, 5000);
-//     let random_millis = time::Duration::from_millis(random_number);
-//
-//     thread::sleep(random_millis);
-// }
+fn sleep_random() {
+    let mut rng = rand::thread_rng();
+    let random_number: u64 = rng.gen_range(0, 5000);
+    let random_millis = std::time::Duration::from_millis(random_number);
+
+    thread::sleep(random_millis);
+}
 
 fn hashfactor(data: Vec<u8>, target_number_of_hashes: u64) -> u64 {
     let mut rng = rand::thread_rng();

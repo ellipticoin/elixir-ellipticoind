@@ -51,7 +51,7 @@ defmodule Integration.MiningTest do
                sender: nil
              }
     ]
-    assert Enum.member?([51, 2], new_block.proof_of_work_value)
+    assert is_integer(new_block.proof_of_work_value)
     assert byte_size(new_block.hash) == 32
     assert byte_size(new_block.changeset_hash) == 32
     refute new_block.hash == <<0::256>>

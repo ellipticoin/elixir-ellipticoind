@@ -1,6 +1,5 @@
 defmodule P2P.Transport.Noise do
   use GenServer
-  alias Node.Models.Block
   @crate "noise"
 
 
@@ -8,7 +7,7 @@ defmodule P2P.Transport.Noise do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def init(options = %{
+  def init(%{
         port: port,
         bootnodes: bootnodes,
   }) do

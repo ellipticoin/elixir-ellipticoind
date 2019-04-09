@@ -1,8 +1,8 @@
 defmodule Node.Models.Transaction do
   use Ecto.Schema
-  alias Node.Repo
   alias Node.Models.{Contract, Block}
   alias Node.Ecto.Types
+  alias Node.Repo
   import Ecto.Changeset
 
   schema "transactions" do
@@ -55,10 +55,13 @@ defmodule Node.Models.Transaction do
   end
 
   def with_code(attributes) do
+    code = Repo.get_by(Contract, name: attributes.contract_name)
+           |> Map.get(:code)
+
     attributes
       |> Map.merge(%{
         contract_address: <<0::256>>,
-        code: Contract.base_contract_code(attributes.contract_name),
+        code: code,
       })
   end
 

@@ -31,17 +31,6 @@ defmodule P2P.Transport.Test do
     {:reply, nil, state}
   end
 
-  def handle_cast(
-        {:receive, message},
-        state
-  ) do
-    spawn fn ->
-      P2P.receive(message)
-    end
-
-    {:noreply, state}
-  end
-
   def handle_call(
         {:broadcast, message},
         _from,
@@ -55,5 +44,16 @@ defmodule P2P.Transport.Test do
     end)
 
     {:reply, nil, state}
+  end
+
+  def handle_cast(
+        {:receive, message},
+        state
+  ) do
+    spawn fn ->
+      P2P.receive(message)
+    end
+
+    {:noreply, state}
   end
 end

@@ -1,6 +1,5 @@
 defmodule P2P.Transport.LibP2P do
   use GenServer
-  alias Node.Models.Block
   @crate "libp2p"
 
 

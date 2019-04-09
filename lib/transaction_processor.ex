@@ -1,6 +1,4 @@
 defmodule TransactionProcessor do
-  alias Node.Repo
-  alias Redis.PubSub
   alias Node.Models.{Block, Transaction}
 
   @crate "transaction_processor"
@@ -11,8 +9,6 @@ defmodule TransactionProcessor do
     Port.open({:spawn_executable, path_to_executable()},
       args: [redis_connection_url]
     )
-
-    PubSub.subscribe(@channel, self)
 
     {:ok, state}
   end
@@ -75,9 +71,9 @@ defmodule TransactionProcessor do
     {:ok, transactions} = Redis.get_list("transactions::done")
     {:ok, results} = Redis.get_list("results")
 
-    transactions = Enum.zip(transactions, results)
+    Enum.zip(transactions, results)
       |> Enum.map(fn {transaction_bytes, result_bytes} ->
-        <<return_code::integer-size(32), return_value::binary>> = result_bytes
+        <<return_code::little-integer-size(32), return_value::binary>> = result_bytes
         transaction = Cbor.decode!(transaction_bytes)
         Cbor.decode!(transaction_bytes)
           |> Map.merge(

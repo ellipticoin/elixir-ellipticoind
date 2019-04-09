@@ -3,6 +3,9 @@ defmodule Node.Models.Block.Validations do
   alias Node.Models.Block
 
   def valid_next_block?(proposed_block, transaction_results) do
+    IO.inspect valid_transaction_results?(proposed_block, transaction_results)
+    IO.inspect valid_proof_of_work_value?(proposed_block)
+    IO.inspect greater_than_best_block?(proposed_block)
     valid_transaction_results?(proposed_block, transaction_results) &&
       valid_proof_of_work_value?(proposed_block) &&
         greater_than_best_block?(proposed_block)

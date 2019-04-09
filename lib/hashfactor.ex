@@ -5,7 +5,7 @@ defmodule Hashfactor do
     port = Port.open({:spawn_executable, path_to_executable()},
       args: [
         Base.encode16(data),
-        Integer.to_string(Config.hashfactor_target()),
+        Integer.to_string(Config.hashfactor_target())
       ],
     )
 

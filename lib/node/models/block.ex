@@ -1,11 +1,10 @@
 defmodule Node.Models.Block do
-  @transaction_processing_time 1
   use Ecto.Schema
   require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
   alias Node.Repo
-  alias Node.Models.{Contract, Transaction}
+  alias Node.Models.Transaction
   alias Node.Models.Block.Validations
 
   @primary_key false

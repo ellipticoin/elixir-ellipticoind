@@ -25,7 +25,7 @@ impl<'a> VM<'a> {
 
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(&"alloc", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
+        let vec_pointer = self.call(&"__malloc", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
         self.memory()
             .set(vec_pointer, vec_with_length.as_slice())
             .unwrap();
