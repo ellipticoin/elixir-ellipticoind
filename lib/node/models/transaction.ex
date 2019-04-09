@@ -6,8 +6,7 @@ defmodule Node.Models.Transaction do
   import Ecto.Changeset
 
   schema "transactions" do
-    belongs_to(:block, Block, source: :block_hash, foreign_key: :block_hash)
-    belongs_to(:contract, Contract)
+    field(:block_hash, :binary)
     field(:contract_name, Types.Atom)
     field(:contract_address, :binary)
     field(:function, Types.Atom)

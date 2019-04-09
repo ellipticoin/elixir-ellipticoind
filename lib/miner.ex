@@ -1,7 +1,7 @@
 defmodule Miner do
   require Logger
   use GenServer
-  alias Node.Models.Block
+  alias Node.Models.{Block, Transaction}
 
   def start_link([]), do: start_link()
   def start_link() do
@@ -37,6 +37,14 @@ defmodule Miner do
   end
 
   defp process_new_block() do
+    # Transaction.post(%{
+    #     contract_address: <<0::256>>,
+    #     contract_name: :BaseToken,
+    #     nonce: 1,
+    #     function: :mint,
+    #     arguments: [],
+    #     sender: Config.public_key(),
+    # })
     case TransactionProcessor.process_new_block() do
       :cancelled -> mining_loop()
       new_block -> hashfactor(new_block)

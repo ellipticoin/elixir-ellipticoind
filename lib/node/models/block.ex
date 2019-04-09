@@ -9,13 +9,13 @@ defmodule Node.Models.Block do
 
   @primary_key false
   schema "blocks" do
-    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :block_hash, type: :binary)
-    has_many(:transactions, Transaction, references: :block_hash)
+    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :block_hash, type: :binary, define_field: false)
+    field(:block_hash, :binary, default: <<0::256>>, primary_key: true)
+    has_many(:transactions, Transaction, references: :block_hash, foreign_key: :block_hash)
     field(:number, :integer, default: 0)
     field(:total_burned, :integer, default: 0)
     field(:winner, :binary, default: <<0::256>>)
     field(:changeset_hash, :binary)
-    field(:hash, :binary, source: :block_hash, default: <<0::256>>, primary_key: true)
     field(:proof_of_work_value, :integer)
     timestamps()
   end
@@ -59,7 +59,7 @@ defmodule Node.Models.Block do
   def changeset(user, params \\ %{}) do
     user
     |> cast(params, [
-      :hash,
+      :block_hash,
       :number,
       :changeset_hash,
       :proof_of_work_value,
@@ -67,7 +67,7 @@ defmodule Node.Models.Block do
     ])
     |> cast_assoc(:transactions)
     |> validate_required([
-      :hash,
+      :block_hash,
       :changeset_hash,
       :number,
       :proof_of_work_value,
@@ -79,7 +79,7 @@ defmodule Node.Models.Block do
 
   def as_map(attributes) do
     Map.take(attributes, [
-        :hash,
+        :block_hash,
         :proof_of_work_value,
         :total_burned,
         :changeset_hash,
@@ -93,7 +93,7 @@ defmodule Node.Models.Block do
     |> Map.put(
       :parent_hash,
       (if (Map.has_key?(attributes, :parent) && Ecto.assoc_loaded?(attributes.parent)), do:
-        attributes.parent.hash, else: nil)
+        attributes.parent.block_hash, else: nil)
     )
   end
 
@@ -122,7 +122,7 @@ defmodule Node.Models.Block do
       Map.merge(
         attributes,
         %{
-          hash: Crypto.hash(as_binary(attributes)),
+          block_hash: Crypto.hash(as_binary(attributes)),
         }
       )
     )
@@ -143,7 +143,7 @@ defmodule Node.Models.Block do
         :proof_of_work_value,
         :parent_hash,
         :parent,
-        :hash,
+        :block_hash,
         :total_burned,
       ])
       |> Cbor.encode()

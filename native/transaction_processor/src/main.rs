@@ -1,23 +1,29 @@
+#![feature(rustc_private)]
 #[macro_use]
 extern crate lazy_static;
+extern crate serialize;
 extern crate serde;
 extern crate serde_cbor;
 extern crate vm;
 
+use serialize::hex::FromHex;
 use serde_cbor::{from_slice, to_vec};
 use std::env::args;
 use std::{io, process, thread, time};
-use vm::{Commands, Transaction};
+use vm::{Commands, Transaction, Env};
 
 lazy_static! {
     static ref COMMAND: String = {
-        args().nth(1).unwrap()
+        args().nth(2).unwrap()
     };
     static ref TRANSACTION_PROCESSING_TIME: u64 = {
         args().nth(3).unwrap().parse().unwrap()
     };
+    static ref ENV: Vec<u8> = {
+        args().nth(3).unwrap().from_hex().unwrap()
+    };
     static ref REDIS: redis::Client ={
-        redis::Client::open(args().nth(2).unwrap().as_str()).unwrap()
+        redis::Client::open(args().nth(1).unwrap().as_str()).unwrap()
     };
 }
 
@@ -37,17 +43,23 @@ fn main() {
 
 fn process_existing_block() {
     let conn = REDIS.get_connection().unwrap();
+    let env = from_slice::<Env>(&ENV).unwrap();
 
     for transaction in get_next_transaction(&conn, "block") {
-        run_transaction(&conn, transaction);
+        run_transaction(&conn, &transaction, &env);
     }
 }
 
 fn process_new_block() {
+    let env = Env {
+        block_hash: vec![],
+        block_winner: vec![],
+        block_number: 1,
+    };
     let conn = REDIS.get_connection().unwrap();
     run_for(*TRANSACTION_PROCESSING_TIME, || {
         match get_next_transaction(&conn, "transactions::queued") {
-            Some(transaction) => run_transaction(&conn, transaction),
+            Some(transaction) => run_transaction(&conn, &transaction, &env),
             None => sleep_1_milli(),
         };
     })
@@ -65,13 +77,12 @@ fn run_for<F: Fn()>(duration_u64: u64, function: F) {
     }
 }
 
-fn run_transaction(conn: &vm::Connection, transaction: vm::Transaction) {
-    let result = vm::run_transaction(&transaction, conn);
-    // println!("{:?}", result);
+fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env) {
+    let result = vm::run_transaction(transaction, conn, env);
     save_result(&conn, transaction, result);
 }
 
-fn save_result(conn: &vm::Connection, transaction: Transaction, result: Vec<u8>) {
+fn save_result(conn: &vm::Connection, transaction: &Transaction, result: Vec<u8>) {
     let transaction_bytes = to_vec(&transaction).unwrap();
     let _: () = redis::pipe()
         .atomic()
@@ -96,7 +107,6 @@ fn get_next_transaction(conn: &vm::Connection, source: &str) -> Option<Transacti
     let transaction_bytes: Vec<u8> = conn.rpoplpush(source, "transactions::processing").unwrap();
 
     if transaction_bytes.len() == 0 {
-        println!("None");
         None
     } else {
         Some(from_slice::<Transaction>(&transaction_bytes).expect("from_slice failed"))

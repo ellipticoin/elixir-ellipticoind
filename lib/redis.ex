@@ -40,7 +40,7 @@ defmodule Redis do
   end
 
   def set_binary(key, value) do
-    GenServer.cast(Redis, {:set_binary, key, value})
+    GenServer.call(Redis, {:set_binary, key, value})
   end
 
   def set_map(key, value) do
@@ -49,6 +49,10 @@ defmodule Redis do
 
   def get_map(key, struct \\ nil) do
     GenServer.call(Redis, {:get_map, key, struct})
+  end
+
+  def get_binary(key) do
+    GenServer.call(Redis, {:get_binary, key})
   end
 
   def push(key, value) do
@@ -118,14 +122,14 @@ defmodule Redis do
     {:noreply, redis}
   end
 
-  def handle_cast({:set_binary, key, value}, redis) do
+  def handle_call({:set_binary, key, value}, _from, redis) do
     Redix.command(redis, [
       "SET",
       key,
       value
     ])
 
-    {:noreply, redis}
+    {:reply, nil, redis}
   end
 
   def handle_call({:push, key, value}, _from, redis) do
@@ -158,6 +162,16 @@ defmodule Redis do
           {String.to_atom(k), v}
         end
       end)
+
+    {:reply, value, redis}
+  end
+
+  def handle_call({:get_binary, key}, _from, redis) do
+    value =
+      Redix.command(redis, [
+        "GET",
+        key,
+      ])
 
     {:reply, value, redis}
   end

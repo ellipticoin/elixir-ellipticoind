@@ -6,6 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
+use env::Env;
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -45,10 +46,10 @@ pub struct Transaction {
     pub arguments: Vec<Value>,
 }
 
-pub fn run_transaction(transaction: &Transaction, db: &Connection) -> Vec<u8> {
+pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> Vec<u8> {
     let module = EllipticoinAPI::new_module(&transaction.code);
 
-    let mut vm = VM::new(db, transaction, &module);
+    let mut vm = VM::new(db, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

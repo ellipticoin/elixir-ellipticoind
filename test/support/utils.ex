@@ -9,14 +9,22 @@ defmodule Test.Utils do
 
   def set_balances(balances) do
     token_contract_address =
-      Constants.system_address() <> (Constants.base_token_name() |> pad_trailing(32))
+      <<0::256>> <> ("BaseToken" |> pad_trailing(32))
 
     for {address, balance} <- balances do
       Redis.set_binary(
-        token_contract_address <> "balances" <> address,
+        token_contract_address <> <<0>> <> address,
         <<balance::little-size(64)>>
       )
     end
+  end
+
+  def get_balance(address) do
+    token_contract_address =
+      <<0::256>> <> ("BaseToken" |> pad_trailing(32))
+    Redis.get_binary(token_contract_address <> <<0>> <> address)
+      |> ok
+      |> :binary.decode_unsigned(:little)
   end
 
   def insert_contracts do
@@ -46,8 +54,10 @@ defmodule Test.Utils do
         poll_for_next_block(best_block)
       is_nil(previous_block) and !is_nil(best_block) ->
         best_block
+        |> Repo.preload(:transactions)
       best_block.number > previous_block.number ->
         best_block
+        |> Repo.preload(:transactions)
       true ->
         :timer.sleep(100)
         poll_for_next_block(best_block)

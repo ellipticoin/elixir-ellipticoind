@@ -6,7 +6,7 @@ use wasmi::*;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
-const _BLOCK_NUMBER_FUNC_INDEX: usize = 2;
+const BLOCK_NUMBER_FUNC_INDEX: usize = 2;
 const BLOCK_WINNER_FUNC_INDEX: usize = 3;
 const GET_MEMORY_FUNC_INDEX: usize = 4;
 const SET_MEMORY_FUNC_INDEX: usize = 5;
@@ -42,6 +42,15 @@ impl EllipticoinAPI {
 
                 Ok(Some(vm.write_pointer(block_hash.to_vec()).into()))
             }
+            BLOCK_NUMBER_FUNC_INDEX => {
+                let block_number: serde_cbor::Value = vm.env.block_number.into();
+                Ok(Some(vm.write_pointer(serde_cbor::to_vec(&block_number).unwrap()).into()))
+            }
+            BLOCK_WINNER_FUNC_INDEX => {
+                let block_winner = vm.db.read("block_winner".as_bytes());
+
+                Ok(Some(vm.write_pointer(block_winner.to_vec()).into()))
+            }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.read(key.clone());
@@ -64,7 +73,7 @@ impl EllipticoinAPI {
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = EllipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(vm.db, vm.transaction, &module);
+                let mut inner_vm = VM::new(vm.db, vm.env, vm.transaction, &module);
                 let mut args = Vec::new();
                 for arg in args_iter {
                     if arg.is_number() {
@@ -83,7 +92,7 @@ impl EllipticoinAPI {
             LOG_WRITE => {
                 let _log_level = vm.read_pointer(args.nth(0));
                 let message = vm.read_pointer(args.nth(0));
-                println!("{:?}", String::from_utf8(message));
+                // println!("{:?}", String::from_utf8(message));
                 Ok(None)
             }
             _ => panic!("unknown function index"),
@@ -108,7 +117,7 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
             ),
             "__block_number" => FuncInstance::alloc_host(
                 Signature::new(&[][..], Some(ValueType::I32)),
-                BLOCK_HASH_FUNC_INDEX,
+                BLOCK_NUMBER_FUNC_INDEX,
             ),
             "__block_winner" => FuncInstance::alloc_host(
                 Signature::new(&[][..], Some(ValueType::I32)),

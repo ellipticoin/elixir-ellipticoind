@@ -34,15 +34,6 @@ defmodule Router do
     send_resp(conn, 200, result)
   end
 
-  post "/blocks" do
-    if Block.valid_next_block?(conn.params) do
-      Block.apply(conn.params)
-      send_resp(conn, 201, "")
-    else
-      send_resp(conn, 400, "Invalid block")
-    end
-  end
-
   get "/blocks" do
     limit =
       if conn.query_params["limit"] do

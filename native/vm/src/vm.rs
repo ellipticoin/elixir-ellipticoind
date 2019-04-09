@@ -7,19 +7,28 @@ use std::mem::transmute;
 use transaction::Transaction;
 use wasmi::RuntimeValue;
 use wasmi::*;
+use env::Env;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub db: &'a DB,
     pub transaction: &'a Transaction,
+    pub env: &'a Env,
+
 }
 
 impl<'a> VM<'a> {
-    pub fn new(db: &'a DB, transaction: &'a Transaction, main: &'a ModuleRef) -> VM<'a> {
+    pub fn new(
+        db: &'a DB,
+        env: &'a Env,
+        transaction: &'a Transaction,
+        main: &'a ModuleRef
+    ) -> VM<'a> {
         VM {
             instance: main,
             db: db,
             transaction: transaction,
+            env: env,
         }
     }
 

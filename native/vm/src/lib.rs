@@ -16,9 +16,11 @@ mod ellipticoin_api;
 mod helpers;
 mod transaction;
 mod vm;
+pub mod env;
 pub use ellipticoin_api::EllipticoinAPI;
 
 pub use db::DB;
+pub use env::Env;
 pub use transaction::{run_transaction, Transaction};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;
@@ -26,4 +28,4 @@ pub use wasmi::RuntimeValue;
 pub use redis::{pipe, Client, Commands, Connection, ControlFlow, PubSubCommands};
 pub use rustler::resource::ResourceArc;
 pub use rustler::types::atom::Atom;
-pub use rustler::{Decoder, Encoder, Env, NifResult, Term};
+pub use rustler::{Decoder, Encoder, NifResult, Term};

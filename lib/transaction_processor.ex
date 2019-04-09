@@ -17,23 +17,23 @@ defmodule TransactionProcessor do
     transaction_processing_time = Application.fetch_env!(:node, :transaction_processing_time)
     redis_connection_url = Application.fetch_env!(:node, :redis_url)
     port = run([
-      "process_new_block",
       redis_connection_url,
+      "process_new_block",
       Integer.to_string(transaction_processing_time),
     ])
 
-    receive do
-      :cancel ->
-        Port.close(port)
-        :cancelled
-      {_port, {:data, '\n'}} -> nil
-      message -> IO.inspect message
-    end
-
+    wait_until_done(port)
     new_block_from_redis()
   end
 
-  def process(transactions) do
+  def process(
+    transactions,
+    env \\ %{
+      block_number: 1,
+      block_winner: <<>>,
+      block_hash: <<>>,
+    }
+  ) do
     redis_connection_url = Application.fetch_env!(:node, :redis_url)
     encoded_transactions = Enum.map(transactions, fn transaction ->
       transaction
@@ -41,21 +41,31 @@ defmodule TransactionProcessor do
         |> Cbor.encode()
     end)
     Redis.push("block", encoded_transactions)
-    _port = run([
-      "process_existing_block",
+    port = run([
       redis_connection_url,
+      "process_existing_block",
+      Cbor.encode(env) |> Base.encode16
     ])
 
-    receive do
-      {_port, {:data, '\n'}} -> nil
-      message -> IO.inspect message
-    end
+    wait_until_done(port)
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
 
     %{
       changeset_hash: Crypto.hash(changeset),
       transactions: done_transactions(),
     }
+  end
+
+  def wait_until_done(port) do
+    receive do
+      :cancel ->
+        Port.close(port)
+        :cancelled
+      {_port, {:data, '\n'}} -> nil
+      {_port, {:data, message}} ->
+        IO.write message
+        wait_until_done(port)
+    end
   end
 
   def new_block_from_redis() do
