@@ -22,9 +22,14 @@ defmodule Test.Utils do
   def get_balance(address) do
     token_contract_address =
       <<0::256>> <> ("BaseToken" |> pad_trailing(32))
-    Redis.get_binary(token_contract_address <> <<0>> <> address)
-      |> ok
-      |> :binary.decode_unsigned(:little)
+    balance_bytes = Redis.get_binary(token_contract_address <> <<0>> <> address)
+                    |> ok
+
+    if is_nil(balance_bytes) do
+      0
+    else
+      :binary.decode_unsigned(balance_bytes, :little)
+    end
   end
 
   def insert_contracts do

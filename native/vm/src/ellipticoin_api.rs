@@ -40,16 +40,15 @@ impl EllipticoinAPI {
             BLOCK_HASH_FUNC_INDEX => {
                 let block_hash = vm.db.read("best_block_hash".as_bytes());
 
-                Ok(Some(vm.write_pointer(block_hash.to_vec()).into()))
+                Ok(Some(vm.write_pointer(block_hash.to_vec()).into()).into())
             }
             BLOCK_NUMBER_FUNC_INDEX => {
                 let block_number: serde_cbor::Value = vm.env.block_number.into();
-                Ok(Some(vm.write_pointer(serde_cbor::to_vec(&block_number).unwrap()).into()))
+
+                Ok(Some(vm.write_pointer(to_vec(&block_number).unwrap()).into()))
             }
             BLOCK_WINNER_FUNC_INDEX => {
-                let block_winner = vm.db.read("block_winner".as_bytes());
-
-                Ok(Some(vm.write_pointer(block_winner.to_vec()).into()))
+                Ok(Some(vm.write_pointer(vm.env.block_winner.clone()).into()))
             }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
@@ -91,8 +90,8 @@ impl EllipticoinAPI {
             }
             LOG_WRITE => {
                 let _log_level = vm.read_pointer(args.nth(0));
-                let message = vm.read_pointer(args.nth(0));
-                // println!("{:?}", String::from_utf8(message));
+                let message = vm.read_pointer(args.nth(1));
+                println!("{:?}", String::from_utf8(message));
                 Ok(None)
             }
             _ => panic!("unknown function index"),

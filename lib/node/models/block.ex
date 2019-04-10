@@ -9,8 +9,8 @@ defmodule Node.Models.Block do
 
   @primary_key false
   schema "blocks" do
-    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :block_hash, type: :binary, define_field: false)
     field(:block_hash, :binary, default: <<0::256>>, primary_key: true)
+    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :block_hash, type: :binary, define_field: false)
     has_many(:transactions, Transaction, references: :block_hash, foreign_key: :block_hash)
     field(:number, :integer, default: 0)
     field(:total_burned, :integer, default: 0)

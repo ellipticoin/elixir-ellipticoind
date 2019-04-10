@@ -46,6 +46,7 @@ defmodule Router do
     blocks =
       Block.latest(limit)
       |> Repo.all()
+      |> Repo.preload(:transactions)
       |> Enum.map(&Block.as_map/1)
 
     send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))

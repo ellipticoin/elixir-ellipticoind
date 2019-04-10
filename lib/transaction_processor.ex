@@ -16,9 +16,15 @@ defmodule TransactionProcessor do
   def process_new_block() do
     transaction_processing_time = Application.fetch_env!(:node, :transaction_processing_time)
     redis_connection_url = Application.fetch_env!(:node, :redis_url)
+    env = %{
+      block_number: 1,
+      block_winner: Config.public_key(),
+      block_hash: <<>>,
+    }
     port = run([
       redis_connection_url,
       "process_new_block",
+      Cbor.encode(env) |> Base.encode16,
       Integer.to_string(transaction_processing_time),
     ])
 
@@ -30,7 +36,7 @@ defmodule TransactionProcessor do
     transactions,
     env \\ %{
       block_number: 1,
-      block_winner: <<>>,
+      block_winner: Config.public_key(),
       block_hash: <<>>,
     }
   ) do
@@ -49,6 +55,7 @@ defmodule TransactionProcessor do
 
     wait_until_done(port)
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
+    Redis.delete("changeset")
 
     %{
       changeset_hash: Crypto.hash(changeset),
@@ -70,6 +77,7 @@ defmodule TransactionProcessor do
 
   def new_block_from_redis() do
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
+    Redis.delete("changeset")
     Block.next_block_params()
     |> Map.merge(%{
       changeset_hash: Crypto.hash(changeset),
@@ -80,14 +88,16 @@ defmodule TransactionProcessor do
   def done_transactions do
     {:ok, transactions} = Redis.get_list("transactions::done")
     {:ok, results} = Redis.get_list("results")
+    Redis.delete("transactions::done")
+    Redis.delete("results")
 
     Enum.zip(transactions, results)
       |> Enum.map(fn {transaction_bytes, result_bytes} ->
         <<return_code::little-integer-size(32), return_value::binary>> = result_bytes
         transaction = Cbor.decode!(transaction_bytes)
         Cbor.decode!(transaction_bytes)
-          |> Map.merge(
-            %{
+          |> Map.merge(%{
+            block_hash: nil,
             arguments: transaction.arguments,
             return_code: return_code,
             return_value: Cbor.decode!(return_value)

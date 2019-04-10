@@ -37,14 +37,14 @@ defmodule Miner do
   end
 
   defp process_new_block() do
-    # Transaction.post(%{
-    #     contract_address: <<0::256>>,
-    #     contract_name: :BaseToken,
-    #     nonce: 1,
-    #     function: :mint,
-    #     arguments: [],
-    #     sender: Config.public_key(),
-    # })
+    Transaction.post(%{
+        contract_address: <<0::256>>,
+        contract_name: :BaseToken,
+        nonce: 1,
+        function: :mint,
+        arguments: [],
+        sender: Config.public_key(),
+    })
     case TransactionProcessor.process_new_block() do
       :cancelled -> mining_loop()
       new_block -> hashfactor(new_block)

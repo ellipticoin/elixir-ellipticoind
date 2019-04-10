@@ -18,7 +18,7 @@ defmodule Hashfactor do
       :cancel ->
         Port.close(port)
         :cancelled
-      error -> IO.inspect error
+      message -> IO.puts message
     end
   end
 

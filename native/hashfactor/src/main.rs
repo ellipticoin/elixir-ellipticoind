@@ -18,7 +18,7 @@ fn main() {
     exit_on_close();
     let data = args().nth(1).unwrap().from_hex().unwrap();
     let target_number_of_hashes = args().nth(2).unwrap().parse().unwrap();
-    // sleep_random();
+    // thread::sleep(std::time::Duration::from_millis(5000));
     let nonce = hashfactor(data, target_number_of_hashes);
     println!("{}", nonce);
 }
@@ -33,8 +33,9 @@ fn sleep_random() {
 }
 
 fn hashfactor(data: Vec<u8>, target_number_of_hashes: u64) -> u64 {
-    let mut rng = rand::thread_rng();
-    let mut nonce = rng.gen_range(0, target_number_of_hashes);
+    // let mut rng = rand::thread_rng();
+    // let mut nonce = rng.gen_range(0, target_number_of_hashes);
+    let mut nonce = 0;
     let mut hash: Vec<u8>;
     let data_hash = sha256(data);
 

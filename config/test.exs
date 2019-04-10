@@ -3,7 +3,7 @@ config :logger, level: :warn
 config :bypass, adapter: Plug.Adapters.Cowboy2
 config :node, base_contracts_path: "./priv/base_contracts"
 config :node, port: 4047
-config :node, transaction_processing_time: 1
+config :node, transaction_processing_time: 1000
 config :node, mining_target_time: 1
 config :node, enable_miner: false
 config :node, bootnode: true

@@ -22,7 +22,7 @@ defmodule WebsocketHandler do
   end
 
   def websocket_info({_channel, message}, state) do
-    body = apply(message.__struct__, :as_bytes, [message])
+    body = apply(message.__struct__, :as_binary, [message])
     {:reply, {:binary, body}, state}
   end
 

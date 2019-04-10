@@ -9,7 +9,7 @@ config :node, port: 4460
 config :node, keyfile: "priv/localhost.key"
 config :node, certfile: "priv/localhost.crt"
 config :node, dhfile: nil
-config :node, https: true
+config :node, https: false
 config :node, p2p_transport: P2P.Transport.Noise
 config :node, P2P.Transport.Noise,
   private_key: "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==" |> Base.decode64!(),

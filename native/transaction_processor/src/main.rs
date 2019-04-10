@@ -17,7 +17,7 @@ lazy_static! {
         args().nth(2).unwrap()
     };
     static ref TRANSACTION_PROCESSING_TIME: u64 = {
-        args().nth(3).unwrap().parse().unwrap()
+        args().nth(4).unwrap().parse().unwrap()
     };
     static ref ENV: Vec<u8> = {
         args().nth(3).unwrap().from_hex().unwrap()
@@ -51,11 +51,7 @@ fn process_existing_block() {
 }
 
 fn process_new_block() {
-    let env = Env {
-        block_hash: vec![],
-        block_winner: vec![],
-        block_number: 1,
-    };
+    let env = from_slice::<Env>(&ENV).unwrap();
     let conn = REDIS.get_connection().unwrap();
     run_for(*TRANSACTION_PROCESSING_TIME, || {
         match get_next_transaction(&conn, "transactions::queued") {

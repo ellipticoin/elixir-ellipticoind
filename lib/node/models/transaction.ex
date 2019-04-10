@@ -22,6 +22,7 @@ defmodule Node.Models.Transaction do
 
   @doc false
   def changeset(transaction, attrs) do
+    # IO.inspect attrs
     transaction
     |> cast(attrs, [
       :contract_address,
@@ -43,6 +44,7 @@ defmodule Node.Models.Transaction do
   def as_map(attributes) do
     attributes
       |> Map.take([
+        :block_hash,
         :sender,
         :function,
         :contract_name,

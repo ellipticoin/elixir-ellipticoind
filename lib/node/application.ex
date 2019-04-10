@@ -1,4 +1,5 @@
 defmodule Node.Application do
+  alias Node.Models.Contract
   use Application
 
   def start(_type, _args) do
@@ -7,6 +8,7 @@ defmodule Node.Application do
     children = [
       Node.Repo,
       {Redis, name: Redis},
+      {Contract, name: Contract},
       {Redis.PubSub, name: Redis.PubSub},
       {TransactionPool, name: TransactionPool},
       {VM, name: VM},

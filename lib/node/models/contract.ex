@@ -1,7 +1,9 @@
 defmodule Node.Models.Contract do
+  use Agent
   use Ecto.Schema
   import Ecto.Changeset
   alias Node.Repo
+  alias Node.Models.Contract
   alias Node.Ecto.Types
 
   @primary_key false
@@ -10,6 +12,10 @@ defmodule Node.Models.Contract do
     field(:name, Types.Atom, primary_key: true)
     field(:code, :binary)
     timestamps()
+  end
+
+  def start_link(_opts) do
+    Agent.start_link(&deploy_system_contracts/0)
   end
 
   def get(%{
@@ -33,6 +39,19 @@ defmodule Node.Models.Contract do
     else
       {:error, error_code}
     end
+  end
+
+  def deploy_system_contracts do
+    case Repo.get_by(Contract, name: :BaseToken) do
+      nil  -> %Contract{name: nil}
+      contract -> contract
+    end
+    |> Contract.changeset(%{
+      address: <<0::256>>,
+      name: :BaseToken,
+      code: Contract.base_contract_code(:BaseToken)
+    })
+    |> Repo.insert_or_update()
   end
 
   def changeset(contract, params) do

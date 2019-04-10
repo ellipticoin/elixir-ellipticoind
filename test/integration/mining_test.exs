@@ -6,12 +6,8 @@ defmodule Integration.MiningTest do
   use OK.Pipe
 
   setup do
+    Redis.reset()
     checkout_repo()
-    insert_contracts()
-
-    on_exit(fn ->
-      Redis.reset()
-    end)
   end
 
   test "mining a block" do
@@ -51,6 +47,15 @@ defmodule Integration.MiningTest do
     end)
     == [
              %{
+               arguments: [],
+               contract_address: <<0::256>>,
+               contract_name: :BaseToken,
+               function: :mint,
+               return_code: 0,
+               return_value: nil,
+               sender: nil
+             },
+             %{
                arguments: [@bob, 50],
                contract_address: <<0::256>>,
                contract_name: :BaseToken,
@@ -67,8 +72,8 @@ defmodule Integration.MiningTest do
     refute Map.has_key?(new_block, :parent_hash)
 
 
-    balance = get_balance(@alice)
-    assert balance == 50
+    assert get_balance(@alice) == 50
+    assert get_balance(Config.public_key()) == 640000
   end
 
   test "a new block is mined on the parent chain and another node is the winner" do
@@ -78,6 +83,7 @@ defmodule Integration.MiningTest do
     })
     transaction =
       %Transaction{
+        block_hash: nil,
         nonce: 1,
         contract_name: :BaseToken,
         contract_address: <<0::256>>,
@@ -91,7 +97,7 @@ defmodule Integration.MiningTest do
     block_bytes =
       %Block{
         number: 0,
-        proof_of_work_value: 2485,
+        proof_of_work_value: 277,
         block_hash: <<0::256>>,
         changeset_hash:
           Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
