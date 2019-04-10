@@ -5,7 +5,9 @@ defmodule Node.Models.Transaction do
   alias Node.Repo
   import Ecto.Changeset
 
+  @private_key false
   schema "transactions" do
+    field(:hash, :binary, default: <<0::256>>, primary_key: true)
     field(:block_hash, :binary)
     field(:contract_name, Types.Atom)
     field(:contract_address, :binary)
@@ -48,7 +50,7 @@ defmodule Node.Models.Transaction do
   def as_map(attributes) do
     attributes
       |> Map.take([
-        # :hash,
+        :hash,
         :block_hash,
         :sender,
         :function,
