@@ -9,9 +9,9 @@ defmodule Node.Models.Block do
 
   @primary_key false
   schema "blocks" do
-    field(:block_hash, :binary, default: <<0::256>>, primary_key: true)
-    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :block_hash, type: :binary, define_field: false)
-    has_many(:transactions, Transaction, references: :block_hash, foreign_key: :block_hash)
+    field(:hash, :binary, default: <<0::256>>, primary_key: true)
+    belongs_to(:parent, __MODULE__, source: :parent_hash, foreign_key: :hash, type: :binary, define_field: false)
+    has_many(:transactions, Transaction, references: :hash, foreign_key: :block_hash)
     field(:number, :integer, default: 0)
     field(:total_burned, :integer, default: 0)
     field(:winner, :binary, default: <<0::256>>)
@@ -45,10 +45,6 @@ defmodule Node.Models.Block do
   def latest(query \\ __MODULE__, count),
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
-  def valid_next_block?(_block_info) do
-    true
-  end
-
   def log(message, block) do
     Logger.info(
       "#{message}: " <>
@@ -56,10 +52,11 @@ defmodule Node.Models.Block do
     )
   end
 
-  def changeset(user, params \\ %{}) do
+  def changeset(user, attrs \\ %{}) do
+    params = set_hash(attrs)
     user
-    |> cast(params, [
-      :block_hash,
+    |> cast(attrs, [
+      :hash,
       :number,
       :changeset_hash,
       :proof_of_work_value,
@@ -67,7 +64,7 @@ defmodule Node.Models.Block do
     ])
     |> cast_assoc(:transactions)
     |> validate_required([
-      :block_hash,
+      :hash,
       :changeset_hash,
       :number,
       :proof_of_work_value,
@@ -75,11 +72,15 @@ defmodule Node.Models.Block do
     ])
   end
 
+  def set_hash(attrs) do
+    Map.put(attrs, :hash, hash(attrs))
+  end
+
   def hash(block), do: Crypto.hash(as_binary(block))
 
   def as_map(attributes) do
     Map.take(attributes, [
-        :block_hash,
+        :hash,
         :proof_of_work_value,
         :total_burned,
         :changeset_hash,
@@ -93,7 +94,7 @@ defmodule Node.Models.Block do
     |> Map.put(
       :parent_hash,
       (if (Map.has_key?(attributes, :parent) && Ecto.assoc_loaded?(attributes.parent)), do:
-        attributes.parent.block_hash, else: nil)
+        attributes.parent.hash, else: nil)
     )
   end
 
@@ -122,7 +123,7 @@ defmodule Node.Models.Block do
       Map.merge(
         attributes,
         %{
-          block_hash: Crypto.hash(as_binary(attributes)),
+          hash: Crypto.hash(as_binary(attributes)),
         }
       )
     )
@@ -143,7 +144,7 @@ defmodule Node.Models.Block do
         :proof_of_work_value,
         :parent_hash,
         :parent,
-        :block_hash,
+        :hash,
         :total_burned,
       ])
       |> Cbor.encode()

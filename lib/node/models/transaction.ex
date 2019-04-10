@@ -22,15 +22,15 @@ defmodule Node.Models.Transaction do
 
   @doc false
   def changeset(transaction, attrs) do
-    # IO.inspect attrs
+    attrs = set_hash(attrs)
     transaction
     |> cast(attrs, [
-      :contract_address,
-      :contract_name,
-      :return_code,
-      :return_value,
-      :function,
-      :arguments
+        :contract_address,
+        :contract_name,
+        :return_code,
+        :return_value,
+        :function,
+        :arguments
     ])
     |> validate_required([
       :contract_address,
@@ -41,9 +41,14 @@ defmodule Node.Models.Transaction do
     ])
   end
 
+  def set_hash(attrs) do
+    Map.put(attrs, :hash, Crypto.hash(as_binary(attrs)))
+  end
+
   def as_map(attributes) do
     attributes
       |> Map.take([
+        # :hash,
         :block_hash,
         :sender,
         :function,
@@ -79,4 +84,8 @@ defmodule Node.Models.Transaction do
     with_code(parameters)
       |> TransactionPool.add()
   end
+
+  def as_binary(transaction), do:
+    as_map(transaction)
+    |> Cbor.encode()
 end

@@ -66,9 +66,9 @@ defmodule Integration.MiningTest do
              }
     ]
     assert is_integer(new_block.proof_of_work_value)
-    assert byte_size(new_block.block_hash) == 32
+    assert byte_size(new_block.hash) == 32
     assert byte_size(new_block.changeset_hash) == 32
-    refute new_block.block_hash == <<0::256>>
+    refute new_block.hash == <<0::256>>
     refute Map.has_key?(new_block, :parent_hash)
 
 
@@ -98,7 +98,7 @@ defmodule Integration.MiningTest do
       %Block{
         number: 0,
         proof_of_work_value: 277,
-        block_hash: <<0::256>>,
+        hash: <<0::256>>,
         changeset_hash:
           Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
         transactions: [transaction],

@@ -3,7 +3,7 @@ defmodule Node.Repo.Migrations.AddBlocksTable do
 
   def change do
     create table("blocks", primary_key: false) do
-      add :block_hash, :binary, private_key: true
+      add :hash, :binary, private_key: true
       add :number, :integer
       add :total_burned, :integer
       add :winner, :binary
@@ -13,10 +13,10 @@ defmodule Node.Repo.Migrations.AddBlocksTable do
       timestamps()
     end
 
-    create unique_index(:blocks, [:block_hash])
+    create unique_index(:blocks, [:hash])
 
     alter table("blocks", primary_key: false) do
-      add :parent_hash, references(:blocks, column: :block_hash, type: :binary)
+      add :parent_hash, references(:blocks, column: :hash, type: :binary)
     end
   end
 end
