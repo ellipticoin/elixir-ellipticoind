@@ -10,7 +10,7 @@ use num_bigint::BigUint;
 use sha2::{Sha256, Digest};
 use num_traits::{ToPrimitive, FromPrimitive};
 use serialize::hex::{FromHex};
-use std::{io, process, thread, env, env::args};
+use std::{io, process, thread, env::args};
 
 const NUMERATOR_BYTE_LENGTH: usize = 8;
 
@@ -24,9 +24,8 @@ fn main() {
 }
 
 fn hashfactor(data: Vec<u8>, target_number_of_hashes: u64) -> u64 {
-    // let mut rng = rand::thread_rng();
-    // let mut nonce = rng.gen_range(0, target_number_of_hashes);
-    let mut nonce = 0;
+    let mut rng = rand::thread_rng();
+    let mut nonce = rng.gen_range(0, target_number_of_hashes);
     let mut hash: Vec<u8>;
     let data_hash = sha256(data);
 
