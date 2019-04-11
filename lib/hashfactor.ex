@@ -6,7 +6,7 @@ defmodule Hashfactor do
       args: [
         Base.encode16(data),
         Integer.to_string(Config.hashfactor_target())
-      ],
+      ]
     )
 
     receive do

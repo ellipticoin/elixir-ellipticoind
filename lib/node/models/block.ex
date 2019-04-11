@@ -52,10 +52,13 @@ defmodule Node.Models.Block do
     )
   end
 
-  def changeset(user, attrs \\ %{}) do
-    params = set_hash(attrs)
+  def changeset(user, params \\ %{}) do
+    params = set_hash(params)
+    # params = %{params | transactions: Enum.map(params.transactions, fn transaction ->
+    #   %{transaction| block_hash: hash(params)}
+    # end)}
     user
-    |> cast(attrs, [
+    |> cast(params, [
       :hash,
       :number,
       :changeset_hash,
@@ -118,15 +121,7 @@ defmodule Node.Models.Block do
   end
 
   def insert(attributes) do
-    block = changeset(
-      %__MODULE__{},
-      Map.merge(
-        attributes,
-        %{
-          hash: Crypto.hash(as_binary(attributes)),
-        }
-      )
-    )
+    block = changeset(%__MODULE__{}, attributes)
     |> Repo.insert!()
 
     WebsocketHandler.broadcast(:blocks, block)

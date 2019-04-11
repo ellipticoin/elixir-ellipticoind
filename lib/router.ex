@@ -1,4 +1,5 @@
 defmodule Router do
+  import Utils
   require Logger
   use Plug.Router
 
@@ -24,14 +25,29 @@ defmodule Router do
   plug(:match)
   plug(:dispatch)
 
-  get "/:address/:contract_name" do
-    result =
-      conn
-      |> parse_get_request()
+  get "/transactions/:hash" do
+    resp = Transaction
+      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
+      |> Transaction.as_binary()
 
-    {:ok, result} = Contract.get(result)
+    send_resp(conn, 200, resp)
+  end
 
-    send_resp(conn, 200, result)
+  get "/blocks/:hash" do
+    resp = Block
+      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
+      |> Repo.preload(:transactions)
+      |> Block.as_binary()
+
+    send_resp(conn, 200, resp)
+  end
+
+  get "/memory/:address/:contract/:key" do
+    address = Base.url_decode64!(conn.path_params["address"])
+    contract = Base.url_decode64!(conn.path_params["contract"])
+    key = Base.url_decode64!(conn.path_params["key"])
+    resp = Redis.get_binary(address <> contract <> key) |> ok
+    send_resp(conn, 200, resp)
   end
 
   get "/blocks" do

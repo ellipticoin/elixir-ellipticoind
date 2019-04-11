@@ -53,7 +53,7 @@ defmodule Integration.MiningTest do
                function: :mint,
                return_code: 0,
                return_value: nil,
-               sender: nil
+               sender: Config.public_key(),
              },
              %{
                arguments: [@bob, 50],
@@ -62,7 +62,7 @@ defmodule Integration.MiningTest do
                function: :transfer,
                return_code: 0,
                return_value: nil,
-               sender: nil
+               sender: @alice,
              }
     ]
     assert is_integer(new_block.proof_of_work_value)

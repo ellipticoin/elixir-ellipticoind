@@ -1,13 +1,12 @@
 defmodule Node.Models.Transaction do
   use Ecto.Schema
-  alias Node.Models.{Contract, Block}
+  alias Node.Models.Contract
   alias Node.Ecto.Types
   alias Node.Repo
   import Ecto.Changeset
 
-  @private_key false
   schema "transactions" do
-    field(:hash, :binary, default: <<0::256>>, primary_key: true)
+    field(:hash, :binary, primary_key: true)
     field(:block_hash, :binary)
     field(:contract_name, Types.Atom)
     field(:contract_address, :binary)
@@ -27,6 +26,8 @@ defmodule Node.Models.Transaction do
     attrs = set_hash(attrs)
     transaction
     |> cast(attrs, [
+        :hash,
+        :sender,
         :contract_address,
         :contract_name,
         :return_code,
@@ -35,6 +36,7 @@ defmodule Node.Models.Transaction do
         :arguments
     ])
     |> validate_required([
+      :hash,
       :contract_address,
       :contract_name,
       :return_code,

@@ -6,8 +6,6 @@ config :node, enable_miner: true
 config :node, node_url: "http://localhost:4047/"
 config :node, base_contracts_path: "./priv/base_contracts"
 config :node, port: 4460
-config :node, keyfile: "priv/localhost.key"
-config :node, certfile: "priv/localhost.crt"
 config :node, dhfile: nil
 config :node, https: false
 config :node, p2p_transport: P2P.Transport.Noise
