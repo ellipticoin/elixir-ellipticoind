@@ -19,8 +19,7 @@ defmodule TransactionProcessor do
     redis_connection_url = Application.fetch_env!(:node, :redis_url)
     best_block = Block.best() |> Repo.one()
     env = %{
-      # block_number: (if best_block, do: best_block.number + 1, else: 0),
-      block_number: 0,
+      block_number: (if best_block, do: best_block.number + 1, else: 0),
       block_winner: Config.public_key(),
       block_hash: <<>>,
     }

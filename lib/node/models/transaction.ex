@@ -27,6 +27,7 @@ defmodule Node.Models.Transaction do
     transaction
     |> cast(attrs, [
         :hash,
+        :block_hash,
         :sender,
         :contract_address,
         :contract_name,

@@ -54,9 +54,9 @@ defmodule Node.Models.Block do
 
   def changeset(user, params \\ %{}) do
     params = set_hash(params)
-    # params = %{params | transactions: Enum.map(params.transactions, fn transaction ->
-    #   %{transaction| block_hash: hash(params)}
-    # end)}
+    params = %{params | transactions: Enum.map(params.transactions, fn transaction ->
+      %{transaction| block_hash: hash(params)}
+    end)}
     user
     |> cast(params, [
       :hash,
