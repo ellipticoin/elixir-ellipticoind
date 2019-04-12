@@ -101,7 +101,6 @@ defmodule TransactionProcessor do
           |> Map.merge(%{
             hash: <<0::256>>,
             block_hash: nil,
-            arguments: transaction.arguments,
             return_code: return_code,
             return_value: Cbor.decode!(return_value)
           })
