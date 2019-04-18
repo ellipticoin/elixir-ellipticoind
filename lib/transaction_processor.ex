@@ -34,16 +34,14 @@ defmodule TransactionProcessor do
     new_block_from_redis()
   end
 
-  def process(
-    transactions,
-    env \\ %{
+  def process(proposed_transactions, env \\ %{}) do
+    env = Map.merge(%{
       block_number: 1,
       block_winner: Config.public_key(),
       block_hash: <<>>,
-    }
-  ) do
+    }, env)
     redis_connection_url = Application.fetch_env!(:node, :redis_url)
-    encoded_transactions = Enum.map(transactions, fn transaction ->
+    encoded_transactions = Enum.map(proposed_transactions, fn transaction ->
       transaction
         |> Transaction.with_code()
         |> Cbor.encode()
@@ -59,10 +57,47 @@ defmodule TransactionProcessor do
     {:ok, changeset} = Redis.fetch("changeset", <<>>)
     Redis.delete("changeset")
 
-    %{
-      changeset_hash: Crypto.hash(changeset),
-      transactions: done_transactions(),
-    }
+    transactions = done_transactions()
+    errors = transaction_errors(proposed_transactions, transactions)
+
+    if !Enum.empty?(errors) do
+      {:error, errors}
+    else
+        {:ok, %{
+            changeset_hash: Crypto.hash(changeset),
+            transactions: transactions,
+        }}
+    end
+  end
+
+  def transaction_errors(proposed_transactions, transactions) do
+    Enum.zip(proposed_transactions, transactions)
+    |> Enum.reduce([], fn ({proposed_transaction, transaction}, errors) ->
+      errors =
+        if proposed_transaction.return_value != transaction.return_value do
+          [{
+            :return_value_mismatch,
+            transaction.return_value,
+            proposed_transaction.return_value,
+          } | errors]
+        else
+         errors
+        end
+
+      errors =
+        if proposed_transaction.return_code != transaction.return_code do
+          [{
+            :return_code_mismatch,
+            transaction.return_code,
+            proposed_transaction.return_code,
+          } | errors]
+        else
+         errors
+        end
+
+
+    end
+    )
   end
 
   def wait_until_done(port) do

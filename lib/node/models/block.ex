@@ -108,7 +108,7 @@ defmodule Node.Models.Block do
 
 
   def apply(proposed_block) do
-    transaction_results = process_transactions(proposed_block)
+    {:ok, transaction_results} = process_transactions(proposed_block)
 
     if Validations.valid_next_block?(proposed_block, transaction_results) do
       insert(proposed_block)
