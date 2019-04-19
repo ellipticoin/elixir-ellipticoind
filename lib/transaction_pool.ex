@@ -21,7 +21,8 @@ defmodule TransactionPool do
   end
 
   def handle_call({:add, transaction}, {_pid, _reference}, state) do
-    transaction_bytes = transaction
+    transaction_bytes =
+      transaction
       |> Transaction.with_code()
       |> Cbor.encode()
 

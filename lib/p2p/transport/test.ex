@@ -38,7 +38,6 @@ defmodule P2P.Transport.Test do
           subscribers: subscribers
         }
       ) do
-
     Enum.each(subscribers, fn subscriber ->
       send(subscriber, {:p2p, nil, message})
     end)
@@ -49,10 +48,10 @@ defmodule P2P.Transport.Test do
   def handle_cast(
         {:receive, message},
         state
-  ) do
-    spawn fn ->
+      ) do
+    spawn(fn ->
       P2P.receive(message)
-    end
+    end)
 
     {:noreply, state}
   end

@@ -13,7 +13,7 @@ defmodule Node.Application do
       {TransactionPool, name: TransactionPool},
       {VM, name: VM},
       p2p_transport(),
-      {P2P, name: P2P},
+      {P2P, name: P2P}
     ]
 
     opts = [strategy: :one_for_one, name: Node.Supervisor]
@@ -45,7 +45,7 @@ defmodule Node.Application do
          cipher_suite: :strong,
          otp_app: :node,
          keyfile: Application.fetch_env!(:node, :keyfile),
-         certfile: Application.fetch_env!(:node, :certfile),
+         certfile: Application.fetch_env!(:node, :certfile)
          # dhfile: Application.fetch_env!(:node, :dhfile)
        ]}
     else

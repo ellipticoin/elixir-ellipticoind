@@ -4,6 +4,7 @@ defmodule Miner do
   alias Node.Models.{Block, Transaction}
 
   def start_link([]), do: start_link()
+
   def start_link() do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
@@ -38,13 +39,14 @@ defmodule Miner do
 
   defp process_new_block() do
     Transaction.post(%{
-        contract_address: <<0::256>>,
-        contract_name: :BaseToken,
-        nonce: 1,
-        function: :mint,
-        arguments: [],
-        sender: Config.public_key(),
+      contract_address: <<0::256>>,
+      contract_name: :BaseToken,
+      nonce: 1,
+      function: :mint,
+      arguments: [],
+      sender: Config.public_key()
     })
+
     case TransactionProcessor.process_new_block() do
       :cancelled -> mining_loop()
       new_block -> hashfactor(new_block)
@@ -53,12 +55,12 @@ defmodule Miner do
 
   defp hashfactor(new_block) do
     new_block
-      |> Block.as_binary_pre_pow()
-      |> Hashfactor.run()
-      |> case do
-        :cancelled -> mining_loop()
-        proof_of_work_value  -> insert(new_block, proof_of_work_value)
-      end
+    |> Block.as_binary_pre_pow()
+    |> Hashfactor.run()
+    |> case do
+      :cancelled -> mining_loop()
+      proof_of_work_value -> insert(new_block, proof_of_work_value)
+    end
   end
 
   defp insert(new_block, proof_of_work_value) do

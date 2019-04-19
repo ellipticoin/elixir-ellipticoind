@@ -12,7 +12,7 @@ defmodule Redis.PubSub do
     channels = [
       :hashcash_runner,
       :libp2p,
-      :transaction_processor,
+      :transaction_processor
     ]
 
     subscriptions =
@@ -40,9 +40,9 @@ defmodule Redis.PubSub do
       {:pubsub, ^channel, message} ->
         if String.starts_with?(message, filter) do
           message
-            |> String.split(" ")
-            |> List.delete_at(0)
-            |> Enum.map(&Base.decode64!/1)
+          |> String.split(" ")
+          |> List.delete_at(0)
+          |> Enum.map(&Base.decode64!/1)
         else
           receive_message_loop(channel, filter)
         end

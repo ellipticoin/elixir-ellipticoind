@@ -15,23 +15,23 @@ defmodule P2P do
   def broadcast(%{__struct__: _} = message),
     do:
       apply(message.__struct__, :as_binary, [message])
-        |> broadcast()
+      |> broadcast()
 
   def broadcast(message),
     do:
       transport()
-        |> apply(:broadcast, [message])
+      |> apply(:broadcast, [message])
 
   def subscribe(),
     do:
       transport()
-        |> apply(:subscribe)
+      |> apply(:subscribe)
 
   def receive(message) do
     Miner.cancel()
 
     Cbor.decode!(message)
-      |> Block.apply()
+    |> Block.apply()
 
     block = Cbor.decode!(message)
     Logger.info("Applied block #{block.number}")
@@ -42,6 +42,5 @@ defmodule P2P do
     {:noreply, state}
   end
 
-  defp transport(), do:
-    Application.fetch_env!(:node, :p2p_transport)
+  defp transport(), do: Application.fetch_env!(:node, :p2p_transport)
 end

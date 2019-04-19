@@ -43,7 +43,7 @@ defmodule Node.Models.Contract do
 
   def deploy_system_contracts do
     case Repo.get_by(Contract, name: :BaseToken) do
-      nil  -> %Contract{name: nil}
+      nil -> %Contract{name: nil}
       contract -> contract
     end
     |> Contract.changeset(%{
@@ -62,7 +62,9 @@ defmodule Node.Models.Contract do
 
   def find_by(parameters) do
     defaults = %{address: <<0::256>>, name: :BaseToken}
-    parameters = Map.merge(parameters, defaults)
+
+    parameters =
+      Map.merge(parameters, defaults)
       |> Enum.into(%{})
 
     Repo.get_by(__MODULE__, parameters)

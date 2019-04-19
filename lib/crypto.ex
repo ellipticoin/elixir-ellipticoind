@@ -8,6 +8,7 @@ defmodule Crypto do
 
   def hash(message) when is_map(message),
     do: hash(Cbor.encode(message))
+
   defdelegate hash(message), to: SHA256
 
   def hash_size, do: @hash_size

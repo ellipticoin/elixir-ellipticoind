@@ -18,7 +18,7 @@ defmodule Node.Mixfile do
   defp golang_modules do
     [
       noise: [
-        path: "native/noise",
+        path: "native/noise"
       ]
     ]
   end
@@ -36,7 +36,7 @@ defmodule Node.Mixfile do
       hashfactor: [
         path: "native/hashfactor",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ],
+      ]
     ]
   end
 

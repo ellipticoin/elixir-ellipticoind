@@ -2,23 +2,25 @@ defmodule P2P.Transport.Noise do
   use GenServer
   @crate "noise"
 
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   def init(%{
         port: port,
-        bootnodes: bootnodes,
-  }) do
+        bootnodes: bootnodes
+      }) do
     port =
-      Port.open({:spawn_executable, path_to_executable()},
-      [
-        :stderr_to_stdout,
-        args: [
-          "-p", Integer.to_string(port),
-        ] ++ bootnodes,
-      ]
+      Port.open(
+        {:spawn_executable, path_to_executable()},
+        [
+          :stderr_to_stdout,
+          args:
+            [
+              "-p",
+              Integer.to_string(port)
+            ] ++ bootnodes
+        ]
       )
 
     {:ok,

@@ -10,11 +10,14 @@ config :node, bootnode: true
 config :node, https: false
 config :node, private_key: File.read!("./config/private_key.pem")
 config :node, p2p_transport: P2P.Transport.Test
+
 config :node, P2P.Transport.Test,
   private_key: File.read!("./config/private_key.pem"),
   port: 4045,
-  bootnodes: File.read!("./priv/bootnodes.txt")
+  bootnodes:
+    File.read!("./priv/bootnodes.txt")
     |> String.split("\n", trim: true)
+
 config :node, node_url: "http://localhost:4047/"
 config :node, :redis_url, "redis://127.0.0.1:6379/"
 config :node, bootnodes: ["http://localhost:4047/"]

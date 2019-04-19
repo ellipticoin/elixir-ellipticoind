@@ -170,7 +170,7 @@ defmodule Redis do
     value =
       Redix.command(redis, [
         "GET",
-        key,
+        key
       ])
 
     {:reply, value, redis}

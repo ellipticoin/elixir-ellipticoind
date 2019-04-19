@@ -8,8 +8,7 @@ defmodule Test.Utils do
   alias Node.Repo
 
   def set_balances(balances) do
-    token_contract_address =
-      <<0::256>> <> ("BaseToken" |> pad_trailing(32))
+    token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
 
     for {address, balance} <- balances do
       Redis.set_binary(
@@ -20,10 +19,11 @@ defmodule Test.Utils do
   end
 
   def get_balance(address) do
-    token_contract_address =
-      <<0::256>> <> ("BaseToken" |> pad_trailing(32))
-    balance_bytes = Redis.get_binary(token_contract_address <> <<0>> <> address)
-                    |> ok
+    token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
+
+    balance_bytes =
+      Redis.get_binary(token_contract_address <> <<0>> <> address)
+      |> ok
 
     if is_nil(balance_bytes) do
       0
@@ -42,27 +42,30 @@ defmodule Test.Utils do
   end
 
   def test_wasm_path(name) do
-      "test/support/wasm/src/#{name}/target/wasm32-unknown-unknown/debug/#{name}.wasm"
+    "test/support/wasm/src/#{name}/target/wasm32-unknown-unknown/debug/#{name}.wasm"
   end
 
   def poll_for_next_block() do
-    best_block= Block.best() |> Repo.one()
+    best_block = Block.best() |> Repo.one()
     poll_for_next_block(best_block)
   end
 
   def poll_for_next_block(previous_block) do
-    best_block= Block.best() |> Repo.one()
+    best_block = Block.best() |> Repo.one()
 
     cond do
       is_nil(previous_block) and is_nil(best_block) ->
         :timer.sleep(100)
         poll_for_next_block(best_block)
+
       is_nil(previous_block) and !is_nil(best_block) ->
         best_block
         |> Repo.preload(:transactions)
+
       best_block.number > previous_block.number ->
         best_block
         |> Repo.preload(:transactions)
+
       true ->
         :timer.sleep(100)
         poll_for_next_block(best_block)

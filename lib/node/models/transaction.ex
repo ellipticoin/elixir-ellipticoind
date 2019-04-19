@@ -24,17 +24,18 @@ defmodule Node.Models.Transaction do
   @doc false
   def changeset(transaction, attrs) do
     attrs = set_hash(attrs)
+
     transaction
     |> cast(attrs, [
-        :hash,
-        :block_hash,
-        :sender,
-        :contract_address,
-        :contract_name,
-        :return_code,
-        :return_value,
-        :function,
-        :arguments
+      :hash,
+      :block_hash,
+      :sender,
+      :contract_address,
+      :contract_name,
+      :return_code,
+      :return_value,
+      :function,
+      :arguments
     ])
     |> validate_required([
       :hash,
@@ -52,28 +53,29 @@ defmodule Node.Models.Transaction do
 
   def as_map(attributes) do
     attributes
-      |> Map.take([
-        :hash,
-        :block_hash,
-        :sender,
-        :function,
-        :contract_name,
-        :contract_address,
-        :arguments,
-        :return_value,
-        :return_code,
-      ])
+    |> Map.take([
+      :hash,
+      :block_hash,
+      :sender,
+      :function,
+      :contract_name,
+      :contract_address,
+      :arguments,
+      :return_value,
+      :return_code
+    ])
   end
 
   def with_code(attributes) do
-    code = Repo.get_by(Contract, name: attributes.contract_name)
-           |> Map.get(:code)
+    code =
+      Repo.get_by(Contract, name: attributes.contract_name)
+      |> Map.get(:code)
 
     attributes
-      |> Map.merge(%{
-        contract_address: <<0::256>>,
-        code: code,
-      })
+    |> Map.merge(%{
+      contract_address: <<0::256>>,
+      code: code
+    })
   end
 
   def sign(transaction, private_key) do
@@ -81,16 +83,17 @@ defmodule Node.Models.Transaction do
     signature = Crypto.sign(as_map(transaction), private_key)
 
     transaction
-      |> Map.put(:sender, sender)
-      |> Map.put(:signature, signature)
+    |> Map.put(:sender, sender)
+    |> Map.put(:signature, signature)
   end
 
   def post(parameters) do
     with_code(parameters)
-      |> TransactionPool.add()
+    |> TransactionPool.add()
   end
 
-  def as_binary(transaction), do:
-    as_map(transaction)
-    |> Cbor.encode()
+  def as_binary(transaction),
+    do:
+      as_map(transaction)
+      |> Cbor.encode()
 end

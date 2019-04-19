@@ -2,21 +2,25 @@ defmodule P2P.Transport.LibP2P do
   use GenServer
   @crate "libp2p"
 
-
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def init(options = %{
-        port: port,
-        bootnodes: bootnodes,
-  }) do
+  def init(
+        options = %{
+          port: port,
+          bootnodes: bootnodes
+        }
+      ) do
     libp2p_address = "/ip4/0.0.0.0/tcp/#{port}"
 
-    bootnodes = bootnodes
+    bootnodes =
+      bootnodes
       |> Enum.join(",")
-    private_key = (Map.get(options, :private_key) || Config.private_key())
-                  |> Base.encode64()
+
+    private_key =
+      (Map.get(options, :private_key) || Config.private_key())
+      |> Base.encode64()
 
     port =
       Port.open({:spawn_executable, path_to_executable()},

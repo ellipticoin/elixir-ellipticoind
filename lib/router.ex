@@ -26,7 +26,8 @@ defmodule Router do
   plug(:dispatch)
 
   get "/transactions/:hash" do
-    resp = Transaction
+    resp =
+      Transaction
       |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
       |> Transaction.as_binary()
 
@@ -34,7 +35,8 @@ defmodule Router do
   end
 
   get "/blocks/:hash" do
-    resp = Block
+    resp =
+      Block
       |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
       |> Repo.preload(:transactions)
       |> Block.as_binary()
