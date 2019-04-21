@@ -96,7 +96,7 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
 
 fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env) -> CompletedTransaction {
     let (result, return_code, return_value) = vm::run_transaction(transaction, conn, env);
-    save_result(&conn, transaction);
+    remove_from_processing(&conn, transaction);
     CompletedTransaction {
         contract_address: transaction.contract_address.clone(),
         contract_name: transaction.contract_name.clone(),
@@ -108,7 +108,7 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
     }
 }
 
-fn save_result(conn: &vm::Connection, transaction: &Transaction) {
+fn remove_from_processing(conn: &vm::Connection, transaction: &Transaction) {
     let transaction_bytes = to_vec(&transaction).unwrap();
     conn.lrem::<_, _, ()>(
         "transactions::processing",

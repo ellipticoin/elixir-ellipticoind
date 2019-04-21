@@ -23,13 +23,16 @@ defmodule TransactionProcessor do
         Integer.to_string(Config.transaction_processing_time())
       ])
 
-    transactions = wait_until_done(port)
-
-    Block.next_block_params()
-    |> Map.merge(%{
-      changeset_hash: changeset_hash(),
-      transactions: transactions
-    })
+    case wait_until_done(port) do
+      :cancelled ->
+        :cancelled
+      transactions ->
+        Block.next_block_params()
+        |> Map.merge(%{
+          changeset_hash: changeset_hash(),
+          transactions: transactions
+        })
+    end
   end
 
   def process(block, env \\ %{}) do
@@ -59,18 +62,22 @@ defmodule TransactionProcessor do
         Cbor.encode(env) |> Base.encode16()
       ])
 
-    transactions = wait_until_done(port)
-    changeset_hash = changeset_hash()
-    errors = transaction_errors(block, transactions, changeset_hash)
+    case wait_until_done(port) do
+      :cancelled ->
+        :cancelled
+      transactions ->
+      changeset_hash = changeset_hash()
+      errors = transaction_errors(block, transactions, changeset_hash)
 
-    if Enum.empty?(errors) do
-      {:ok,
-       %{
-         changeset_hash: changeset_hash,
-         transactions: transactions
-       }}
-    else
-      {:error, errors}
+      if Enum.empty?(errors) do
+        {:ok,
+        %{
+          changeset_hash: changeset_hash,
+          transactions: transactions
+        }}
+      else
+        {:error, errors}
+      end
     end
   end
 
