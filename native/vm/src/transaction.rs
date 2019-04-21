@@ -5,6 +5,7 @@ use serde_cbor::Value;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
+use std::mem::transmute;
 use std::io::Read;
 use env::Env;
 
@@ -30,10 +31,10 @@ lazy_static! {
             .collect()
     };
 }
-use serde_cbor::to_vec;
+use serde_cbor::{to_vec};
 pub use wasmi::RuntimeValue;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,
@@ -46,7 +47,20 @@ pub struct Transaction {
     pub arguments: Vec<Value>,
 }
 
-pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> Vec<u8> {
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct CompletedTransaction {
+    #[serde(with = "serde_bytes")]
+    pub contract_address: Vec<u8>,
+    pub contract_name: String,
+    #[serde(with = "serde_bytes")]
+    pub sender: Vec<u8>,
+    pub function: String,
+    pub arguments: Vec<Value>,
+    pub return_value: Value,
+    pub return_code: u32,
+}
+
+pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (Vec<u8>, u32, Value) {
     let module = EllipticoinAPI::new_module(&transaction.code);
 
     let mut vm = VM::new(db, &env, transaction, &module);
@@ -61,6 +75,15 @@ pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) ->
         .collect();
     let pointer = vm.call(&transaction.function, &arguments);
     let result = vm.read_pointer(pointer);
+    let result_clone = result.clone();
+    let (return_code_bytes, return_value_bytes) = result_clone.split_at(4);
+    let mut return_code_bytes_fixed: [u8; 4] = Default::default();
+    return_code_bytes_fixed.copy_from_slice(&return_code_bytes[0..4]);
+    let return_code: u32 = unsafe{
+        transmute(return_code_bytes_fixed)
+    };
+    let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
 
-    result
+
+    (result, return_code, return_value)
 }

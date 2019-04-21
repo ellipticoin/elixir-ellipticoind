@@ -10,7 +10,7 @@ defmodule Router do
   alias Node.Plug.CBOR
   alias Node.Repo
   alias HTTP.SignatureAuth
-  alias Node.Models.{Block, Contract, Transaction}
+  alias Node.Models.{Block, Transaction}
 
   plug(CORSPlug)
 

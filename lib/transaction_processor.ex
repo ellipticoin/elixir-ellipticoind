@@ -4,15 +4,7 @@ defmodule TransactionProcessor do
 
   @crate "transaction_processor"
 
-  def init(state) do
-    redis_connection_url = Application.fetch_env!(:node, :redis_url)
-
-    Port.open({:spawn_executable, path_to_executable()},
-      args: [redis_connection_url]
-    )
-
-    {:ok, state}
-  end
+  def init(state), do: {:ok, state}
 
   def process_new_block() do
     best_block = Block.best() |> Repo.one()
@@ -31,12 +23,12 @@ defmodule TransactionProcessor do
         Integer.to_string(Config.transaction_processing_time())
       ])
 
-    wait_until_done(port)
+    transactions = wait_until_done(port)
 
     Block.next_block_params()
     |> Map.merge(%{
       changeset_hash: changeset_hash(),
-      transactions: done_transactions()
+      transactions: transactions
     })
   end
 
@@ -67,19 +59,18 @@ defmodule TransactionProcessor do
         Cbor.encode(env) |> Base.encode16()
       ])
 
-    wait_until_done(port)
-    transactions = done_transactions()
+    transactions = wait_until_done(port)
     changeset_hash = changeset_hash()
     errors = transaction_errors(block, transactions, changeset_hash)
 
-    if !Enum.empty?(errors) do
-      {:error, errors}
-    else
+    if Enum.empty?(errors) do
       {:ok,
        %{
          changeset_hash: changeset_hash,
          transactions: transactions
        }}
+    else
+      {:error, errors}
     end
   end
 
@@ -147,38 +138,29 @@ defmodule TransactionProcessor do
         Port.close(port)
         :cancelled
 
-      {_port, {:data, '\n'}} ->
-        nil
-
       {_port, {:data, message}} ->
-        IO.write(message)
-        wait_until_done(port)
+        message
+        |> List.to_string()
+        |> handle_port_data(port)
     end
   end
 
-  def done_transactions do
-    {:ok, transactions} = Redis.get_list("transactions::done")
-    {:ok, results} = Redis.get_list("results")
-    Redis.delete("transactions::done")
-    Redis.delete("results")
-
-    Enum.zip(transactions, results)
-    |> Enum.map(fn {transaction_bytes, result_bytes} ->
-      <<return_code::little-integer-size(32), return_value::binary>> = result_bytes
-      transaction = Cbor.decode!(transaction_bytes)
-
-      Cbor.decode!(transaction_bytes)
-      |> Map.merge(%{
-        return_code: return_code,
-        return_value: Cbor.decode!(return_value)
-      })
-      |> Map.delete(:code)
+  def handle_port_data("completed_transactions:" <> completed_transactions, _port) do
+    completed_transactions
+    |> String.trim("\n")
+    |> String.split(" ")
+    |> Enum.map(fn completed_transaction ->
+      completed_transaction
+      |> Base.decode64!()
+      |> Cbor.decode!()
     end)
   end
 
-  def handle_info({_port, {:data, message}}, state) do
+  def handle_port_data("\n", _port), do: nil
+
+  def handle_port_data(message, port) do
     IO.write(message)
-    {:noreply, state}
+    wait_until_done(port)
   end
 
   defp run(args) do

@@ -1,5 +1,5 @@
 defmodule MockHashfactor do
-  def run(data, target) do
+  def run(_data, _target) do
     1
   end
 

@@ -127,12 +127,13 @@ defmodule Node.Models.Block do
   def apply(block) do
     if Validations.valid_next_block?(block) do
       block
-        |> TransactionProcessor.process()
-        |> case do
-          {:ok, _} ->
-            insert(block)
-          _ ->
-            nil
+      |> TransactionProcessor.process()
+      |> case do
+        {:ok, _} ->
+          insert(block)
+
+        _ ->
+          nil
       end
     end
   end

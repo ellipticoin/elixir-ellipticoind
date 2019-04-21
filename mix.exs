@@ -25,10 +25,6 @@ defmodule Node.Mixfile do
 
   defp rustler_crates do
     [
-      vm_nif: [
-        path: "native/vm_nif",
-        mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ],
       transaction_processor: [
         path: "native/transaction_processor",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
