@@ -120,7 +120,15 @@ defmodule Node.Models.Block do
   def transactions_as_map(transactions),
     do:
       if(Ecto.assoc_loaded?(transactions),
-        do: Enum.map(transactions, &Transaction.as_map/1),
+        do: transactions
+          |> Enum.map(&Transaction.as_map/1)
+          |> Enum.map(fn transaction ->
+            transaction
+            |> Map.drop([
+              :hash,
+              :block_hash,
+            ])
+          end),
         else: []
       )
 
@@ -132,7 +140,8 @@ defmodule Node.Models.Block do
         {:ok, _} ->
           insert(block)
 
-        _ ->
+        error ->
+          IO.inspect error
           nil
       end
     end

@@ -52,24 +52,20 @@ defmodule Test.Utils do
 
   def poll_for_next_block(previous_block) do
     best_block = Block.best() |> Repo.one()
-
-    cond do
-      is_nil(previous_block) and is_nil(best_block) ->
-        :timer.sleep(100)
-        poll_for_next_block(best_block)
-
-      is_nil(previous_block) and !is_nil(best_block) ->
-        best_block
         |> Repo.preload(:transactions)
 
-      best_block.number > previous_block.number ->
+    if new_block?(previous_block, best_block) do
         best_block
-        |> Repo.preload(:transactions)
-
-      true ->
+    else
         :timer.sleep(100)
         poll_for_next_block(best_block)
     end
+  end
+
+  def new_block?(previous_block, best_block) do
+    (is_nil(previous_block) and !is_nil(best_block)) ||
+      (best_block &&  previous_block &&
+        (best_block.number > previous_block.number))
   end
 
   def parse_hex("0x" <> hex_data), do: parse_hex(hex_data)

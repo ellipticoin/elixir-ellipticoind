@@ -39,9 +39,9 @@ defmodule TransactionProcessor do
     env =
       Map.merge(
         %{
-          block_number: 1,
+          block_number: block.number,
           block_winner: Config.public_key(),
-          block_hash: <<>>
+          block_hash: block.hash
         },
         env
       )
@@ -66,18 +66,18 @@ defmodule TransactionProcessor do
       :cancelled ->
         :cancelled
       transactions ->
-      changeset_hash = changeset_hash()
-      errors = transaction_errors(block, transactions, changeset_hash)
+        changeset_hash = changeset_hash()
+        errors = transaction_errors(block, transactions, changeset_hash)
 
-      if Enum.empty?(errors) do
-        {:ok,
-        %{
-          changeset_hash: changeset_hash,
-          transactions: transactions
-        }}
-      else
-        {:error, errors}
-      end
+        if Enum.empty?(errors) do
+          {:ok,
+          %{
+            changeset_hash: changeset_hash,
+            transactions: transactions
+          }}
+        else
+          {:error, errors}
+        end
     end
   end
 
