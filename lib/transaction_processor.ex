@@ -40,7 +40,7 @@ defmodule TransactionProcessor do
       Map.merge(
         %{
           block_number: block.number,
-          block_winner: Config.public_key(),
+          block_winner: block.winner,
           block_hash: block.hash
         },
         env

@@ -48,7 +48,7 @@ defmodule Router do
     address = Base.url_decode64!(conn.path_params["address"])
     contract = Base.url_decode64!(conn.path_params["contract"])
     key = Base.url_decode64!(conn.path_params["key"])
-    resp = Redis.get_binary(address <> contract <> key) |> ok
+    resp = Redis.get_binary(address <> contract <> key) |> ok || <<>>
     send_resp(conn, 200, resp)
   end
 
