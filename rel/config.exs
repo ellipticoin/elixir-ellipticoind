@@ -45,6 +45,7 @@ environment :prod do
   set commands: [
     install_deps: "rel/commands/install_deps.sh",
     migrate: "rel/commands/migrate.sh",
+    generate_private_key: "rel/commands/generate_private_key.sh",
   ]
   set overlays: [
     {:copy, "rel/config/config.exs", "etc/config.exs"}
