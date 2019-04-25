@@ -9,6 +9,16 @@ defmodule Node.ReleaseTasks do
 
   @repos Application.get_env(:node, :ecto_repos, [])
 
+  def generate_private_key() do
+    IO.puts("New private_key:")
+
+    IO.puts(
+      Crypto.keypair()
+      |> elem(1)
+      |> Base.encode64()
+    )
+  end
+
   def migrate(_argv) do
     start_services()
 
