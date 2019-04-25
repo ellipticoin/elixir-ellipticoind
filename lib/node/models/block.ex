@@ -144,6 +144,8 @@ defmodule Node.Models.Block do
           IO.inspect error
           nil
       end
+    else
+      IO.puts "Received invalid block ##{block.number}"
     end
   end
 
