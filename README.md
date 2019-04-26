@@ -1,64 +1,79 @@
-Ellipticoin Blacksmith Node
+Ellipticoind
 ==========
 
-Ellipticoin is a developer friendly scalable Ethereum side-chain. Blacksmith
-nodes forge transactions to keep the network secure. They are authenticated via [proof
-of
-burn](https://www.masonforest.com/blockchain/ethereum/ellipticoin/2018/05/29/the-ellipticoin-proof-of-burn-algorithm.html)
-which has similar economic incentives to proof of work except instead of
-burning energy they burn tokens on the parent chain.
+Ellipticoind is the reference implementation of an Ellipticoin node written in
+Elixir.
 
-You can install the [reference wallet](https://www.npmjs.com/package/ec-wallet) to use the Ellipticoin network itself.
-
-
-Running a Blacksmith Node:
+Running Ellipticoind:
 ==========================
-
-Using docker-compose
------
-1. Clone the repo:  `git clone https://github.com/ellipticoin/ellipticoin-blacksmith-node && cd ellipticoin-blacksmith-node`
-2. Install Docker
-2. Update `ETHEREUM_PRIVATE_KEY` in `config/docker.env`
-3. Run `docker-compose up`
 
 From a binary release
 -----
 
-1. Create an `Ubuntu 18.04` VPS/Droplet (or another type of VPS and create a
-   PR!)
-2. Download the appropriate release for your system and extract it:
-````
-$ cd /usr/local
-$ wget blacksmith.tar.gz
-$ tar -xf blacksmith.tar.gz
-$ rm blacksmith.tar.gz
-````
-3. Run `sh ./releases/0.1.0/commands/install_deps.sh` to install the required dependencies.
-4. Allow all postgres connections from localhost:
+Installation instructions for Ubuntu 18.0.4 (Bionic Beaver)
 
-Edit: /etc/postgresql/10/main/pg_hba.conf
+0. Ensure you’re running version 18.0.4 of Ubuntu. If you’re running on a different version of Ubuntu or a different operating system you’ll have to build from source for now.
 
-    Change the line:
-````
-local   all             postgres                                peer
-````
-to
-````
-local   all             postgres                                trust
-````
-5. Restart postgres: `sudo service postgresql restart`
+1. Install the required dependencies:
 
-6. Create the blacksmith's db: `createdb -U postgres blacksmith`
-7. Update `ETHEREUM_PRIVATE_KEY` and anything else you'd like to customize in
-   `/usr/local/etc/config.exs`
+    `$ apt-get update && apt-get install postgresql redis-server`
 
-9. Run the blacksmith node in the forground to check if everything is set up correctly: `blacksmith foreground`
+2. Create a postgres user:
 
-10. If everything looks to be working you can kill the node and start it again in the background: `blacksmith start`
+    `$ su -c "createuser ellipticoin" postgres`
+
+3. Create a postgres db:
+
+    `$ su -c "createdb ellipticoin" postgres`
+
+
+4. Create a user that will run the ellipticoind:
+
+    `$ adduser --disabled-password  --gecos "Ellipticoin" ellipticoin`
+
+5. Execute the remaining commands as the ellipticoin user:
+
+    `su ellipticoin`
+
+6. Change the working directory to the home folder of the user you just created:
+
+    `$ cd /home/ellipticoin`
+
+7. Download the latest release:
+
+    `wget https://github.com/ellipticoin/ellipticoin-node/releases/download/0.1.0-alpha/ellipticoind-ubuntu-18-04-0.1.0.tar.gz`
+
+8. Extract it:
+
+    `$ tar -xf ellipticoind-ubuntu-18-04-0.1.0.tar.gz`
+
+
+9. Migrate the database:
+
+    `$ ./bin/node migrate`
+
+10. Generate a private key for your node:
+
+    ```
+    $ ./bin/node generate_private_key
+    New private_key:
+    LZf9CkbgnZzBKQWfd9ywu9B8XF+wZbRzulAr3ZLogWPIKAJesHzDBDTHJ2foOB/gjLcqLQyfYu8ORK97G05zPg==
+    ```
+
+11. Update your private key in `etc/config.exs`.
+
+
+12. Run the server in the foreground to make sure everything is set up correctly:
+
+    `$ ./bin/node foreground`
+
+13. Start the server in the background:
+
+    `$ ./bin/node start`
 
 From Source
 -----
-1. Clone the repo:  `git clone https://github.com/ellipticoin/ellipticoin-blacksmith-node && cd ellipticoin-blacksmith-node`
+1. Clone the repo:  `git clone https://github.com/ellipticoin/ellipticoin-node && cd ellipticoin-blacksmith-node`
 2. Update `ETHEREUM_PRIVATE_KEY` and anything else you'd like to customize in
    `config/dev.secret.exs` and `config/dev.exs`
 3. Run: `mix dep.get`
