@@ -10,6 +10,7 @@ defmodule Miner do
   end
 
   def init(_init_arg) do
+    SystemContracts.deploy()
     mining_loop()
 
     {:ok, nil}

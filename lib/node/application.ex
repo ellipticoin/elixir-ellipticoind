@@ -19,8 +19,6 @@ defmodule Node.Application do
 
     opts = [strategy: :one_for_one, name: Node.Supervisor]
 
-    supervisor = Supervisor.start_link(children, opts)
-    SystemContracts.deploy()
-    supervisor
+    Supervisor.start_link(children, opts)
   end
 end
