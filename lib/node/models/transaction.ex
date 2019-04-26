@@ -88,8 +88,12 @@ defmodule Node.Models.Transaction do
   end
 
   def post(parameters) do
-    with_code(parameters)
-    |> TransactionPool.add()
+    transaction_bytes =
+      parameters
+      |> with_code()
+      |> Cbor.encode()
+
+    Redis.push("transactions::queued", [transaction_bytes])
   end
 
   def as_binary(transaction),

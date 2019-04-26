@@ -11,6 +11,7 @@ defmodule Miner do
 
   def init(_init_arg) do
     mining_loop()
+
     {:ok, nil}
   end
 

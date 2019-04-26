@@ -15,4 +15,21 @@ defmodule Config do
     do:
       private_key()
       |> Crypto.private_key_to_public_key()
+
+  def p2p_transport() do
+    transport = Application.fetch_env!(:node, :p2p_transport)
+    options = Application.fetch_env!(:node, transport)
+
+    {transport, Enum.into(options, %{})}
+  end
+
+  def cowboy() do
+    {Plug.Cowboy,
+      scheme: :http,
+      plug: Router,
+      options: [
+        dispatch: Cowboy.dispatch(),
+        port: Application.fetch_env!(:node, :port)
+      ]}
+  end
 end

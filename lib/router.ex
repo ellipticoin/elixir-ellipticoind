@@ -55,8 +55,7 @@ defmodule Router do
   get "/blocks" do
     limit =
       if conn.query_params["limit"] do
-        Integer.parse(conn.query_params["limit"])
-        |> elem(0)
+        String.to_integer(conn.query_params["limit"])
       else
         nil
       end
@@ -76,18 +75,6 @@ defmodule Router do
     Transaction.post(conn.params)
 
     send_resp(conn, 200, Cbor.encode(""))
-  end
-
-  def parse_get_request(conn) do
-    arguments = Cbor.decode!(Base.decode16!(conn.query_params["arguments"]))
-    address = Base.decode16!(conn.path_params["address"], case: :lower)
-
-    %{
-      address: address,
-      function: String.to_atom(conn.query_params["function"]),
-      arguments: arguments,
-      contract_name: String.to_atom(conn.path_params["contract_name"])
-    }
   end
 
   match _ do

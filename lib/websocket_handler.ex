@@ -1,6 +1,10 @@
 defmodule WebsocketHandler do
   @behaviour :cowboy_websocket
 
+  def start() do
+    :pg2.create("websocket::blocks")
+  end
+
   def init(req, state) do
     {:cowboy_websocket, req, state}
   end
