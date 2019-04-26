@@ -8,7 +8,7 @@ config :node, port: 4460
 config :node, enable_miner: true
 config :node, private_key: "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==" |> Base.decode64!()
 config :node, P2P.Transport.Noise,
-  port: 4047,
+  port: 4461,
   bootnodes:  File.read!("lib/node-0.1.0/priv/bootnodes.txt")
    |> String.split("\n", trim: true)
 
