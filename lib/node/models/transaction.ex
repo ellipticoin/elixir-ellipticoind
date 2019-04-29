@@ -27,9 +27,10 @@ defmodule Node.Models.Transaction do
 
     transaction
     |> cast(attrs, [
+      :sender,
+      :nonce,
       :hash,
       :block_hash,
-      :sender,
       :contract_address,
       :contract_name,
       :return_code,
@@ -55,6 +56,7 @@ defmodule Node.Models.Transaction do
     attributes
     |> Map.take([
       :hash,
+      :nonce,
       :block_hash,
       :sender,
       :function,

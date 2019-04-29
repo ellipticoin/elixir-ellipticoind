@@ -2,7 +2,7 @@ use Mix.Config
 
 config :node, transaction_processing_time: 1000
 config :node, mining_target_time: 1
-config :node, enable_miner: true
+config :node, enable_miner: false
 config :node, node_url: "http://localhost:4047/"
 config :node, base_contracts_path: "./priv/base_contracts"
 config :node, port: if(System.get_env("API_PORT"), do: System.get_env("API_PORT") |> String.to_integer(), else: 4460)

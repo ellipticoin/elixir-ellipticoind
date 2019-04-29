@@ -34,7 +34,7 @@ lazy_static! {
 use serde_cbor::{to_vec};
 pub use wasmi::RuntimeValue;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,
@@ -43,6 +43,7 @@ pub struct Transaction {
     pub code: Vec<u8>,
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
+    pub nonce: u64,
     pub function: String,
     pub arguments: Vec<Value>,
 }

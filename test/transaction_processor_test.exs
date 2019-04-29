@@ -18,6 +18,7 @@ defmodule TransactionProcessorTest do
 
     assert process_transaction(%{
              sender: <<0>>,
+             nonce: 0,
              contract_name: :adder,
              function: :add,
              arguments: [1, 2],
@@ -32,6 +33,7 @@ defmodule TransactionProcessorTest do
     assert process_transaction(
              %{
                sender: <<0>>,
+               nonce: 0,
                contract_name: :env,
                function: :block_number,
                arguments: [],
@@ -53,6 +55,7 @@ defmodule TransactionProcessorTest do
              transactions: [
                %{
                  sender: <<0>>,
+                 nonce: 0,
                  contract_name: :adder,
                  function: :add,
                  arguments: [1, 2],
@@ -66,6 +69,7 @@ defmodule TransactionProcessorTest do
              transactions: [
                %{
                  sender: <<0>>,
+                 nonce: 0,
                  contract_name: :adder,
                  function: :add,
                  arguments: [1, 2],

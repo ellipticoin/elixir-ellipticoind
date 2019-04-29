@@ -110,6 +110,7 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
 
 fn remove_from_processing(conn: &vm::Connection, transaction: &Transaction) {
     let transaction_bytes = to_vec(&transaction).unwrap();
+    // println!("removing {:?}", &transaction_bytes[0..3]);
     conn.lrem::<_, _, ()>(
         "transactions::processing",
         0,
@@ -123,6 +124,14 @@ fn get_next_transaction(conn: &vm::Connection, source: &str) -> Option<Transacti
     if transaction_bytes.len() == 0 {
         None
     } else {
+        let mut t: Transaction = from_slice::<Transaction>(&transaction_bytes).unwrap();
+        t.code = vec![];
+
+        let round_trip = to_vec(&t).unwrap();
+        
+        // println!("round trip {:?}", base64::encode(&round_trip));
+        // println!("transaction bytes {:?}", &transaction_bytes[0..2]);
+        // println!("round trip {:?}", &round_trip[0..2]);
         Some(from_slice::<Transaction>(&transaction_bytes).expect("from_slice failed"))
     }
 }
