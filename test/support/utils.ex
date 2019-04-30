@@ -41,8 +41,29 @@ defmodule Test.Utils do
     |> Repo.insert!()
   end
 
+  def insert_test_contract(contract_name) do
+    %Contract{
+      address: <<0::256>>,
+      name: contract_name,
+      code: File.read!(test_wasm_path(Atom.to_string(contract_name)))
+    }
+    |> Repo.insert!()
+  end
+
+  def process_transaction(
+    transaction,
+    env \\ %{},
+    changeset_hash \\ Crypto.hash(<<>>)
+  ),
+    do:
+      transaction
+      |> (&TransactionProcessor.process(%Block{
+        transactions: [&1],
+        changeset_hash: changeset_hash,
+      }, env)).()
+
   def test_wasm_path(name) do
-    "test/support/wasm/src/#{name}/target/wasm32-unknown-unknown/debug/#{name}.wasm"
+    "test/support/wasm/#{name}.wasm"
   end
 
   def poll_for_next_block() do

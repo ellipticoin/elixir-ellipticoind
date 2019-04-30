@@ -6,7 +6,7 @@ else
   TARGET_PATH="./target/wasm32-unknown-unknown/debug/"
 fi
 
-DIST_DIR="dist"
+DIST_DIR="../.."
 
 scriptsDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $scriptsDir/..
