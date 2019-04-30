@@ -2,7 +2,7 @@ use ellipticoin_api::EllipticoinAPI;
 use heck::SnakeCase;
 use redis::Connection;
 use serde_cbor::Value;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::mem::transmute;
@@ -34,6 +34,7 @@ lazy_static! {
 use serde_cbor::{to_vec};
 pub use wasmi::RuntimeValue;
 
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
@@ -61,7 +62,7 @@ pub struct CompletedTransaction {
     pub return_code: u32,
 }
 
-pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (Vec<u8>, u32, Value) {
+pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (u32, Value) {
     let module = EllipticoinAPI::new_module(&transaction.code);
 
     let mut vm = VM::new(db, &env, transaction, &module);
@@ -86,5 +87,5 @@ pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) ->
     let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
 
 
-    (result, return_code, return_value)
+    (return_code, return_value)
 }

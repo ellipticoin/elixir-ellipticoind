@@ -95,7 +95,7 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
 }
 
 fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env) -> CompletedTransaction {
-    let (result, return_code, return_value) = vm::run_transaction(transaction, conn, env);
+    let (return_code, return_value) = vm::run_transaction(transaction, conn, env);
     remove_from_processing(&conn, transaction);
     CompletedTransaction {
         contract_address: transaction.contract_address.clone(),
@@ -124,14 +124,6 @@ fn get_next_transaction(conn: &vm::Connection, source: &str) -> Option<Transacti
     if transaction_bytes.len() == 0 {
         None
     } else {
-        let mut t: Transaction = from_slice::<Transaction>(&transaction_bytes).unwrap();
-        t.code = vec![];
-
-        let round_trip = to_vec(&t).unwrap();
-        
-        // println!("round trip {:?}", base64::encode(&round_trip));
-        // println!("transaction bytes {:?}", &transaction_bytes[0..2]);
-        // println!("round trip {:?}", &round_trip[0..2]);
         Some(from_slice::<Transaction>(&transaction_bytes).expect("from_slice failed"))
     }
 }

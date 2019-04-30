@@ -53,7 +53,7 @@ defmodule Node.Mixfile do
     [
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:bypass, "~> 1.0", only: :test},
-      {:cbor, "~> 0.1"},
+      {:cbor, "~> 0.1.7"},
       {:binary, "~> 0.0.5"},
       {:cors_plug, "~> 2.0"},
       {:golang_compiler, "~> 0.2.0"},

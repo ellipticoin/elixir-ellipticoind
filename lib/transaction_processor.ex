@@ -50,6 +50,10 @@ defmodule TransactionProcessor do
       Enum.map(block.transactions, fn transaction ->
         transaction
         |> Transaction.with_code()
+        |> Map.drop([
+          :return_code,
+          :return_value,
+        ])
         |> Cbor.encode()
       end)
 

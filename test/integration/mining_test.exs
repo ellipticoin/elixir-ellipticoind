@@ -99,7 +99,7 @@ defmodule Integration.MiningTest do
     block_bytes =
       %Block{
         number: 0,
-        proof_of_work_value: 1196,
+        proof_of_work_value: 1731,
         hash: <<0::256>>,
         changeset_hash:
           Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
