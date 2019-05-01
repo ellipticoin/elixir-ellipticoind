@@ -33,6 +33,24 @@ defmodule Test.Utils do
     end
   end
 
+  def get_value(
+        contract_name,
+        key
+      ) do
+    get_memory(contract_name, key)
+    |> Cbor.decode!()
+  end
+
+  def get_memory(
+        contract_name,
+        key
+      ) do
+    address = <<0::256>> <> (Atom.to_string(contract_name) |> pad_trailing(32))
+
+    Redis.get_binary(address <> "value")
+    |> Utils.ok()
+  end
+
   def insert_contracts do
     %Contract{
       address: <<0::256>>,

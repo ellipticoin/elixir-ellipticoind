@@ -1,3 +1,4 @@
+extern crate serialize;
 extern crate hex;
 use self::memory_units::Pages;
 use db::DB;
@@ -8,6 +9,7 @@ use transaction::Transaction;
 use wasmi::RuntimeValue;
 use wasmi::*;
 use env::Env;
+use vm::serialize::hex::ToHex;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,

@@ -1,4 +1,4 @@
-#![feature(custom_attribute, plugin)]
+#![feature(custom_attribute, plugin, rustc_private)]
 #[macro_use]
 extern crate lazy_static;
 extern crate heck;

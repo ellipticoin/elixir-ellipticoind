@@ -1,6 +1,7 @@
-defmodule Integration.BlockReorganizationTest do
+defmodule TransactionProcessor.BlockReorganizationTest do
   use ExUnit.Case
   import Test.Utils
+  import Binary
 
   setup do
     Redis.reset()
@@ -47,16 +48,23 @@ defmodule Integration.BlockReorganizationTest do
   """
   test ".process_transaction reverts state changes of transactions that aren't on this chain" do
     insert_test_contract(:stack)
+    push(:A, 1, 1)
+    push(:B, 2, 2)
+    push(:C, 3, 3)
+    push(:D, 2, 2)
+    push(:E, 3, 3)
+    push(:F, 4, 4)
 
-    run_transaction(
-      %{
+    assert get_stack() == [:A, :D, :E, :F]
+  end
+
+  def get_stack(), do: get_value(:stack, "value")
+
+  def push(value, _block \\ 0, _difficulty \\ 0),
+    do:
+      run_transaction(%{
         contract_name: :stack,
         function: :push,
-        arguments: [:A],
-      }
-    )
-
-    # stack_contract_address = <<0::256>> <> ("stack" |> pad_trailing(32))
-    # IO.inspect Redis.get_binary(stack_contract_address <> "values")
-  end
+        arguments: [value]
+      })
 end
