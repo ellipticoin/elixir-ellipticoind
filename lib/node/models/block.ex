@@ -6,6 +6,7 @@ defmodule Node.Models.Block do
   alias Node.Repo
   alias Node.Models.Transaction
   alias Node.Models.Block.Validations
+  alias Node.Models.Block.TransactionProcessor
 
   @primary_key false
   schema "blocks" do
@@ -120,13 +121,14 @@ defmodule Node.Models.Block do
   def transactions_as_map(transactions),
     do:
       if(Ecto.assoc_loaded?(transactions),
-        do: transactions
+        do:
+          transactions
           |> Enum.map(&Transaction.as_map/1)
           |> Enum.map(fn transaction ->
             transaction
             |> Map.drop([
               :hash,
-              :block_hash,
+              :block_hash
             ])
           end),
         else: []
@@ -141,11 +143,11 @@ defmodule Node.Models.Block do
           insert(block)
 
         error ->
-          IO.inspect error
+          IO.inspect(error)
           nil
       end
     else
-      IO.puts "Received invalid block ##{block.number}"
+      IO.puts("Received invalid block ##{block.number}")
     end
   end
 

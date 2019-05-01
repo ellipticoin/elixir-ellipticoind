@@ -1,4 +1,4 @@
-defmodule TransactionProcessor do
+defmodule Node.Models.Block.TransactionProcessor do
   alias Node.Repo
   alias Node.Models.{Block, Transaction}
 
@@ -26,6 +26,7 @@ defmodule TransactionProcessor do
     case wait_until_done(port) do
       :cancelled ->
         :cancelled
+
       transactions ->
         Block.next_block_params()
         |> Map.merge(%{
@@ -52,7 +53,7 @@ defmodule TransactionProcessor do
         |> Transaction.with_code()
         |> Map.drop([
           :return_code,
-          :return_value,
+          :return_value
         ])
         |> Cbor.encode()
       end)
@@ -69,16 +70,17 @@ defmodule TransactionProcessor do
     case wait_until_done(port) do
       :cancelled ->
         :cancelled
+
       transactions ->
         changeset_hash = changeset_hash()
         errors = transaction_errors(block, transactions, changeset_hash)
 
         if Enum.empty?(errors) do
           {:ok,
-          %{
-            changeset_hash: changeset_hash,
-            transactions: transactions
-          }}
+           %{
+             changeset_hash: changeset_hash,
+             transactions: transactions
+           }}
         else
           {:error, errors}
         end

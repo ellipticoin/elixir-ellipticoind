@@ -25,11 +25,11 @@ defmodule Config do
 
   def cowboy() do
     {Plug.Cowboy,
-      scheme: :http,
-      plug: Router,
-      options: [
-        dispatch: Cowboy.dispatch(),
-        port: Application.fetch_env!(:node, :port)
-      ]}
+     scheme: :http,
+     plug: Router,
+     options: [
+       dispatch: Cowboy.dispatch(),
+       port: Application.fetch_env!(:node, :port)
+     ]}
   end
 end

@@ -5,6 +5,7 @@ defmodule Test.Utils do
   import Binary
   alias Crypto.Ed25519
   alias Node.Models.{Block, Contract}
+  alias Node.Models.Block.TransactionProcessor
   alias Node.Repo
 
   def set_balances(balances) do
@@ -51,16 +52,19 @@ defmodule Test.Utils do
   end
 
   def process_transaction(
-    transaction,
-    env \\ %{},
-    changeset_hash \\ Crypto.hash(<<>>)
-  ),
-    do:
-      transaction
-      |> (&TransactionProcessor.process(%Block{
-        transactions: [&1],
-        changeset_hash: changeset_hash,
-      }, env)).()
+        transaction,
+        env \\ %{},
+        changeset_hash \\ Crypto.hash(<<>>)
+      ),
+      do:
+        transaction
+        |> (&TransactionProcessor.process(
+              %Block{
+                transactions: [&1],
+                changeset_hash: changeset_hash
+              },
+              env
+            )).()
 
   def test_wasm_path(name) do
     "test/support/wasm/#{name}.wasm"
@@ -72,21 +76,23 @@ defmodule Test.Utils do
   end
 
   def poll_for_next_block(previous_block) do
-    best_block = Block.best() |> Repo.one()
-        |> Repo.preload(:transactions)
+    best_block =
+      Block.best()
+      |> Repo.one()
+      |> Repo.preload(:transactions)
 
     if new_block?(previous_block, best_block) do
-        best_block
+      best_block
     else
-        :timer.sleep(100)
-        poll_for_next_block(best_block)
+      :timer.sleep(100)
+      poll_for_next_block(best_block)
     end
   end
 
   def new_block?(previous_block, best_block) do
     (is_nil(previous_block) and !is_nil(best_block)) ||
-      (best_block &&  previous_block &&
-        (best_block.number > previous_block.number))
+      (best_block && previous_block &&
+         best_block.number > previous_block.number)
   end
 
   def parse_hex("0x" <> hex_data), do: parse_hex(hex_data)

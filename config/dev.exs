@@ -5,7 +5,14 @@ config :node, mining_target_time: 1
 config :node, enable_miner: false
 config :node, node_url: "http://localhost:4047/"
 config :node, base_contracts_path: "./priv/base_contracts"
-config :node, port: if(System.get_env("API_PORT"), do: System.get_env("API_PORT") |> String.to_integer(), else: 4460)
+
+config :node,
+  port:
+    if(System.get_env("API_PORT"),
+      do: System.get_env("API_PORT") |> String.to_integer(),
+      else: 4460
+    )
+
 config :node, dhfile: nil
 config :node, https: false
 config :node, p2p_transport: P2P.Transport.Noise
@@ -16,11 +23,12 @@ config :node, P2P.Transport.Noise,
     |> Base.decode64!(),
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
   # File.read!("./priv/bootnodes.txt")
-  bootnodes: if(System.get_env("BOOTNODES"), do: System.get_env("BOOTNODES"), else: "")
+  bootnodes:
+    if(System.get_env("BOOTNODES"), do: System.get_env("BOOTNODES"), else: "")
     |> String.split(",", trim: true)
-  # bootnodes: []
-  #
 
+# bootnodes: []
+#
 
 config :node, bootnode: true
 

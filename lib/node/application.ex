@@ -8,14 +8,15 @@ defmodule Node.Application do
       {Redis, name: Redis},
       Config.p2p_transport(),
       P2P,
-      Config.cowboy(),
+      Config.cowboy()
     ]
 
-    children = if Application.fetch_env!(:node, :enable_miner) do
-      children ++ [Miner]
-    else
-      children
-    end
+    children =
+      if Application.fetch_env!(:node, :enable_miner) do
+        children ++ [Miner]
+      else
+        children
+      end
 
     opts = [strategy: :one_for_one, name: Node.Supervisor]
 

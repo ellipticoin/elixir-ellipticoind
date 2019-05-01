@@ -1,8 +1,9 @@
 defmodule TransactionProcessorTest do
-  use ExUnit.Case
-  alias Node.Models.Block
   import Utils
   import Test.Utils
+  use ExUnit.Case
+  alias Node.Models.Block
+  alias Node.Models.Block.TransactionProcessor
 
   setup do
     checkout_repo()
@@ -15,36 +16,38 @@ defmodule TransactionProcessorTest do
   test "adder.wasm" do
     insert_test_contract(:adder)
 
-    {:ok, _} = process_transaction(%{
-             sender: <<0>>,
-             nonce: 0,
-             contract_name: :adder,
-             function: :add,
-             arguments: [1, 2],
-             return_value: 3,
-             return_code: 0
-           })
+    {:ok, _} =
+      process_transaction(%{
+        sender: <<0>>,
+        nonce: 0,
+        contract_name: :adder,
+        function: :add,
+        arguments: [1, 2],
+        return_value: 3,
+        return_code: 0
+      })
   end
 
   test "env.wasm" do
     insert_test_contract(:env)
 
-    {:ok, _ } = process_transaction(
-             %{
-               sender: <<0>>,
-               nonce: 0,
-               contract_name: :env,
-               function: :block_number,
-               arguments: [],
-               return_value: 1,
-               return_code: 0
-             },
-             %{
-               block_number: 1,
-               block_winner: <<>>,
-               block_hash: <<>>
-             }
-           )
+    {:ok, _} =
+      process_transaction(
+        %{
+          sender: <<0>>,
+          nonce: 0,
+          contract_name: :env,
+          function: :block_number,
+          arguments: [],
+          return_value: 1,
+          return_code: 0
+        },
+        %{
+          block_number: 1,
+          block_winner: <<>>,
+          block_hash: <<>>
+        }
+      )
   end
 
   test ".process_transaction fails if the transaction results are different than the ones that were provided" do
