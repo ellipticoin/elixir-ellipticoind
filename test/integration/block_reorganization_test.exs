@@ -48,21 +48,13 @@ defmodule Integration.BlockReorganizationTest do
   test ".process_transaction reverts state changes of transactions that aren't on this chain" do
     insert_test_contract(:stack)
 
-    {:ok, _results} =
-      process_transaction(
-        %{
-          sender: <<0>>,
-          nonce: 0,
-          contract_address: <<0::256>>,
-          contract_name: :stack,
-          function: :push,
-          arguments: [:A],
-          return_value: nil,
-          return_code: 0
-        },
-        %{},
-        "Cskl8nkhbWMBDV4Um/ilk97GbfOYFEp2CzUM5y976bI=" |> Base.decode64!()
-      )
+    run_transaction(
+      %{
+        contract_name: :stack,
+        function: :push,
+        arguments: [:A],
+      }
+    )
 
     # stack_contract_address = <<0::256>> <> ("stack" |> pad_trailing(32))
     # IO.inspect Redis.get_binary(stack_contract_address <> "values")

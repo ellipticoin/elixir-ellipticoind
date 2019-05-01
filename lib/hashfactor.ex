@@ -26,13 +26,14 @@ defmodule Hashfactor do
     end
   end
 
-  def valid_nonce?(data, target, nonce) do
+  def valid_nonce?(data, nonce) do
     <<numerator::bytes-size(8), _::binary>> =
       (Crypto.hash(data) <>
          :binary.encode_unsigned(nonce, :little))
       |> Crypto.hash()
 
     # IO.inspect "#{:binary.decode_unsigned(numerator, :little)} % #{target + 1}", label: "testing"
+    target = Config.hashfactor_target()
     rem(:binary.decode_unsigned(numerator, :little), target + 1) == 0
   end
 

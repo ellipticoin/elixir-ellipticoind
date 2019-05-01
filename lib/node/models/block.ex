@@ -138,14 +138,8 @@ defmodule Node.Models.Block do
     if Validations.valid_next_block?(block) do
       block
       |> TransactionProcessor.process()
-      |> case do
-        {:ok, _} ->
-          insert(block)
 
-        error ->
-          IO.inspect(error)
-          nil
-      end
+      insert(block)
     else
       IO.puts("Received invalid block ##{block.number}")
     end

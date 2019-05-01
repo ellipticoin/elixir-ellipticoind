@@ -10,7 +10,6 @@ defmodule Node.Models.Block.Validations do
   def valid_proof_of_work_value?(proposed_block) do
     Hashfactor.valid_nonce?(
       Block.as_binary_pre_pow(proposed_block),
-      Config.hashfactor_target(),
       proposed_block.proof_of_work_value
     )
   end

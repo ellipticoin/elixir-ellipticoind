@@ -51,20 +51,37 @@ defmodule Test.Utils do
     |> Repo.insert!()
   end
 
-  def process_transaction(
-        transaction,
-        env \\ %{},
-        changeset_hash \\ Crypto.hash(<<>>)
-      ),
-      do:
-        transaction
-        |> (&TransactionProcessor.process(
-              %Block{
-                transactions: [&1],
-                changeset_hash: changeset_hash
-              },
-              env
-            )).()
+  def run_transaction(transaction, block_params \\ %{}) do
+    defaults = %{
+      sender: <<0>>,
+      arguments: [],
+      nonce: 0
+    }
+
+    transaction = Map.merge(defaults, transaction)
+
+    %{
+      return_code: return_code,
+      return_value: return_value
+    } =
+      %Block{
+        transactions: [transaction]
+      }
+      |> Map.merge(block_params)
+      |> TransactionProcessor.process()
+      |> Map.get(:transactions)
+      |> List.first()
+      |> Map.take([
+        :return_code,
+        :return_value
+      ])
+
+    if return_code == 0 do
+      {:ok, return_value}
+    else
+      {:error, return_value}
+    end
+  end
 
   def test_wasm_path(name) do
     "test/support/wasm/#{name}.wasm"
