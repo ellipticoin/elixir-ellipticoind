@@ -112,5 +112,6 @@ defmodule Integration.MiningTest do
 
     poll_for_next_block()
     assert get_balance(@alice) == 50
+    assert get_balance(@bob) == 150
   end
 end

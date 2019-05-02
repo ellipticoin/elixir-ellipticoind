@@ -38,14 +38,16 @@ impl EllipticoinAPI {
                 vm.write_pointer(vm.transaction.sender.to_vec()).into(),
             )),
             BLOCK_HASH_FUNC_INDEX => {
-                let block_hash = vm.db.read("best_block_hash".as_bytes());
+                let block_hash: serde_cbor::Value = vm.env.block_hash.clone().into();
 
-                Ok(Some(vm.write_pointer(block_hash.to_vec()).into()).into())
+                Ok(Some(vm.write_pointer(to_vec(&block_hash).unwrap()).into()))
             }
             BLOCK_NUMBER_FUNC_INDEX => {
                 let block_number: serde_cbor::Value = vm.env.block_number.into();
 
-                Ok(Some(vm.write_pointer(to_vec(&block_number).unwrap()).into()))
+                Ok(Some(
+                    vm.write_pointer(to_vec(&block_number).unwrap()).into(),
+                ))
             }
             BLOCK_WINNER_FUNC_INDEX => {
                 Ok(Some(vm.write_pointer(vm.env.block_winner.clone()).into()))

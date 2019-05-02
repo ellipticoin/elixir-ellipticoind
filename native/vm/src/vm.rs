@@ -1,22 +1,21 @@
-extern crate serialize;
 extern crate hex;
+extern crate serialize;
 use self::memory_units::Pages;
 use db::DB;
 use ellipticoin_api::*;
+use env::Env;
 use helpers::*;
 use std::mem::transmute;
 use transaction::Transaction;
+use vm::serialize::hex::ToHex;
 use wasmi::RuntimeValue;
 use wasmi::*;
-use env::Env;
-use vm::serialize::hex::ToHex;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub db: &'a DB,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
-
 }
 
 impl<'a> VM<'a> {
@@ -24,7 +23,7 @@ impl<'a> VM<'a> {
         db: &'a DB,
         env: &'a Env,
         transaction: &'a Transaction,
-        main: &'a ModuleRef
+        main: &'a ModuleRef,
     ) -> VM<'a> {
         VM {
             instance: main,
@@ -36,7 +35,10 @@ impl<'a> VM<'a> {
 
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(&"__malloc", &[RuntimeValue::I32(vec_with_length.len() as i32)]);
+        let vec_pointer = self.call(
+            &"__malloc",
+            &[RuntimeValue::I32(vec_with_length.len() as i32)],
+        );
         self.memory()
             .set(vec_pointer, vec_with_length.as_slice())
             .unwrap();
@@ -50,7 +52,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.db.read(key.as_slice());
+        let result = self.db.read(self.env.block_number, key.as_slice());
 
         result
     }
@@ -62,7 +64,8 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
-        self.db.write(key.as_slice(), value.as_slice());
+        self.db
+            .write(self.env.block_number, key.as_slice(), value.as_slice());
     }
 
     pub fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {

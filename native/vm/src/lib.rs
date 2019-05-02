@@ -6,21 +6,22 @@ extern crate redis;
 extern crate rustler;
 extern crate serde;
 extern crate serde_cbor;
+extern crate serialize;
 extern crate sha3;
 extern crate time;
 extern crate wasmi;
 
 mod db;
 mod ellipticoin_api;
+pub mod env;
 mod helpers;
 mod transaction;
 mod vm;
-pub mod env;
 pub use ellipticoin_api::EllipticoinAPI;
 
 pub use db::DB;
 pub use env::Env;
-pub use transaction::{run_transaction, Transaction, CompletedTransaction};
+pub use transaction::{run_transaction, CompletedTransaction, Transaction};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;
 

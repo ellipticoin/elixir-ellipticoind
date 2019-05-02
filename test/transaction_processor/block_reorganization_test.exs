@@ -1,7 +1,7 @@
 defmodule TransactionProcessor.BlockReorganizationTest do
   use ExUnit.Case
+  alias Node.Models.Block.TransactionProcessor
   import Test.Utils
-  import Binary
 
   setup do
     Redis.reset()
@@ -46,21 +46,23 @@ defmodule TransactionProcessor.BlockReorganizationTest do
 
   A --- D --- E --- F
   """
-  test ".process_transaction reverts state changes of transactions that aren't on this chain" do
+  @tag :skip
+  test ".revert_state reverts state back to a specified block number" do
     insert_test_contract(:stack)
-    push(:A, 1, 1)
-    push(:B, 2, 2)
-    push(:C, 3, 3)
-    push(:D, 2, 2)
-    push(:E, 3, 3)
-    push(:F, 4, 4)
+    push(:A, 1)
+    push(:B, 2)
+    push(:C, 3)
+    TransactionProcessor.revert_to(1)
+    push(:D, 2)
+    push(:E, 3)
+    push(:F, 4)
 
     assert get_stack() == [:A, :D, :E, :F]
   end
 
   def get_stack(), do: get_value(:stack, "value")
 
-  def push(value, _block \\ 0, _difficulty \\ 0),
+  def push(value, _block \\ 0),
     do:
       run_transaction(%{
         contract_name: :stack,

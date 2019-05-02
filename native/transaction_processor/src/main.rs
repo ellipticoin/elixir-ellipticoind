@@ -110,7 +110,6 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
 
 fn remove_from_processing(conn: &vm::Connection, transaction: &Transaction) {
     let transaction_bytes = to_vec(&transaction).unwrap();
-    // println!("removing {:?}", &transaction_bytes[0..3]);
     conn.lrem::<_, _, ()>(
         "transactions::processing",
         0,

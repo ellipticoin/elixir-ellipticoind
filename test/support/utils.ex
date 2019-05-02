@@ -12,19 +12,44 @@ defmodule Test.Utils do
     token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
 
     for {address, balance} <- balances do
-      Redis.set_binary(
-        token_contract_address <> <<0>> <> address,
+      key = token_contract_address <> <<0>> <> address
+      memory_key = "memory:" <> key
+      hash_key = <<0::little-size(64)>> <> key
+
+      Redis.add_to_sorted_set(
+        memory_key,
+        0,
+        hash_key
+      )
+
+      Redis.set_hash_value(
+        "memory_hash",
+        hash_key,
         <<balance::little-size(64)>>
       )
+
+      # <<balance::little-size(64)>>  
+      # Redis.set_binary(
+      #   token_contract_address <> <<0>> <> address,
+      #   <<balance::little-size(64)>>
+      # )
     end
   end
 
   def get_balance(address) do
-    token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
+    key = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
+    memory_key = "memory:" <> key <> <<0>> <> address
 
-    balance_bytes =
-      Redis.get_binary(token_contract_address <> <<0>> <> address)
-      |> ok
+    [hash_key] =
+      Redis.get_reverse_ordered_set_values(
+        memory_key,
+        "+inf",
+        "-inf",
+        0,
+        1
+      )
+
+    balance_bytes = Redis.get_hash_value("memory_hash", hash_key)
 
     if is_nil(balance_bytes) do
       0

@@ -87,6 +87,9 @@ defmodule Node.Models.Block.TransactionProcessor do
     Crypto.hash(changeset)
   end
 
+  def revert_to(block_number) do
+  end
+
   def wait_until_done(port) do
     receive do
       :cancel ->

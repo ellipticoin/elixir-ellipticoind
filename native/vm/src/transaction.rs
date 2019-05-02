@@ -1,13 +1,13 @@
 use ellipticoin_api::EllipticoinAPI;
+use env::Env;
 use heck::SnakeCase;
 use redis::Connection;
-use serde_cbor::Value;
 use serde::{Deserialize, Serialize};
+use serde_cbor::Value;
 use std::collections::HashMap;
 use std::fs::File;
-use std::mem::transmute;
 use std::io::Read;
-use env::Env;
+use std::mem::transmute;
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -31,9 +31,8 @@ lazy_static! {
             .collect()
     };
 }
-use serde_cbor::{to_vec};
+use serde_cbor::to_vec;
 pub use wasmi::RuntimeValue;
-
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Transaction {
@@ -81,11 +80,8 @@ pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) ->
     let (return_code_bytes, return_value_bytes) = result_clone.split_at(4);
     let mut return_code_bytes_fixed: [u8; 4] = Default::default();
     return_code_bytes_fixed.copy_from_slice(&return_code_bytes[0..4]);
-    let return_code: u32 = unsafe{
-        transmute(return_code_bytes_fixed)
-    };
+    let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
     let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
-
 
     (return_code, return_value)
 }

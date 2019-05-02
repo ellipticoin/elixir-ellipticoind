@@ -43,6 +43,22 @@ defmodule Redis do
     GenServer.call(Redis, {:set_binary, key, value})
   end
 
+  def add_to_sorted_set(key, score, value) do
+    GenServer.call(Redis, {:add_to_sorted_set, key, score, value})
+  end
+
+  def get_reverse_ordered_set_values(key, min, max, offset, count) do
+    GenServer.call(Redis, {:get_reverse_ordered_set_values, key, min, max, offset, count})
+  end
+
+  def set_hash_value(hash, key, value) do
+    GenServer.call(Redis, {:set_hash_value, hash, key, value})
+  end
+
+  def get_hash_value(hash, key) do
+    GenServer.call(Redis, {:get_hash_value, hash, key})
+  end
+
   def set_map(key, value) do
     GenServer.cast(Redis, {:set_map, key, value})
   end
@@ -120,6 +136,54 @@ defmodule Redis do
     ])
 
     {:noreply, redis}
+  end
+
+  def handle_call({:add_to_sorted_set, key, score, value}, _from, redis) do
+    Redix.command(redis, [
+      "ZADD",
+      key,
+      score,
+      value
+    ])
+
+    {:reply, nil, redis}
+  end
+
+  def handle_call({:get_reverse_ordered_set_values, key, min, max, offset, count}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "ZREVRANGEBYSCORE",
+        key,
+        min,
+        max,
+        "LIMIT",
+        offset,
+        count
+      ])
+
+    {:reply, value, redis}
+  end
+
+  def handle_call({:get_hash_value, hash, key}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "HGET",
+        hash,
+        key
+      ])
+
+    {:reply, value, redis}
+  end
+
+  def handle_call({:set_hash_value, hash, key, value}, _from, redis) do
+    Redix.command(redis, [
+      "HSET",
+      hash,
+      key,
+      value
+    ])
+
+    {:reply, nil, redis}
   end
 
   def handle_call({:set_binary, key, value}, _from, redis) do
