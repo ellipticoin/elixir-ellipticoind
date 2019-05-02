@@ -55,6 +55,10 @@ defmodule Redis do
     GenServer.call(Redis, {:set_hash_value, hash, key, value})
   end
 
+  def remove_range_by_score(key, min, max) do
+    GenServer.call(Redis, {:remove_range_by_score, key, min, max})
+  end
+
   def get_hash_value(hash, key) do
     GenServer.call(Redis, {:get_hash_value, hash, key})
   end
@@ -147,6 +151,18 @@ defmodule Redis do
     ])
 
     {:reply, nil, redis}
+  end
+
+  def handle_call({:remove_range_by_score, key, min, max}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "ZRANGEBYSCORE",
+        key,
+        min,
+        max,
+      ])
+
+    {:reply, value, redis}
   end
 
   def handle_call({:get_reverse_ordered_set_values, key, min, max, offset, count}, _from, redis) do

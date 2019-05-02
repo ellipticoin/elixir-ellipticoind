@@ -13,5 +13,5 @@ lazy_static = "0.2"
 wasmi = { git = "https://github.com/paritytech/wasmi.git"}
 serde = { version = "1.0.90", features = ["derive"] }
 serde_bytes = "0.11.1"
-serde_cbor = { path = "../../../cbor" }
+serde_cbor = { git = "https://github.com/baloo/cbor", branch = "baloo/fixup-serde_bytes_dependency" }
 hex = "*"
