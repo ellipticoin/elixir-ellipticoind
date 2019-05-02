@@ -7,7 +7,6 @@ use env::Env;
 use helpers::*;
 use std::mem::transmute;
 use transaction::Transaction;
-use vm::serialize::hex::ToHex;
 use wasmi::RuntimeValue;
 use wasmi::*;
 
@@ -52,7 +51,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.db.read(self.env.block_number, key.as_slice());
+        let result = self.db.read(key.as_slice());
 
         result
     }

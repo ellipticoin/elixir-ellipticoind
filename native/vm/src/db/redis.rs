@@ -1,15 +1,7 @@
 use redis::Commands;
 extern crate redis;
 use db::DB;
-use serialize::hex::ToHex;
 
-fn full_key(block_number: u64, key: &[u8]) -> Vec<u8> {
-    [
-        unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(block_number) }.to_vec(),
-        key.to_vec(),
-    ]
-    .concat()
-}
 fn memory_key(key: &[u8]) -> Vec<u8> {
     ["memory:".as_bytes().to_vec(), key.to_vec()].concat()
 }
@@ -48,7 +40,7 @@ impl DB for redis::Connection {
             .unwrap();
     }
 
-    fn read(&self, block_number: u64, key: &[u8]) -> Vec<u8> {
+    fn read(&self, key: &[u8]) -> Vec<u8> {
         let latest_hash_keys = self
             .zrevrangebyscore_limit::<_, _, _, Vec<Vec<u8>>>(memory_key(key), "+inf", "-inf", 0, 1)
             .unwrap();
