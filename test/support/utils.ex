@@ -70,10 +70,17 @@ defmodule Test.Utils do
         contract_name,
         key
       ) do
-    address = <<0::256>> <> (Atom.to_string(contract_name) |> pad_trailing(32))
-
-    Redis.get_binary(address <> "value")
-    |> Utils.ok()
+        memory_key = "memory:" <> <<0::256>> <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
+    case Redis.get_reverse_ordered_set_values(
+        memory_key,
+        "+inf",
+        "-inf",
+        0,
+        1
+    ) do
+      [hash_key] -> Redis.get_hash_value("memory_hash", hash_key)
+      _ -> []
+    end
   end
 
   def insert_contracts do

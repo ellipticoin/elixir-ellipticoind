@@ -88,6 +88,13 @@ defmodule Node.Models.Block.TransactionProcessor do
   end
 
   def revert_to(block_number) do
+    for key <- Redis.get_set("memory_keys") do
+      Redis.remove_range_by_reverse_score(
+        key,
+        block_number,
+        "+inf"
+      )
+    end
   end
 
   def wait_until_done(port) do

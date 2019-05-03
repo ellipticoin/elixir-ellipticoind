@@ -46,7 +46,6 @@ defmodule TransactionProcessor.BlockReorganizationTest do
 
   A --- D --- E --- F
   """
-  @tag :skip
   test ".revert_state reverts state back to a specified block number" do
     insert_test_contract(:stack)
     push(:A, 1)
@@ -62,11 +61,13 @@ defmodule TransactionProcessor.BlockReorganizationTest do
 
   def get_stack(), do: get_value(:stack, "value")
 
-  def push(value, _block \\ 0),
+  def push(value, block_number),
     do:
       run_transaction(%{
         contract_name: :stack,
         function: :push,
         arguments: [value]
+      }, %{
+        number: block_number,
       })
 end

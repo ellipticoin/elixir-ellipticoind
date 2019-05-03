@@ -22,6 +22,10 @@ impl DB for redis::Connection {
     fn write(&self, block_number: u64, key: &[u8], value: &[u8]) {
         let _: () = redis::pipe()
             .atomic()
+            .cmd("SADD")
+            .arg("memory_keys")
+            .arg(memory_key(key))
+            .ignore()
             .cmd("ZREM")
             .arg(memory_key(key))
             .arg(hash_key(block_number, key))
