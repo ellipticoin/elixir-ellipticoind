@@ -44,7 +44,7 @@ defmodule Miner do
     Transaction.post(%{
       contract_address: <<0::256>>,
       contract_name: :BaseToken,
-      nonce: 1,
+      nonce: 0,
       function: :mint,
       arguments: [],
       sender: Config.public_key()

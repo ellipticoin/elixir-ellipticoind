@@ -55,6 +55,7 @@ pub struct CompletedTransaction {
     pub contract_name: String,
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
+    pub nonce: u64,
     pub function: String,
     pub arguments: Vec<Value>,
     pub return_value: Value,

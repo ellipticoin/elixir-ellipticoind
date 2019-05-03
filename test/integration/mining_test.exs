@@ -27,9 +27,13 @@ defmodule Integration.MiningTest do
 
     Miner.start_link()
 
-    new_block = poll_for_next_block()
+    P2P.Transport.Test.subscribe_to_test_broadcasts(self())
+    broadcasted_block = receive do
+      {:p2p, nil, block} -> block |> Cbor.decode!
+    end
+    new_block = poll_for_block(0)
+    assert Block.Validations.valid_proof_of_work_value?(broadcasted_block)
     assert new_block.number == 0
-
     assert new_block.transactions
            |> Enum.map(fn transaction ->
              Map.take(
@@ -110,7 +114,7 @@ defmodule Integration.MiningTest do
 
     P2P.Transport.Test.receive(block_bytes)
 
-    poll_for_next_block()
+    poll_for_block(0)
     assert get_balance(@alice) == 50
     assert get_balance(@bob) == 150
   end

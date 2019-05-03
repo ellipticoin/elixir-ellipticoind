@@ -51,6 +51,11 @@ defmodule Test.Utils do
 
     balance_bytes = Redis.get_hash_value("memory_hash", hash_key)
 
+    # Not sure what causes this but sleepeing for 10ms prevents against the
+    # following intermittent test error:
+    #  `16:38:19.626 [error] Postgrex.Protocol (#PID<0.352.0>) disconnected: ** (DBConnection.ConnectionError) owner #PID<0.498.0> exited`
+    :timer.sleep(10)
+
     if is_nil(balance_bytes) do
       0
     else
@@ -137,29 +142,18 @@ defmodule Test.Utils do
     "test/support/wasm/#{name}.wasm"
   end
 
-  def poll_for_next_block() do
-    best_block = Block.best() |> Repo.one()
-    poll_for_next_block(best_block)
-  end
-
-  def poll_for_next_block(previous_block) do
+  def poll_for_block(block_number) do
     best_block =
       Block.best()
       |> Repo.one()
       |> Repo.preload(:transactions)
 
-    if new_block?(previous_block, best_block) do
+
+    if best_block && best_block.number == block_number do
       best_block
     else
-      :timer.sleep(100)
-      poll_for_next_block(best_block)
+      poll_for_block(block_number)
     end
-  end
-
-  def new_block?(previous_block, best_block) do
-    (is_nil(previous_block) and !is_nil(best_block)) ||
-      (best_block && previous_block &&
-         best_block.number > previous_block.number)
   end
 
   def parse_hex("0x" <> hex_data), do: parse_hex(hex_data)

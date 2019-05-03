@@ -103,11 +103,11 @@ fn start_server() {
         }
     }
 
-    let bootellipticoinds_string = std::env::args().nth(3).unwrap();
-    let bootellipticoinds: Vec<(PeerId, Multiaddr)> = if bootellipticoinds_string == "" {
+    let bootnodes_string = std::env::args().nth(3).unwrap();
+    let bootnodes: Vec<(PeerId, Multiaddr)> = if bootnodes_string == "" {
         vec![]
     } else {
-        bootellipticoinds_string.split(",").map(|string| {
+        bootnodes_string.split(",").map(|string| {
             let bootellipticoind_parts: Vec<&str> = string
                 .split(":")
                 .collect();
@@ -137,7 +137,7 @@ fn start_server() {
         behaviour.floodsub.subscribe(floodsub_topic.clone());
         libp2p::Swarm::new(transport, behaviour, local_peer_id)
     };
-    for (_peer_id, multi_addr) in bootellipticoinds {
+    for (_peer_id, multi_addr) in bootnodes {
         libp2p::Swarm::dial_addr(&mut swarm, multi_addr).unwrap();
     };
 

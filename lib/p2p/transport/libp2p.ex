@@ -9,13 +9,13 @@ defmodule P2P.Transport.LibP2P do
   def init(
         options = %{
           port: port,
-          bootellipticoinds: bootellipticoinds
+          bootnodes: bootnodes
         }
       ) do
     libp2p_address = "/ip4/0.0.0.0/tcp/#{port}"
 
-    bootellipticoinds =
-      bootellipticoinds
+    bootnodes =
+      bootnodes
       |> Enum.join(",")
 
     private_key =
@@ -24,7 +24,7 @@ defmodule P2P.Transport.LibP2P do
 
     port =
       Port.open({:spawn_executable, path_to_executable()},
-        args: [private_key, libp2p_address, bootellipticoinds]
+        args: [private_key, libp2p_address, bootnodes]
       )
 
     {:ok,

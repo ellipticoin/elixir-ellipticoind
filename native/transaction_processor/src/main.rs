@@ -101,6 +101,7 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
         contract_address: transaction.contract_address.clone(),
         contract_name: transaction.contract_name.clone(),
         sender: transaction.sender.clone(),
+        nonce: transaction.nonce.clone(),
         function: transaction.function.clone(),
         arguments: transaction.arguments.clone(),
         return_value: return_value,
