@@ -1,4 +1,4 @@
-defmodule Node.Plug.RawBody do
+defmodule Ellipticoind.Plug.RawBody do
   def init(options), do: options
 
   def call(conn, _options) do

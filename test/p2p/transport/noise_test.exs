@@ -10,7 +10,7 @@ defmodule P2P.NoiseTest do
         %{
           private_key: @alices_private_key,
           port: 4045,
-          bootnodes: []
+          bootellipticoinds: []
         },
         []
       )
@@ -21,7 +21,7 @@ defmodule P2P.NoiseTest do
         %{
           private_key: @bobs_private_key,
           port: 4046,
-          bootnodes: [
+          bootellipticoinds: [
             "127.0.0.1:4045"
           ]
         },

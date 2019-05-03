@@ -1,12 +1,12 @@
-defmodule Node.Models.Block do
+defmodule Ellipticoind.Models.Block do
   use Ecto.Schema
   require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
-  alias Node.Repo
-  alias Node.Models.Transaction
-  alias Node.Models.Block.Validations
-  alias Node.Models.Block.TransactionProcessor
+  alias Ellipticoind.Repo
+  alias Ellipticoind.Models.Transaction
+  alias Ellipticoind.Models.Block.Validations
+  alias Ellipticoind.Models.Block.TransactionProcessor
 
   @primary_key false
   schema "blocks" do

@@ -1,4 +1,4 @@
-defmodule Node.Plug.CBOR do
+defmodule Ellipticoind.Plug.CBOR do
   @moduledoc """
   Parses CBOR request body.
   CBOR arrays are parsed into a `"_cbor"` key to allow

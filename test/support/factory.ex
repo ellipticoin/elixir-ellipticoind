@@ -1,7 +1,7 @@
-defmodule Node.Factory do
-  use ExMachina.Ecto, repo: Node.Repo
+defmodule Ellipticoind.Factory do
+  use ExMachina.Ecto, repo: Ellipticoind.Repo
 
-  alias Node.Models.Block
+  alias Ellipticoind.Models.Block
 
   def block_factory do
     %Block{

@@ -1,10 +1,9 @@
-defmodule Node.Models.Contract do
+defmodule Ellipticoind.Models.Contract do
   use Agent
   use Ecto.Schema
   import Ecto.Changeset
-  alias Node.Repo
-  alias Node.Models.Contract
-  alias Node.Ecto.Types
+  alias Ellipticoind.Repo
+  alias Ellipticoind.Ecto.Types
 
   @primary_key false
   schema "contracts" do
@@ -32,7 +31,7 @@ defmodule Node.Models.Contract do
 
   def base_contract_code(contract_name) do
     File.read!(
-      Application.get_env(:node, :base_contracts_path) <>
+      Application.get_env(:ellipticoind, :base_contracts_path) <>
         "/#{Macro.underscore(Atom.to_string(contract_name))}.wasm"
     )
   end

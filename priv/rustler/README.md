@@ -57,7 +57,7 @@ fn add<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
 #### Community
 
-You can find us in `#rustler` on [freenode](http://freenode.net/) or [the elixir-lang slack](https://elixir-slackin.herokuapp.com/).
+You can find us in `#rustler` on [freeellipticoind](http://freeellipticoind.net/) or [the elixir-lang slack](https://elixir-slackin.herokuapp.com/).
 
 #### License
 

@@ -1,4 +1,4 @@
-defmodule Node.Ecto.Types.Atom do
+defmodule Ellipticoind.Ecto.Types.Atom do
   @behaviour Ecto.Type
 
   def type, do: :string

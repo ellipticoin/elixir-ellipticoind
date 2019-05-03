@@ -1,8 +1,8 @@
 defmodule Miner do
   require Logger
   use GenServer
-  alias Node.Models.{Block, Transaction}
-  alias Node.Models.Block.TransactionProcessor
+  alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Models.Block.TransactionProcessor
 
   def start_link([]), do: start_link()
 

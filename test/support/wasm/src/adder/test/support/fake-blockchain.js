@@ -113,7 +113,7 @@ class FakeBlockchain extends WasmRPC {
       };
       run();`;
 
-    return execFileSync('node', ['-e', runWasmCode]);
+    return execFileSync('ellipticoind', ['-e', runWasmCode]);
   }
 }
 

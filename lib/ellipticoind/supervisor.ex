@@ -1,8 +1,8 @@
-defmodule Node.Supervisor do
+defmodule Ellipticoind.Supervisor do
   use Supervisor
 
   def start_link(_opts) do
-    opts = [strategy: :one_for_one, name: Node.Supervisor]
+    opts = [strategy: :one_for_one, name: Ellipticoind.Supervisor]
     Supervisor.start_link(__MODULE__, :ok, opts)
   end
 

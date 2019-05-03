@@ -37,5 +37,5 @@ defmodule Hashfactor do
     rem(:binary.decode_unsigned(numerator, :little), target + 1) == 0
   end
 
-  def path_to_executable(), do: Application.app_dir(:node, ["priv", "native", @crate])
+  def path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
 end

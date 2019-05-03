@@ -1,6 +1,6 @@
-defmodule Node.Models.Block.Validations do
-  alias Node.Repo
-  alias Node.Models.Block
+defmodule Ellipticoind.Models.Block.Validations do
+  alias Ellipticoind.Repo
+  alias Ellipticoind.Models.Block
 
   def valid_next_block?(proposed_block) do
     valid_proof_of_work_value?(proposed_block) &&

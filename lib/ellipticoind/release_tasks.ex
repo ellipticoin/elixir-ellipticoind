@@ -1,4 +1,4 @@
-defmodule Node.ReleaseTasks do
+defmodule Ellipticoind.ReleaseTasks do
   @start_apps [
     :crypto,
     :ssl,
@@ -7,7 +7,7 @@ defmodule Node.ReleaseTasks do
     :ecto_sql
   ]
 
-  @repos Application.get_env(:node, :ecto_repos, [])
+  @repos Application.get_env(:ellipticoind, :ecto_repos, [])
 
   def generate_private_key() do
     IO.puts("New private_key:")

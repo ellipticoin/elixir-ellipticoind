@@ -7,7 +7,7 @@ defmodule Redis do
   end
 
   def init(_args) do
-    connection_url = Application.fetch_env!(:node, :redis_url)
+    connection_url = Application.fetch_env!(:ellipticoind, :redis_url)
     Redix.start_link(connection_url)
   end
 

@@ -1,4 +1,4 @@
-defmodule Node.Repo.Migrations.AddContractsTable do
+defmodule Ellipticoind.Repo.Migrations.AddContractsTable do
   use Ecto.Migration
 
   def change do

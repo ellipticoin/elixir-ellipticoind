@@ -2,7 +2,7 @@ defmodule Integration.MiningTest do
   import Test.Utils
   use NamedAccounts
   use ExUnit.Case
-  alias Node.Models.{Block, Transaction}
+  alias Ellipticoind.Models.{Block, Transaction}
   use OK.Pipe
 
   setup do
@@ -76,7 +76,7 @@ defmodule Integration.MiningTest do
     # assert get_balance(Config.public_key()) == 640_000
   end
 
-  test "a new block is mined on the parent chain and another node is the winner" do
+  test "a new block is mined on the parent chain and another ellipticoind is the winner" do
     set_balances(%{
       @alice => 100,
       @bob => 100

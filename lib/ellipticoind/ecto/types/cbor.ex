@@ -1,4 +1,4 @@
-defmodule Node.Ecto.Types.Cbor do
+defmodule Ellipticoind.Ecto.Types.Cbor do
   @behaviour Ecto.Type
 
   def type, do: :binary

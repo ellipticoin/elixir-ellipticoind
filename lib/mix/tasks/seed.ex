@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Seed do
-  alias Node.Models.Contract
-  alias Node.Repo
+  alias Ellipticoind.Models.Contract
+  alias Ellipticoind.Repo
   use Mix.Task
 
   @shortdoc "Seeds the database"

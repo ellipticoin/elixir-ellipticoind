@@ -1,1 +1,1 @@
-Node.Repo.delete_all(Node.Models.Block)
+Ellipticoind.Repo.delete_all(Ellipticoind.Models.Block)

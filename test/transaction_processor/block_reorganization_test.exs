@@ -1,6 +1,6 @@
 defmodule TransactionProcessor.BlockReorganizationTest do
   use ExUnit.Case
-  alias Node.Models.Block.TransactionProcessor
+  alias Ellipticoind.Models.Block.TransactionProcessor
   import Test.Utils
 
   setup do

@@ -1,8 +1,7 @@
 Ellipticoind
 ==========
 
-Ellipticoind is the reference implementation of an Ellipticoin node written in
-Elixir.
+Ellipticoind is an Ellipticoin node written in Elixir.
 
 Running Ellipticoind:
 ==========================
@@ -41,7 +40,7 @@ Installation instructions for Ubuntu 18.0.4 (Bionic Beaver)
 
 7. Download the latest release:
 
-    `wget https://github.com/ellipticoin/ellipticoin-node/releases/download/0.1.0-alpha/ellipticoind-ubuntu-18-04-0.1.0.tar.gz`
+    `wget https://github.com/ellipticoin/ellipticoin-ellipticoind/releases/download/0.1.0-alpha/ellipticoind-ubuntu-18-04-0.1.0.tar.gz`
 
 8. Extract it:
 
@@ -50,12 +49,12 @@ Installation instructions for Ubuntu 18.0.4 (Bionic Beaver)
 
 9. Migrate the database:
 
-    `$ ./bin/node migrate`
+    `$ ./bin/ellipticoind migrate`
 
-10. Generate a private key for your node:
+10. Generate a private key for your ellipticoind:
 
     ```
-    $ ./bin/node generate_private_key
+    $ ./bin/ellipticoind generate_private_key
     New private_key:
     LZf9CkbgnZzBKQWfd9ywu9B8XF+wZbRzulAr3ZLogWPIKAJesHzDBDTHJ2foOB/gjLcqLQyfYu8ORK97G05zPg==
     ```
@@ -65,15 +64,15 @@ Installation instructions for Ubuntu 18.0.4 (Bionic Beaver)
 
 12. Run the server in the foreground to make sure everything is set up correctly:
 
-    `$ ./bin/node foreground`
+    `$ ./bin/ellipticoind foreground`
 
 13. Start the server in the background:
 
-    `$ ./bin/node start`
+    `$ ./bin/ellipticoind start`
 
 From Source
 -----
-1. Clone the repo:  `git clone https://github.com/ellipticoin/ellipticoin-node && cd ellipticoin-blacksmith-node`
+1. Clone the repo:  `git clone https://github.com/ellipticoin/ellipticoin-ellipticoind && cd ellipticoin-blacksmith-ellipticoind`
 2. Update `ETHEREUM_PRIVATE_KEY` and anything else you'd like to customize in
    `config/dev.secret.exs` and `config/dev.exs`
 3. Run: `mix dep.get`

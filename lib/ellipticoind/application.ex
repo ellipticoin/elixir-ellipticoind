@@ -1,9 +1,9 @@
-defmodule Node.Application do
+defmodule Ellipticoind.Application do
   use Application
 
   def start(_type, _args) do
     children = [
-      Node.Repo,
+      Ellipticoind.Repo,
       Supervisor.child_spec({Task, &WebsocketHandler.start/0}, id: WebsocketHandler),
       {Redis, name: Redis},
       Config.p2p_transport(),
@@ -12,13 +12,13 @@ defmodule Node.Application do
     ]
 
     children =
-      if Application.fetch_env!(:node, :enable_miner) do
+      if Application.fetch_env!(:ellipticoind, :enable_miner) do
         children ++ [Miner]
       else
         children
       end
 
-    opts = [strategy: :one_for_one, name: Node.Supervisor]
+    opts = [strategy: :one_for_one, name: Ellipticoind.Supervisor]
 
     Supervisor.start_link(children, opts)
   end

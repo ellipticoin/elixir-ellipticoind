@@ -1,6 +1,6 @@
 defmodule P2P do
   require Logger
-  alias Node.Models.Block
+  alias Ellipticoind.Models.Block
   use GenServer
 
   def start_link(opts) do
@@ -42,5 +42,5 @@ defmodule P2P do
     {:noreply, state}
   end
 
-  defp transport(), do: Application.fetch_env!(:node, :p2p_transport)
+  defp transport(), do: Application.fetch_env!(:ellipticoind, :p2p_transport)
 end

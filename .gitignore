@@ -28,6 +28,6 @@ blacksmith-*.tar
 config/*.secret.ex
 config/*.secret.exs
 config/*.pem
-test/support/wasm/src/adder/node_modules
-staking_contract/node_modules
+test/support/wasm/src/adder/ellipticoind_modules
+staking_contract/ellipticoind_modules
 staking_contract/build

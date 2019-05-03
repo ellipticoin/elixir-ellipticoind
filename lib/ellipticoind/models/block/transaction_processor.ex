@@ -1,6 +1,6 @@
-defmodule Node.Models.Block.TransactionProcessor do
-  alias Node.Repo
-  alias Node.Models.{Block, Transaction}
+defmodule Ellipticoind.Models.Block.TransactionProcessor do
+  alias Ellipticoind.Repo
+  alias Ellipticoind.Models.{Block, Transaction}
 
   @crate "transaction_processor"
 
@@ -132,5 +132,5 @@ defmodule Node.Models.Block.TransactionProcessor do
     Port.open({:spawn_executable, path_to_executable()}, args: args)
   end
 
-  def path_to_executable(), do: Application.app_dir(:node, ["priv", "native", @crate])
+  def path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
 end

@@ -8,7 +8,7 @@ defmodule P2P.Transport.Noise do
 
   def init(%{
         port: port,
-        bootnodes: bootnodes
+        bootellipticoinds: bootellipticoinds
       }) do
     port =
       Port.open(
@@ -19,7 +19,7 @@ defmodule P2P.Transport.Noise do
             [
               "-p",
               Integer.to_string(port)
-            ] ++ bootnodes
+            ] ++ bootellipticoinds
         ]
       )
 
@@ -97,5 +97,5 @@ defmodule P2P.Transport.Noise do
     state
   end
 
-  defp path_to_executable(), do: Application.app_dir(:node, ["priv", "native", @crate])
+  defp path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
 end

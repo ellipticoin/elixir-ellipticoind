@@ -1,4 +1,4 @@
-defmodule Node.Repo.Migrations.AddBlocksTable do
+defmodule Ellipticoind.Repo.Migrations.AddBlocksTable do
   use Ecto.Migration
 
   def change do

@@ -1,8 +1,8 @@
-defmodule Node.Models.Transaction do
+defmodule Ellipticoind.Models.Transaction do
   use Ecto.Schema
-  alias Node.Models.Contract
-  alias Node.Ecto.Types
-  alias Node.Repo
+  alias Ellipticoind.Models.Contract
+  alias Ellipticoind.Ecto.Types
+  alias Ellipticoind.Repo
   import Ecto.Changeset
 
   schema "transactions" do

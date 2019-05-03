@@ -4,13 +4,13 @@ defmodule Router do
   use Plug.Router
 
   if Mix.env() == :dev do
-    use Plug.Debugger, otp_app: :node
+    use Plug.Debugger, otp_app: :ellipticoind
   end
 
-  alias Node.Plug.CBOR
-  alias Node.Repo
+  alias Ellipticoind.Plug.CBOR
+  alias Ellipticoind.Repo
   alias HTTP.SignatureAuth
-  alias Node.Models.{Block, Transaction}
+  alias Ellipticoind.Models.{Block, Transaction}
 
   plug(CORSPlug)
 

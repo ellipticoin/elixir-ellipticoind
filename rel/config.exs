@@ -57,8 +57,8 @@ end
 # when running `mix release`, the first release in the file
 # will be used by default
 
-release :node do
-  set version: current_version(:node)
+release :ellipticoind do
+  set version: current_version(:ellipticoind)
   set applications: [
     :crypto,
     :runtime_tools

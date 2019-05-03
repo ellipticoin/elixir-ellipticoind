@@ -1,4 +1,4 @@
-defmodule Node.Models.Block.TransactionResultValidations do
+defmodule Ellipticoind.Models.Block.TransactionResultValidations do
   def valid_transaction_results?(block, transaction_results) do
     !Enum.any?(transaction_errors(block, transaction_results))
   end

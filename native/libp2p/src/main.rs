@@ -67,13 +67,13 @@ fn start_server() {
             match event {
                 libp2p::mdns::MdnsEvent::Discovered(list) => {
                     for (peer, _) in list {
-                        self.floodsub.add_node_to_partial_view(peer);
+                        self.floodsub.add_ellipticoind_to_partial_view(peer);
                     }
                 }
                 libp2p::mdns::MdnsEvent::Expired(list) => {
                     for (peer, _) in list {
-                        if !self.mdns.has_node(&peer) {
-                            self.floodsub.remove_node_from_partial_view(&peer);
+                        if !self.mdns.has_ellipticoind(&peer) {
+                            self.floodsub.remove_ellipticoind_from_partial_view(&peer);
                         }
                     }
                 }
@@ -103,16 +103,16 @@ fn start_server() {
         }
     }
 
-    let bootnodes_string = std::env::args().nth(3).unwrap();
-    let bootnodes: Vec<(PeerId, Multiaddr)> = if bootnodes_string == "" {
+    let bootellipticoinds_string = std::env::args().nth(3).unwrap();
+    let bootellipticoinds: Vec<(PeerId, Multiaddr)> = if bootellipticoinds_string == "" {
         vec![]
     } else {
-        bootnodes_string.split(",").map(|string| {
-            let bootnode_parts: Vec<&str> = string
+        bootellipticoinds_string.split(",").map(|string| {
+            let bootellipticoind_parts: Vec<&str> = string
                 .split(":")
                 .collect();
 
-            if let &[peer_id_string, multi_addr_string] = bootnode_parts.as_slice() {
+            if let &[peer_id_string, multi_addr_string] = bootellipticoind_parts.as_slice() {
                 let public_key: PublicKey = PublicKey::Ed25519(peer_id_string.from_base64().unwrap());
                 let peer_id: PeerId = public_key.into_peer_id();
                 let multi_addr: Multiaddr = multi_addr_string.parse().unwrap();
@@ -137,7 +137,7 @@ fn start_server() {
         behaviour.floodsub.subscribe(floodsub_topic.clone());
         libp2p::Swarm::new(transport, behaviour, local_peer_id)
     };
-    for (_peer_id, multi_addr) in bootnodes {
+    for (_peer_id, multi_addr) in bootellipticoinds {
         libp2p::Swarm::dial_addr(&mut swarm, multi_addr).unwrap();
     };
 

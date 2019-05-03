@@ -1,4 +1,4 @@
-defmodule Node.Repo.Migrations.CreateTransactions do
+defmodule Ellipticoind.Repo.Migrations.CreateTransactions do
   use Ecto.Migration
 
   def change do

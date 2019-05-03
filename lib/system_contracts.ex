@@ -1,6 +1,6 @@
 defmodule SystemContracts do
-  alias Node.Repo
-  alias Node.Models.Contract
+  alias Ellipticoind.Repo
+  alias Ellipticoind.Models.Contract
 
   def deploy() do
     case Repo.get_by(Contract, name: :BaseToken) do

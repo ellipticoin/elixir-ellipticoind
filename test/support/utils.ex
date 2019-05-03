@@ -4,9 +4,9 @@ defmodule Test.Utils do
   require Integer
   import Binary
   alias Crypto.Ed25519
-  alias Node.Models.{Block, Contract}
-  alias Node.Models.Block.TransactionProcessor
-  alias Node.Repo
+  alias Ellipticoind.Models.{Block, Contract}
+  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.Repo
 
   def set_balances(balances) do
     token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
@@ -170,8 +170,8 @@ defmodule Test.Utils do
   def parse_hex(hex_data), do: Base.decode16!(hex_data, case: :mixed)
 
   def checkout_repo() do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Node.Repo)
-    Ecto.Adapters.SQL.Sandbox.mode(Node.Repo, {:shared, self()})
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Ellipticoind.Repo)
+    Ecto.Adapters.SQL.Sandbox.mode(Ellipticoind.Repo, {:shared, self()})
   end
 
   def read_test_wasm(file_name) do
