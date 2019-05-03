@@ -8,7 +8,7 @@ defmodule P2P.Transport.Noise do
 
   def init(%{
         port: port,
-        bootellipticoinds: bootellipticoinds
+        bootnodes: bootnodes
       }) do
     port =
       Port.open(
@@ -19,7 +19,7 @@ defmodule P2P.Transport.Noise do
             [
               "-p",
               Integer.to_string(port)
-            ] ++ bootellipticoinds
+            ] ++ bootnodes
         ]
       )
 
