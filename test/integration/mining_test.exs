@@ -3,6 +3,7 @@ defmodule Integration.MiningTest do
   use NamedAccounts
   use ExUnit.Case
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Miner
   use OK.Pipe
 
   setup do

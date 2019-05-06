@@ -1,6 +1,7 @@
-defmodule Miner do
+defmodule Ellipticoind.Miner do
   require Logger
   use GenServer
+  alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.Models.Block.TransactionProcessor
 
@@ -51,9 +52,19 @@ defmodule Miner do
     })
 
     case TransactionProcessor.process_new_block() do
-      :cancelled -> mining_loop()
+      :cancelled -> handle_cancel()
       new_block -> hashfactor(new_block)
     end
+  end
+
+  defp handle_cancel() do
+    best_block = Block.best() |> Repo.one()
+    if best_block do
+      TransactionProcessor.revert_to(best_block.number - 1)
+    else
+      TransactionProcessor.revert_to(-1)
+    end
+    mining_loop()
   end
 
   defp hashfactor(new_block) do
@@ -61,7 +72,7 @@ defmodule Miner do
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :cancelled -> mining_loop()
+      :cancelled -> handle_cancel()
       proof_of_work_value -> insert(new_block, proof_of_work_value)
     end
   end

@@ -4,7 +4,7 @@ defmodule Test.Utils do
   require Integer
   import Binary
   alias Crypto.Ed25519
-  alias Ellipticoind.Models.{Block, Contract}
+  alias Ellipticoind.Models.{Block, Contract, Transaction}
   alias Ellipticoind.Models.Block.TransactionProcessor
   alias Ellipticoind.Repo
 
@@ -67,8 +67,12 @@ defmodule Test.Utils do
         contract_name,
         key
       ) do
-    get_memory(contract_name, key)
-    |> Cbor.decode!()
+    memory = get_memory(contract_name, key)
+    if memory == [] do
+      nil
+    else
+      Cbor.decode!(memory)
+    end
   end
 
   def get_memory(
@@ -106,21 +110,18 @@ defmodule Test.Utils do
     |> Repo.insert!()
   end
 
+  def post_transaction(transaction) do
+    build_transaction(transaction)
+    |> Transaction.post()
+  end
+
   def run_transaction(transaction, block_params \\ %{}) do
-    defaults = %{
-      sender: <<0>>,
-      arguments: [],
-      nonce: 0
-    }
-
-    transaction = Map.merge(defaults, transaction)
-
     %{
       return_code: return_code,
       return_value: return_value
     } =
       %Block{
-        transactions: [transaction]
+        transactions: [build_transaction(transaction)]
       }
       |> Map.merge(block_params)
       |> TransactionProcessor.process()
@@ -217,17 +218,25 @@ defmodule Test.Utils do
     Map.put(transaction, :signature, signature)
   end
 
-  def build_transaction(options \\ [], private_key) do
+  def build_transaction(transaction, private_key \\ nil) do
     defaults = %{
       address: <<0::256>>,
-      contract_name: :BaseToken
+      arguments: [],
+      contract_name: :BaseToken,
+      nonce: 0,
+      sender: <<0>>,
     }
 
-    sender = Ed25519.private_key_to_public_key(private_key)
+    transaction = Map.merge(defaults, transaction)
 
-    options
-    |> Enum.into(defaults)
-    |> Map.put(:sender, sender)
+    if private_key do
+      sender = Ed25519.private_key_to_public_key(private_key)
+
+      transaction
+      |> Map.put(:sender, sender)
+    else
+      transaction
+    end
   end
 
   def http_get(path, query) do
