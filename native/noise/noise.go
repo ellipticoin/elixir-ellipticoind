@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/perlin-network/noise"
@@ -45,6 +46,13 @@ func setup(node *noise.Node) {
 	opcodeMessage = noise.RegisterMessage(noise.NextAvailableOpcode(), (*message)(nil))
 
 	node.OnPeerInit(func(node *noise.Node, peer *noise.Peer) error {
+		peer.OnDisconnect(func(node *noise.Node, peer *noise.Peer) error {
+			log.Info().Msgf("Peer %v has disconnected.", peer.RemoteIP().String()+":"+strconv.Itoa(int(peer.RemotePort())))
+
+			os.Exit(1)
+			return nil
+		})
+
 		go func() {
 			for {
 				msg := <-peer.Receive(opcodeMessage)
