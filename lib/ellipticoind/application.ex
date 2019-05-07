@@ -1,4 +1,5 @@
 defmodule Ellipticoind.Application do
+  alias Ellipticoind.Miner
   use Application
 
   def start(_type, _args) do
