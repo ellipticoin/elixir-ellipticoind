@@ -7,7 +7,7 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   def init(state), do: {:ok, state}
 
   def process_new_block() do
-    best_block = Block.best() |> Repo.one()
+    best_block = Block.best()
 
     env = %{
       block_number: if(best_block, do: best_block.number + 1, else: 0),

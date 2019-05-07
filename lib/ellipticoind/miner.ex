@@ -1,7 +1,6 @@
 defmodule Ellipticoind.Miner do
   require Logger
   use GenServer
-  alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.Models.Block.TransactionProcessor
 
@@ -58,12 +57,7 @@ defmodule Ellipticoind.Miner do
   end
 
   defp handle_cancel() do
-    best_block = Block.best() |> Repo.one()
-    if best_block do
-      TransactionProcessor.revert_to(best_block.number - 1)
-    else
-      TransactionProcessor.revert_to(-1)
-    end
+    TransactionProcessor.revert_to(Block.next_block_number() - 1)
     mining_loop()
   end
 

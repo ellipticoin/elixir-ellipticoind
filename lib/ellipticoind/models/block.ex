@@ -29,11 +29,11 @@ defmodule Ellipticoind.Models.Block do
   end
 
   def next_block_params() do
-    best_block = best() |> Repo.one()
+    best_block = best()
 
     if best_block do
       %{
-        number: best_block.number + 1,
+        number: next_block_number(),
         parent: best_block
       }
     else
@@ -46,10 +46,21 @@ defmodule Ellipticoind.Models.Block do
     })
   end
 
+  def next_block_number() do
+    best_block = best()
+
+    if best_block do
+      best_block.number + 1
+    else
+      0
+    end
+  end
+
   def best(query \\ __MODULE__),
     do:
       from(q in query, order_by: [desc: q.number])
       |> Ecto.Query.first()
+      |> Repo.one()
 
   def latest(query \\ __MODULE__, count),
     do: from(q in query, order_by: [desc: q.number], limit: ^count)

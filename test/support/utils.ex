@@ -146,7 +146,6 @@ defmodule Test.Utils do
   def poll_for_block(block_number) do
     best_block =
       Block.best()
-      |> Repo.one()
       |> Repo.preload(:transactions)
 
 

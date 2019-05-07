@@ -1,5 +1,4 @@
 defmodule Ellipticoind.Models.Block.Validations do
-  alias Ellipticoind.Repo
   alias Ellipticoind.Models.Block
 
   def valid_next_block?(proposed_block) do
@@ -15,8 +14,6 @@ defmodule Ellipticoind.Models.Block.Validations do
   end
 
   def greater_than_best_block?(proposed_block) do
-    best_block = Block.best() |> Repo.one()
-
-    is_nil(best_block) || proposed_block.number > best_block.number
+    proposed_block.number >= Block.next_block_number()
   end
 end
