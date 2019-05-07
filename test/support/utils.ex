@@ -2,54 +2,25 @@ defmodule Test.Utils do
   @host "http://localhost:4047"
   use Utils
   require Integer
-  import Binary
   alias Crypto.Ed25519
   alias Ellipticoind.Models.{Block, Contract, Transaction}
   alias Ellipticoind.Models.Block.TransactionProcessor
-  alias Ellipticoind.Repo
+  alias Ellipticoind.{Memory, Repo}
 
   def set_balances(balances) do
-    token_contract_address = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
-
     for {address, balance} <- balances do
-      key = token_contract_address <> <<0>> <> address
-      memory_key = "memory:" <> key
-      hash_key = <<0::little-size(64)>> <> key
-
-      Redis.add_to_sorted_set(
-        memory_key,
+      Memory.set(
+        <<0::256>>,
+        :BaseToken,
         0,
-        hash_key
-      )
-
-      Redis.set_hash_value(
-        "memory_hash",
-        hash_key,
+        <<0>> <> address,
         <<balance::little-size(64)>>
       )
-
-      # <<balance::little-size(64)>>  
-      # Redis.set_binary(
-      #   token_contract_address <> <<0>> <> address,
-      #   <<balance::little-size(64)>>
-      # )
     end
   end
 
   def get_balance(address) do
-    key = <<0::256>> <> ("BaseToken" |> pad_trailing(32))
-    memory_key = "memory:" <> key <> <<0>> <> address
-
-    [hash_key] =
-      Redis.get_reverse_ordered_set_values(
-        memory_key,
-        "+inf",
-        "-inf",
-        0,
-        1
-      )
-
-    balance_bytes = Redis.get_hash_value("memory_hash", hash_key)
+    balance_bytes = Memory.get(<<0::256>>, :BaseToken, <<0>> <> address)
 
     # Not sure what causes this but sleepeing for 10ms prevents against the
     # following intermittent test error:
@@ -60,35 +31,6 @@ defmodule Test.Utils do
       0
     else
       :binary.decode_unsigned(balance_bytes, :little)
-    end
-  end
-
-  def get_value(
-        contract_name,
-        key
-      ) do
-    memory = get_memory(contract_name, key)
-    if memory == [] do
-      nil
-    else
-      Cbor.decode!(memory)
-    end
-  end
-
-  def get_memory(
-        contract_name,
-        key
-      ) do
-        memory_key = "memory:" <> <<0::256>> <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
-    case Redis.get_reverse_ordered_set_values(
-        memory_key,
-        "+inf",
-        "-inf",
-        0,
-        1
-    ) do
-      [hash_key] -> Redis.get_hash_value("memory_hash", hash_key)
-      _ -> []
     end
   end
 

@@ -1,5 +1,5 @@
 defmodule Miner.CancelProcessingTest do
-  alias Ellipticoind.Miner
+  alias Ellipticoind.{Miner, Memory}
   use ExUnit.Case
   import Test.Utils
   use TemporaryEnv
@@ -23,6 +23,6 @@ defmodule Miner.CancelProcessingTest do
       Miner.cancel()
       :timer.sleep(1500)
     end
-    assert get_value(:stack, "value") == nil
+    assert Memory.get_value(<<0::256>>, :stack, "value") == nil
   end
 end

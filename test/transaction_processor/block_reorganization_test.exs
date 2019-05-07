@@ -1,6 +1,7 @@
 defmodule TransactionProcessor.BlockReorganizationTest do
   use ExUnit.Case
   alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.Memory
   import Test.Utils
 
   setup do
@@ -59,7 +60,7 @@ defmodule TransactionProcessor.BlockReorganizationTest do
     assert get_stack() == [:A, :D, :E, :F]
   end
 
-  def get_stack(), do: get_value(:stack, "value")
+  def get_stack(), do: Memory.get_value(<<0::256>>, :stack, "value")
 
   def push(value, block_number),
     do:
