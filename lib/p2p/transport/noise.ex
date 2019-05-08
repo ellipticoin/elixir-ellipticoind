@@ -1,5 +1,5 @@
 defmodule P2P.Transport.Noise do
-  import Logger
+  require Logger
   use GenServer
   @crate "noise"
 
@@ -63,13 +63,12 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
-    # IO.puts "handle_cast :broadcast #{byte_size(message)}"
     Port.command(port, "#{Base.encode64(message)}\n")
     {:noreply, state}
   end
 
-  def handle_info({:EXIT, port, reason}, state) do
-    Logger.error "Noise error #{inspect reason}"
+  def handle_info({:EXIT, _port, reason}, _state) do
+    Logger.error("Noise error #{inspect(reason)}")
     System.halt(1)
   end
 

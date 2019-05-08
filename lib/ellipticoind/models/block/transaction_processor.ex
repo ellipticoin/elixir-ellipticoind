@@ -1,5 +1,4 @@
 defmodule Ellipticoind.Models.Block.TransactionProcessor do
-  alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
 
   @crate "transaction_processor"

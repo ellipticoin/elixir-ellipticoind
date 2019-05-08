@@ -1,7 +1,7 @@
 defmodule Router do
-  import Utils
   require Logger
   use Plug.Router
+  alias Ellipticoind.Memory
 
   if Mix.env() == :dev do
     use Plug.Debugger, otp_app: :ellipticoind
@@ -44,11 +44,9 @@ defmodule Router do
     send_resp(conn, 200, resp)
   end
 
-  get "/memory/:address/:contract/:key" do
-    address = Base.url_decode64!(conn.path_params["address"])
-    contract = Base.url_decode64!(conn.path_params["contract"])
+  get "/memory/:key" do
     key = Base.url_decode64!(conn.path_params["key"])
-    resp = Redis.get_binary(address <> contract <> key) |> ok || <<>>
+    resp = Memory.get(key) || <<>>
     send_resp(conn, 200, resp)
   end
 

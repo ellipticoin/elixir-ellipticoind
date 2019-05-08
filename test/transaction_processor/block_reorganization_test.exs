@@ -64,11 +64,14 @@ defmodule TransactionProcessor.BlockReorganizationTest do
 
   def push(value, block_number),
     do:
-      run_transaction(%{
-        contract_name: :stack,
-        function: :push,
-        arguments: [value]
-      }, %{
-        number: block_number,
-      })
+      run_transaction(
+        %{
+          contract_name: :stack,
+          function: :push,
+          arguments: [value]
+        },
+        %{
+          number: block_number
+        }
+      )
 end

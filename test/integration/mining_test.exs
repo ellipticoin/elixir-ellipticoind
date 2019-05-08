@@ -29,12 +29,16 @@ defmodule Integration.MiningTest do
     Miner.start_link()
 
     P2P.Transport.Test.subscribe_to_test_broadcasts(self())
-    broadcasted_block = receive do
-      {:p2p, nil, block} -> block |> Cbor.decode!
-    end
+
+    broadcasted_block =
+      receive do
+        {:p2p, nil, block} -> block |> Cbor.decode!()
+      end
+
     new_block = poll_for_block(0)
     assert Block.Validations.valid_proof_of_work_value?(broadcasted_block)
     assert new_block.number == 0
+
     assert new_block.transactions
            |> Enum.map(fn transaction ->
              Map.take(

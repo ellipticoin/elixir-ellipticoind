@@ -163,8 +163,9 @@ defmodule Redis do
         "ZREMRANGEBYSCORE",
         key,
         "(#{min}",
-        max,
+        max
       ])
+
     {:reply, value, redis}
   end
 
@@ -275,7 +276,7 @@ defmodule Redis do
     {:ok, value} =
       Redix.command(redis, [
         "SMEMBERS",
-        key,
+        key
       ])
 
     {:reply, value, redis}

@@ -12,15 +12,19 @@ defmodule Ellipticoind.Memory do
     end
   end
 
-  def get(address, contract_name, key) do
-    memory_key = @key <> ":" <> address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
+  def get(address, contract_name, key), do: get(to_key(address, contract_name, key))
+
+  def to_key(address, contract_name, key),
+    do: address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
+
+  def get(key) do
     case Redis.get_reverse_ordered_set_values(
-      memory_key,
-      "+inf",
-      "-inf",
-      0,
-      1
-    ) do
+           @key <> ":" <> key,
+           "+inf",
+           "-inf",
+           0,
+           1
+         ) do
       [hash_key] -> Redis.get_hash_value("memory_hash", hash_key)
       _ -> []
     end
@@ -28,8 +32,9 @@ defmodule Ellipticoind.Memory do
 
   def set(address, contract_name, block_number, key, value) do
     key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
-    memory_key =  @key <> ":" <> key
+    memory_key = @key <> ":" <> key
     hash_key = <<block_number::little-size(64)>> <> key
+
     Redis.add_to_sorted_set(
       memory_key,
       0,
@@ -42,5 +47,4 @@ defmodule Ellipticoind.Memory do
       value
     )
   end
-
 end

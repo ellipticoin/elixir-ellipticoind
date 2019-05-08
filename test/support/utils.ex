@@ -90,7 +90,6 @@ defmodule Test.Utils do
       Block.best()
       |> Repo.preload(:transactions)
 
-
     if best_block && best_block.number == block_number do
       best_block
     else
@@ -119,32 +118,6 @@ defmodule Test.Utils do
     Path.join([File.cwd!(), "test", "support"])
   end
 
-  def get(options \\ []) do
-    defaults = %{
-      address: <<0::256>>,
-      contract_name: :BaseToken
-    }
-
-    %{
-      function: function,
-      arguments: arguments,
-      address: address,
-      contract_name: contract_name
-    } = Enum.into(options, defaults)
-
-    address = Base.encode16(address, case: :lower)
-    path = "/" <> Enum.join([address, contract_name], "/")
-
-    query =
-      Plug.Conn.Query.encode(%{
-        function: function,
-        arguments: Base.encode16(Cbor.encode(arguments))
-      })
-
-    {:ok, response} = http_get(path, query)
-    Cbor.decode!(response.body)
-  end
-
   def post(transaction, private_key) do
     http_post_signed(
       "/transactions",
@@ -165,7 +138,7 @@ defmodule Test.Utils do
       arguments: [],
       contract_name: :BaseToken,
       nonce: 0,
-      sender: <<0>>,
+      sender: <<0>>
     }
 
     transaction = Map.merge(defaults, transaction)
@@ -180,8 +153,8 @@ defmodule Test.Utils do
     end
   end
 
-  def http_get(path, query) do
-    HTTPoison.get(@host <> path <> "?" <> query)
+  def http_get(path) do
+    HTTPoison.get(@host <> path)
   end
 
   def join_network(port) do
@@ -203,32 +176,6 @@ defmodule Test.Utils do
       headers(signature),
       timeout: 50_000,
       recv_timeout: 50_000
-    )
-  end
-
-  def post_signed_block(block, private_key) do
-    encoded_block = Block.as_binary(block)
-    message = <<block.number::size(64)>> <> Crypto.hash(encoded_block)
-    {:ok, signature} = Crypto.sign(message, private_key)
-
-    HTTPoison.post(
-      @host <> "/blocks",
-      encoded_block,
-      headers(signature)
-    )
-  end
-
-  def put_signed(path, message, private_key) do
-    signature =
-      Crypto.sign(
-        message,
-        private_key
-      )
-
-    HTTPoison.put(
-      @host <> path,
-      message,
-      headers(signature)
     )
   end
 
