@@ -72,18 +72,11 @@ defmodule Ellipticoind.Models.Block do
     )
   end
 
-  def changeset(user, params \\ %{}) do
-    params = set_hash(params)
+  def changeset(block, params \\ %{}) do
+    block_hash = hash(params)
+    params = Map.put(params, :hash, block_hash)
 
-    params = %{
-      params
-      | transactions:
-          Enum.map(params.transactions, fn transaction ->
-            Map.put(transaction, :block_hash, hash(params))
-          end)
-    }
-
-    user
+    block
     |> cast(params, [
       :hash,
       :number,
@@ -99,10 +92,6 @@ defmodule Ellipticoind.Models.Block do
       :proof_of_work_value,
       :winner
     ])
-  end
-
-  def set_hash(attrs) do
-    Map.put(attrs, :hash, hash(attrs))
   end
 
   def hash(block), do: Crypto.hash(as_binary(block))

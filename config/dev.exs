@@ -2,7 +2,7 @@ use Mix.Config
 
 config :ellipticoind, transaction_processing_time: 1000
 config :ellipticoind, mining_target_time: 1
-config :ellipticoind, enable_miner: false
+config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
 

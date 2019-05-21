@@ -9,7 +9,6 @@ defmodule Router do
 
   alias Ellipticoind.Plug.CBOR
   alias Ellipticoind.Repo
-  alias HTTP.SignatureAuth
   alias Ellipticoind.Models.{Block, Transaction}
 
   plug(CORSPlug)
@@ -25,13 +24,23 @@ defmodule Router do
   plug(:match)
   plug(:dispatch)
 
-  get "/transactions/:hash" do
-    resp =
-      Transaction
-      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
-      |> Transaction.as_binary()
+  get "/transactions/:block_hash/:transaction_index" do
+    block =
+      Block
+      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["block_hash"]))
+      |> Repo.preload(:transactions)
 
-    send_resp(conn, 200, resp)
+
+    if block do
+      IO.inspect block.transactions
+             # |> Enum.at(String.to_integer(conn.path_params["transaction_index"]))
+      resp = block.transactions
+             |> Enum.at(String.to_integer(conn.path_params["transaction_index"]))
+             |> Transaction.as_binary()
+      send_resp(conn, 200, resp)
+    else
+      send_resp(conn, 404, "not found")
+    end
   end
 
   get "/blocks/:hash" do
@@ -68,8 +77,6 @@ defmodule Router do
   end
 
   post "/transactions" do
-    SignatureAuth.verify_signature(conn)
-
     Transaction.post(conn.params)
 
     send_resp(conn, 200, Cbor.encode(""))

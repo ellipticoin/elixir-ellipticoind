@@ -95,6 +95,7 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
 }
 
 fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env) -> CompletedTransaction {
+
     let (return_code, return_value) = vm::run_transaction(transaction, conn, env);
     remove_from_processing(&conn, transaction);
     CompletedTransaction {
