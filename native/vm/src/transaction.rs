@@ -60,6 +60,7 @@ pub struct CompletedTransaction {
     pub arguments: Vec<Value>,
     pub return_value: Value,
     pub return_code: u32,
+    pub execution_order: u64,
 }
 
 pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (u32, Value) {

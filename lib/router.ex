@@ -24,16 +24,15 @@ defmodule Router do
   plug(:match)
   plug(:dispatch)
 
-  get "/transactions/:block_hash/:transaction_index" do
-    block =
-      Block
-      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["block_hash"]))
-      |> Repo.preload(:transactions)
+  get "/transactions/:block_hash/:execution_order" do
+    transaction = Transaction
+      |> Repo.get_by(
+        block_hash: Base.url_decode64!(conn.path_params["block_hash"]),
+        execution_order: String.to_integer(conn.path_params["execution_order"])
+        )
 
-
-    if block do
-      resp = block.transactions
-             |> Enum.at(String.to_integer(conn.path_params["transaction_index"]))
+    if transaction do
+      resp = transaction
              |> Transaction.as_binary()
       send_resp(conn, 200, resp)
     else

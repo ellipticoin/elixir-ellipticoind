@@ -103,14 +103,15 @@ defmodule Integration.MiningTest do
         function: :transfer,
         return_code: 0,
         return_value: nil,
-        arguments: [@bob, 50]
+        arguments: [@bob, 50],
+        execution_order: 0,
       }
       |> Transaction.sign(@alices_private_key)
 
     block_bytes =
       %Block{
         number: 0,
-        proof_of_work_value: 1731,
+        proof_of_work_value: 777,
         hash: <<0::256>>,
         changeset_hash:
           Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),

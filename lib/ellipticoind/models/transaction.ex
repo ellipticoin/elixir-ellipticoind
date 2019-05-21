@@ -16,11 +16,11 @@ defmodule Ellipticoind.Models.Transaction do
     field(:return_code, :integer)
     field(:return_value, Types.Cbor)
     field(:signature, :binary)
+    field(:execution_order, :integer)
 
     timestamps()
   end
 
-  @doc false
   def changeset(transaction, attrs) do
     transaction
     |> cast(attrs, [
@@ -32,14 +32,16 @@ defmodule Ellipticoind.Models.Transaction do
       :return_code,
       :return_value,
       :function,
-      :arguments
+      :arguments,
+      :execution_order,
     ])
     |> validate_required([
       :contract_address,
       :contract_name,
       :return_code,
       :function,
-      :arguments
+      :arguments,
+      :execution_order,
     ])
   end
 
@@ -54,7 +56,8 @@ defmodule Ellipticoind.Models.Transaction do
       :contract_address,
       :arguments,
       :return_value,
-      :return_code
+      :return_code,
+      :execution_order,
     ])
   end
 

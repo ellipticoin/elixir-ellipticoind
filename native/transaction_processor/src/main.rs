@@ -44,24 +44,28 @@ fn main() {
 fn process_existing_block() {
     let conn = REDIS.get_connection().unwrap();
     let env = from_slice::<Env>(&ENV).unwrap();
+    let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
     for transaction in get_next_transaction(&conn, "block") {
-        let completed_transaction = run_transaction(&conn, &transaction, &env);
+        let completed_transaction = run_transaction(&conn, &transaction, &env, execution_order);
         completed_transactions.push(completed_transaction);
+        execution_order += 1;
     }
     return_completed_transactions(completed_transactions);
 }
 
 fn process_new_block() {
+    let mut execution_order = 0;
     let env = from_slice::<Env>(&ENV).unwrap();
     let conn = REDIS.get_connection().unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
     run_for(*TRANSACTION_PROCESSING_TIME, || {
         match get_next_transaction(&conn, "transactions::queued") {
             Some(transaction) => {
-                let completed_transaction = run_transaction(&conn, &transaction, &env);
+                let completed_transaction = run_transaction(&conn, &transaction, &env, execution_order);
                 completed_transactions.push(completed_transaction);
+                execution_order += 1;
             },
             None => sleep_1_milli(),
         };
@@ -94,7 +98,7 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
     }
 }
 
-fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env) -> CompletedTransaction {
+fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env, execution_order: u64) -> CompletedTransaction {
 
     let (return_code, return_value) = vm::run_transaction(transaction, conn, env);
     remove_from_processing(&conn, transaction);
@@ -107,6 +111,7 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
         arguments: transaction.arguments.clone(),
         return_value: return_value,
         return_code: return_code,
+        execution_order: execution_order,
     }
 }
 

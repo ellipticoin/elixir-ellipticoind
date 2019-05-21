@@ -18,7 +18,7 @@ fn main() {
     exit_on_close();
     let data = args().nth(1).unwrap().from_hex().unwrap();
     let target_number_of_hashes = args().nth(2).unwrap().parse().unwrap();
-    thread::sleep(std::time::Duration::from_millis(2000));
+    // thread::sleep(std::time::Duration::from_millis(2000));
     let nonce = hashfactor(data, target_number_of_hashes);
     println!("{}", nonce);
 }
