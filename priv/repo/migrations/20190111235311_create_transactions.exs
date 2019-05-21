@@ -2,9 +2,8 @@ defmodule Ellipticoind.Repo.Migrations.CreateTransactions do
   use Ecto.Migration
 
   def change do
-    create table(:transactions, primaray_key: false) do
-      add :hash, :binary, private_key: true
-      add :block_hash, references(:blocks, column: :hash, type: :binary, on_delete: :nothing)
+    create table(:transactions) do
+      add :block_hash, references(:blocks, column: :hash, type: :binary)
       add :contract_address, :binary
       add :contract_name, :varchar
       add :sender, :binary

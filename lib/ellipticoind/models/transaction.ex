@@ -6,7 +6,6 @@ defmodule Ellipticoind.Models.Transaction do
   import Ecto.Changeset
 
   schema "transactions" do
-    field(:hash, :binary, primary_key: true)
     field(:block_hash, :binary)
     field(:contract_name, Types.Atom)
     field(:contract_address, :binary)
@@ -23,13 +22,10 @@ defmodule Ellipticoind.Models.Transaction do
 
   @doc false
   def changeset(transaction, attrs) do
-    attrs = set_hash(attrs)
-
     transaction
     |> cast(attrs, [
       :sender,
       :nonce,
-      :hash,
       :block_hash,
       :contract_address,
       :contract_name,
@@ -39,7 +35,6 @@ defmodule Ellipticoind.Models.Transaction do
       :arguments
     ])
     |> validate_required([
-      :hash,
       :contract_address,
       :contract_name,
       :return_code,
@@ -48,14 +43,9 @@ defmodule Ellipticoind.Models.Transaction do
     ])
   end
 
-  def set_hash(attrs) do
-    Map.put(attrs, :hash, Crypto.hash(as_binary(attrs)))
-  end
-
   def as_map(attributes) do
     attributes
     |> Map.take([
-      :hash,
       :nonce,
       :block_hash,
       :sender,

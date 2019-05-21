@@ -9,6 +9,9 @@ defmodule Integration.MiningTest do
   setup do
     Redis.reset()
     checkout_repo()
+    SystemContracts.deploy()
+
+    :ok
   end
 
   test "mining a block" do
@@ -93,7 +96,6 @@ defmodule Integration.MiningTest do
 
     transaction =
       %Transaction{
-        hash: <<0::256>>,
         block_hash: nil,
         nonce: 1,
         contract_name: :BaseToken,
