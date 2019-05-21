@@ -32,8 +32,6 @@ defmodule Router do
 
 
     if block do
-      IO.inspect block.transactions
-             # |> Enum.at(String.to_integer(conn.path_params["transaction_index"]))
       resp = block.transactions
              |> Enum.at(String.to_integer(conn.path_params["transaction_index"]))
              |> Transaction.as_binary()

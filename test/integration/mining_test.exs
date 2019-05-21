@@ -82,7 +82,7 @@ defmodule Integration.MiningTest do
     refute Map.has_key?(new_block, :parent_hash)
 
     assert get_balance(@alice) == 50
-    # assert get_balance(Config.public_key()) == 640_000
+    assert get_balance(Config.public_key()) == 640_000
   end
 
   test "a new block is mined on the parent chain and another ellipticoind is the winner" do
