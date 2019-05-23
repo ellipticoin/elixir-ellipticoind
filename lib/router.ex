@@ -25,15 +25,18 @@ defmodule Router do
   plug(:dispatch)
 
   get "/transactions/:block_hash/:execution_order" do
-    transaction = Transaction
+    transaction =
+      Transaction
       |> Repo.get_by(
         block_hash: Base.url_decode64!(conn.path_params["block_hash"]),
         execution_order: String.to_integer(conn.path_params["execution_order"])
-        )
+      )
 
     if transaction do
-      resp = transaction
-             |> Transaction.as_binary()
+      resp =
+        transaction
+        |> Transaction.as_binary()
+
       send_resp(conn, 200, resp)
     else
       send_resp(conn, 404, "not found")

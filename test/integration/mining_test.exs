@@ -104,7 +104,7 @@ defmodule Integration.MiningTest do
         return_code: 0,
         return_value: nil,
         arguments: [@bob, 50],
-        execution_order: 0,
+        execution_order: 0
       }
       |> Transaction.sign(@alices_private_key)
 

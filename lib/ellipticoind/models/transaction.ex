@@ -33,7 +33,7 @@ defmodule Ellipticoind.Models.Transaction do
       :return_value,
       :function,
       :arguments,
-      :execution_order,
+      :execution_order
     ])
     |> validate_required([
       :contract_address,
@@ -41,7 +41,7 @@ defmodule Ellipticoind.Models.Transaction do
       :return_code,
       :function,
       :arguments,
-      :execution_order,
+      :execution_order
     ])
   end
 
@@ -57,7 +57,7 @@ defmodule Ellipticoind.Models.Transaction do
       :arguments,
       :return_value,
       :return_code,
-      :execution_order,
+      :execution_order
     ])
   end
 
