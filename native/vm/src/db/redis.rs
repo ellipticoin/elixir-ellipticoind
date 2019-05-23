@@ -7,10 +7,13 @@ fn memory_key(key: &[u8]) -> Vec<u8> {
 }
 fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
     [
-        unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(block_number) }.to_vec(),
+        u64_to_vec(block_number),
         key.to_vec(),
     ]
     .concat()
+}
+fn u64_to_vec(n: u64) -> Vec<u8> {
+    return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec()
 }
 
 fn get_memory_by_hash_key(conn: &redis::Connection, hash_key: &[u8]) -> Vec<u8> {
@@ -33,7 +36,7 @@ impl DB for redis::Connection {
             .cmd("ZADD")
             .arg(memory_key(key))
             .arg(block_number)
-            .arg(hash_key(block_number, key))
+            .arg(block_number)
             .ignore()
             .cmd("HSET")
             .arg("memory_hash")
@@ -46,11 +49,13 @@ impl DB for redis::Connection {
 
     fn read(&self, key: &[u8]) -> Vec<u8> {
         let latest_hash_keys = self
-            .zrevrangebyscore_limit::<_, _, _, Vec<Vec<u8>>>(memory_key(key), "+inf", "-inf", 0, 1)
+            .zrevrangebyscore_limit::<_, _, _, Vec<u64>>(memory_key(key), "+inf", "-inf", 0, 1)
             .unwrap();
 
         match latest_hash_keys.as_slice() {
-            [hash_key] => get_memory_by_hash_key(self, hash_key),
+            [block_number] => {
+                get_memory_by_hash_key(self, &hash_key(*block_number, key))
+            },
             _ => vec![],
         }
     }

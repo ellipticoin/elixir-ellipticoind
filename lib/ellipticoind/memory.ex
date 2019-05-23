@@ -1,7 +1,7 @@
 defmodule Ellipticoind.Memory do
   alias Ellipticoind.BlockIndex
   import Binary
-  @key "memory"
+  @prefix "memory"
 
   def get_value(address, contract_name, key) do
     memory = get(address, contract_name, key)
@@ -19,10 +19,10 @@ defmodule Ellipticoind.Memory do
     do: address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
 
   def get(key) do
-    if hash_key = BlockIndex.get_at_block(@key, key, 0) do
+    if block_number = BlockIndex.get_latest(@prefix, key) do
       Redis.get_hash_value(
         "memory_hash",
-        hash_key
+        <<block_number::little-size(64)>> <> key
       )
     else
       []
@@ -31,8 +31,7 @@ defmodule Ellipticoind.Memory do
 
   def set(address, contract_name, block_number, key, value) do
     key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
-    BlockIndex.set_at_block(@key, key, 0)
-
+    BlockIndex.set_at_block(@prefix, key, block_number)
     Redis.set_hash_value(
       "memory_hash",
       <<block_number::little-size(64)>> <> key,

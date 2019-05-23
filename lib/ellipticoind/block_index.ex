@@ -1,13 +1,13 @@
 defmodule Ellipticoind.BlockIndex do
-  def get_at_block(prefix, key, block_number) do
+  def get_latest(prefix, key) do
     case Redis.get_reverse_ordered_set_values(
            "#{prefix}:#{key}",
            "+inf",
            "-inf",
-           block_number,
+           0,
            1
          ) do
-      [hash_key] -> hash_key
+      [block_number] -> String.to_integer(block_number)
       _ -> nil
     end
   end
@@ -16,7 +16,7 @@ defmodule Ellipticoind.BlockIndex do
     Redis.add_to_sorted_set(
       "#{prefix}:#{key}",
       0,
-      <<block_number::little-size(64)>> <> key
+      block_number
     )
   end
 end

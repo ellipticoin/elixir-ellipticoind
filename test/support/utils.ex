@@ -27,7 +27,7 @@ defmodule Test.Utils do
     #  `16:38:19.626 [error] Postgrex.Protocol (#PID<0.352.0>) disconnected: ** (DBConnection.ConnectionError) owner #PID<0.498.0> exited`
     :timer.sleep(10)
 
-    if is_nil(balance_bytes) do
+    if balance_bytes == [] do
       0
     else
       :binary.decode_unsigned(balance_bytes, :little)
