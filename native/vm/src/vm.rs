@@ -1,7 +1,7 @@
 extern crate hex;
 extern crate serialize;
 use self::memory_units::Pages;
-use db::DB;
+use memory::Memory;
 use ellipticoin_api::*;
 use env::Env;
 use helpers::*;
@@ -12,21 +12,21 @@ use wasmi::*;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
-    pub db: &'a DB,
+    pub memory: &'a Memory,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
 }
 
 impl<'a> VM<'a> {
     pub fn new(
-        db: &'a DB,
+        memory: &'a Memory,
         env: &'a Env,
         transaction: &'a Transaction,
         main: &'a ModuleRef,
     ) -> VM<'a> {
         VM {
             instance: main,
-            db: db,
+            memory: memory,
             transaction: transaction,
             env: env,
         }
@@ -51,7 +51,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.db.read(key.as_slice());
+        let result = self.memory.read(key.as_slice());
 
         result
     }
@@ -63,7 +63,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
-        self.db
+        self.memory
             .write(self.env.block_number, key.as_slice(), value.as_slice());
     }
 
