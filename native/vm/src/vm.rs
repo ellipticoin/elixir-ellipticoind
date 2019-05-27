@@ -44,7 +44,7 @@ impl<'a> VM<'a> {
         vec_pointer
     }
 
-    pub fn read(&mut self, key: Vec<u8>) -> Vec<u8> {
+    pub fn get_memory(&mut self, key: Vec<u8>) -> Vec<u8> {
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
@@ -56,7 +56,7 @@ impl<'a> VM<'a> {
         result
     }
 
-    pub fn write(&mut self, key: Vec<u8>, value: Vec<u8>) {
+    pub fn set_memory(&mut self, key: Vec<u8>, value: Vec<u8>) {
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 

@@ -56,27 +56,27 @@ impl EllipticoinAPI {
             }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.read(key.clone());
+                let value: Vec<u8> = vm.get_memory(key.clone());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.write(key, value);
+                vm.set_memory(key, value);
 
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.read(key.clone());
+                let value: Vec<u8> = vm.get_memory(key.clone());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.write(key, value);
+                vm.set_memory(key, value);
 
                 Ok(None)
             }
