@@ -10,9 +10,11 @@ const BLOCK_NUMBER_FUNC_INDEX: usize = 2;
 const BLOCK_WINNER_FUNC_INDEX: usize = 3;
 const GET_MEMORY_FUNC_INDEX: usize = 4;
 const SET_MEMORY_FUNC_INDEX: usize = 5;
-const THROW_FUNC_INDEX: usize = 6;
-const CALL_FUNC_INDEX: usize = 7;
-const LOG_WRITE: usize = 8;
+const GET_STORAGE_FUNC_INDEX: usize = 6;
+const SET_STORAGE_FUNC_INDEX: usize = 7;
+const THROW_FUNC_INDEX: usize = 8;
+const CALL_FUNC_INDEX: usize = 9;
+const LOG_WRITE: usize = 10;
 
 pub struct EllipticoinAPI;
 
@@ -59,6 +61,19 @@ impl EllipticoinAPI {
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_MEMORY_FUNC_INDEX => {
+                let key = vm.read_pointer(args.nth(0));
+                let value = vm.read_pointer(args.nth(1));
+                vm.write(key, value);
+
+                Ok(None)
+            }
+            GET_STORAGE_FUNC_INDEX => {
+                let key = vm.read_pointer(args.nth(0));
+                let value: Vec<u8> = vm.read(key.clone());
+
+                Ok(Some(vm.write_pointer(value).into()))
+            }
+            SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
                 vm.write(key, value);
@@ -131,6 +146,14 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
             "__set_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32, ValueType::I32][..], None),
                 SET_MEMORY_FUNC_INDEX,
+            ),
+            "__get_storage" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32][..], Some(ValueType::I32)),
+                GET_STORAGE_FUNC_INDEX,
+            ),
+            "__set_storage" => FuncInstance::alloc_host(
+                Signature::new(&[ValueType::I32, ValueType::I32][..], None),
+                SET_STORAGE_FUNC_INDEX,
             ),
             "throw" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32][..], None),

@@ -1,4 +1,4 @@
-defmodule TransactionProcessor.BasicTransactionProcessorTest do
+defmodule TransactionProcessor.VMTest do
   import Test.Utils
   use ExUnit.Case
 
