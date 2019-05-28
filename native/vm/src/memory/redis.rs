@@ -59,9 +59,4 @@ impl Memory for redis::Connection {
             _ => vec![],
         }
     }
-
-    fn get_block_data(&self) -> Vec<u8> {
-        let elements: Vec<Vec<u8>> = self.lrange("current_block", 0, -1).unwrap();
-        elements.concat()
-    }
 }
