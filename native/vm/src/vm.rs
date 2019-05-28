@@ -1,13 +1,13 @@
 extern crate hex;
 extern crate serialize;
 use self::memory_units::Pages;
-use memory::Memory;
-use storage::Storage;
 use block_index::BlockIndex;
 use ellipticoin_api::*;
 use env::Env;
 use helpers::*;
+use memory::Memory;
 use std::mem::transmute;
+use storage::Storage;
 use transaction::Transaction;
 use wasmi::RuntimeValue;
 use wasmi::*;
@@ -28,10 +28,10 @@ impl<'a> VM<'a> {
         storage: &'a Storage,
         env: &'a Env,
         transaction: &'a Transaction,
-        main: &'a ModuleRef,
+        instance: &'a ModuleRef,
     ) -> VM<'a> {
         VM {
-            instance: main,
+            instance: instance,
             block_index: block_index,
             memory: memory,
             storage: storage,
@@ -40,71 +40,36 @@ impl<'a> VM<'a> {
         }
     }
 
+    pub fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {
+        let length = self.read_pointer_length(ptr);
+        self.read_vm_memory(ptr + 4, length as usize)
+    }
+
+    fn read_pointer_length(&mut self, ptr: u32) -> u32 {
+        let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
+        let length_slice = self.read_vm_memory(ptr, LENGTH_BYTE_COUNT);
+        length_u8.clone_from_slice(&length_slice);
+        unsafe { (transmute::<[u8; LENGTH_BYTE_COUNT], u32>(length_u8)) }
+    }
+
     pub fn write_pointer(&mut self, vec: Vec<u8>) -> u32 {
         let vec_with_length = vec.to_vec_with_length();
-        let vec_pointer = self.call(
-            &"__malloc",
-            &[RuntimeValue::I32(vec_with_length.len() as i32)],
-        );
-        self.memory()
-            .set(vec_pointer, vec_with_length.as_slice())
-            .unwrap();
+        let vec_pointer = self.malloc(vec_with_length.len() as i32);
+        self.write_vm_memory(vec_pointer, vec_with_length.as_slice());
         vec_pointer
     }
 
-    pub fn get_memory(&mut self, key: Vec<u8>) -> Vec<u8> {
+    fn malloc(&mut self, size: i32) -> u32 {
+        self.call(&"__malloc", &[RuntimeValue::I32(size)])
+    }
+
+    pub fn namespaced_key(&mut self, key: Vec<u8>) -> Vec<u8> {
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.memory.get(key.as_slice());
-
-        result
-    }
-
-    pub fn set_memory(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        let contract_address = &self.transaction.contract_address;
-        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
-
-        let contract_name_len = contract_name.len();
-        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
-        self.memory
-            .set(self.env.block_number, key.as_slice(), value.as_slice());
-    }
-
-    pub fn get_storage(&mut self, key: Vec<u8>) -> Vec<u8> {
-        let contract_address = &self.transaction.contract_address;
-        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
-
-        let contract_name_len = contract_name.clone().len();
-        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.memory.get(key.as_slice());
-
-        result
-    }
-
-    pub fn set_storage(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        let contract_address = &self.transaction.contract_address;
-        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
-
-        let contract_name_len = contract_name.len();
-        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
-        self.memory
-            .set(self.env.block_number, key.as_slice(), value.as_slice());
-    }
-
-    pub fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {
-        let length_slice = self.memory().get(ptr, 4).unwrap();
-        let mut length_u8 = [0 as u8; LENGTH_BYTE_COUNT];
-        length_u8.clone_from_slice(&length_slice);
-        let length: u32 = unsafe { (transmute::<[u8; 4], u32>(length_u8)) };
-        let mem = self.memory().get(ptr + 4, length as usize).unwrap();
-        mem
+        [contract_address.clone(), contract_name.to_vec(), key].concat()
     }
 
     pub fn call(&mut self, func: &str, args: &[RuntimeValue]) -> u32 {
@@ -116,11 +81,20 @@ impl<'a> VM<'a> {
         }
     }
 
-    pub fn memory(&self) -> MemoryRef {
+    pub fn read_vm_memory(&self, pointer: u32, length: usize) -> Vec<u8> {
+        match self.instance.export_by_name("memory").unwrap() {
+            ExternVal::Memory(x) => x.get(pointer, length).unwrap(),
+            _ => vec![],
+        }
+    }
+
+    pub fn write_vm_memory(&self, pointer: u32, value: &[u8]) {
         match self.instance.export_by_name("memory").unwrap() {
             ExternVal::Memory(x) => x,
             _ => MemoryInstance::alloc(Pages(256), None).unwrap(),
         }
+        .set(pointer, value)
+        .unwrap();
     }
 }
 

@@ -3,11 +3,7 @@ pub struct BlockIndex<'a> {
 }
 
 impl<'a> BlockIndex<'a> {
-    pub fn new(
-        redis: &'a redis::Connection,
-    ) -> BlockIndex<'a> {
-        BlockIndex {
-            redis: redis,
-        }
+    pub fn new(redis: &'a redis::Connection) -> BlockIndex<'a> {
+        BlockIndex { redis: redis }
     }
 }

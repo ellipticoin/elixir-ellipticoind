@@ -11,19 +11,19 @@ extern crate sha3;
 extern crate time;
 extern crate wasmi;
 
-mod storage;
-mod memory;
 mod block_index;
 mod ellipticoin_api;
 pub mod env;
 mod helpers;
+mod memory;
+mod storage;
 mod transaction;
 mod vm;
 pub use ellipticoin_api::EllipticoinAPI;
 
+pub use env::Env;
 pub use memory::Memory;
 pub use storage::Storage;
-pub use env::Env;
 pub use transaction::{run_transaction, CompletedTransaction, Transaction};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;

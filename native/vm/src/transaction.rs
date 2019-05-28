@@ -1,6 +1,8 @@
+use block_index::BlockIndex;
 use ellipticoin_api::EllipticoinAPI;
 use env::Env;
 use heck::SnakeCase;
+use memory::Memory;
 use redis::Connection;
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
@@ -8,8 +10,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
-use block_index::BlockIndex;
-use memory::Memory;
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";

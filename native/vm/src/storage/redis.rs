@@ -6,14 +6,10 @@ fn storage_key(key: &[u8]) -> Vec<u8> {
     ["storage:".as_bytes().to_vec(), key.to_vec()].concat()
 }
 fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
-    [
-        u64_to_vec(block_number),
-        key.to_vec(),
-    ]
-    .concat()
+    [u64_to_vec(block_number), key.to_vec()].concat()
 }
 fn u64_to_vec(n: u64) -> Vec<u8> {
-    return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec()
+    return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec();
 }
 
 fn get_storage_by_hash_key(conn: &redis::Connection, hash_key: &[u8]) -> Vec<u8> {
@@ -53,9 +49,7 @@ impl Storage for redis::Connection {
             .unwrap();
 
         match latest_hash_keys.as_slice() {
-            [block_number] => {
-                get_storage_by_hash_key(self, &hash_key(*block_number, key))
-            },
+            [block_number] => get_storage_by_hash_key(self, &hash_key(*block_number, key)),
             _ => vec![],
         }
     }

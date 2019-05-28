@@ -56,27 +56,35 @@ impl EllipticoinAPI {
             }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.get_memory(key.clone());
+                let value: Vec<u8> = vm.memory.get(vm.namespaced_key(key).as_slice());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.set_memory(key, value);
+                vm.memory.set(
+                    vm.env.block_number,
+                    vm.namespaced_key(key).as_slice(),
+                    value.as_slice(),
+                );
 
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.get_storage(key.clone());
+                let value: Vec<u8> = vm.memory.get(vm.namespaced_key(key).as_slice());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.set_storage(key, value);
+                vm.memory.set(
+                    vm.env.block_number,
+                    vm.namespaced_key(key).as_slice(),
+                    value.as_slice(),
+                );
 
                 Ok(None)
             }
@@ -89,7 +97,14 @@ impl EllipticoinAPI {
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = EllipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(vm.block_index, vm.memory, vm.storage, vm.env, vm.transaction, &module);
+                let mut inner_vm = VM::new(
+                    vm.block_index,
+                    vm.memory,
+                    vm.storage,
+                    vm.env,
+                    vm.transaction,
+                    &module,
+                );
                 let mut args = Vec::new();
                 for arg in args_iter {
                     if arg.is_number() {
