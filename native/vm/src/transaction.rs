@@ -9,6 +9,7 @@ use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
 use block_index::BlockIndex;
+use memory::Memory;
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -67,8 +68,9 @@ pub struct CompletedTransaction {
 pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (u32, Value) {
     let module = EllipticoinAPI::new_module(&transaction.code);
     let block_index = BlockIndex::new(db);
+    let memory = Memory::new(db, &block_index);
 
-    let mut vm = VM::new(&block_index, db, db, &env, transaction, &module);
+    let mut vm = VM::new(&block_index, &memory, db, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

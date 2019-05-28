@@ -15,7 +15,7 @@ use wasmi::*;
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub block_index: &'a BlockIndex<'a>,
-    pub memory: &'a Memory,
+    pub memory: &'a Memory<'a>,
     pub storage: &'a Storage,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
@@ -59,7 +59,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.memory.read(key.as_slice());
+        let result = self.memory.get(key.as_slice());
 
         result
     }
@@ -72,7 +72,7 @@ impl<'a> VM<'a> {
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
         self.memory
-            .write(self.env.block_number, key.as_slice(), value.as_slice());
+            .set(self.env.block_number, key.as_slice(), value.as_slice());
     }
 
     pub fn get_storage(&mut self, key: Vec<u8>) -> Vec<u8> {
@@ -82,7 +82,7 @@ impl<'a> VM<'a> {
         let contract_name_len = contract_name.clone().len();
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
-        let result = self.memory.read(key.as_slice());
+        let result = self.memory.get(key.as_slice());
 
         result
     }
@@ -95,7 +95,7 @@ impl<'a> VM<'a> {
         contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
         let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
         self.memory
-            .write(self.env.block_number, key.as_slice(), value.as_slice());
+            .set(self.env.block_number, key.as_slice(), value.as_slice());
     }
 
     pub fn read_pointer(&mut self, ptr: u32) -> Vec<u8> {

@@ -1,6 +1,5 @@
 use redis::Commands;
-extern crate redis;
-use memory::Memory;
+use block_index::BlockIndex;
 
 fn memory_key(key: &[u8]) -> Vec<u8> {
     ["memory:".as_bytes().to_vec(), key.to_vec()].concat()
@@ -21,8 +20,23 @@ fn get_memory_by_hash_key(conn: &redis::Connection, hash_key: &[u8]) -> Vec<u8> 
     value
 }
 
-impl Memory for redis::Connection {
-    fn write(&self, block_number: u64, key: &[u8], value: &[u8]) {
+pub struct Memory<'a> {
+    pub redis: &'a redis::Connection,
+    pub block_index: &'a BlockIndex<'a>,
+}
+
+
+impl<'a> Memory<'a> {
+    pub fn new(
+        redis: &'a redis::Connection,
+        block_index: &'a BlockIndex<'a>,
+    ) -> Memory<'a> {
+        Memory {
+            redis: redis,
+            block_index: block_index,
+        }
+    }
+    pub fn set(&self, block_number: u64, key: &[u8], value: &[u8]) {
         let _: () = redis::pipe()
             .atomic()
             .cmd("SADD")
@@ -43,18 +57,19 @@ impl Memory for redis::Connection {
             .arg(hash_key(block_number, key))
             .arg(value)
             .ignore()
-            .query(self)
+            .query(self.redis)
             .unwrap();
     }
 
-    fn read(&self, key: &[u8]) -> Vec<u8> {
+    pub fn get(&self, key: &[u8]) -> Vec<u8> {
         let latest_hash_keys = self
+            .redis
             .zrevrangebyscore_limit::<_, _, _, Vec<u64>>(memory_key(key), "+inf", "-inf", 0, 1)
             .unwrap();
 
         match latest_hash_keys.as_slice() {
             [block_number] => {
-                get_memory_by_hash_key(self, &hash_key(*block_number, key))
+                get_memory_by_hash_key(self.redis, &hash_key(*block_number, key))
             },
             _ => vec![],
         }
