@@ -89,7 +89,7 @@ impl EllipticoinAPI {
                 let _storage = vm.read_pointer(args.nth(3));
 
                 let module = EllipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(vm.memory, vm.storage, vm.env, vm.transaction, &module);
+                let mut inner_vm = VM::new(vm.block_index, vm.memory, vm.storage, vm.env, vm.transaction, &module);
                 let mut args = Vec::new();
                 for arg in args_iter {
                     if arg.is_number() {

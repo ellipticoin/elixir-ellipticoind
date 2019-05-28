@@ -13,6 +13,7 @@ extern crate wasmi;
 
 mod storage;
 mod memory;
+mod block_index;
 mod ellipticoin_api;
 pub mod env;
 mod helpers;

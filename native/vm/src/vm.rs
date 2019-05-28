@@ -3,6 +3,7 @@ extern crate serialize;
 use self::memory_units::Pages;
 use memory::Memory;
 use storage::Storage;
+use block_index::BlockIndex;
 use ellipticoin_api::*;
 use env::Env;
 use helpers::*;
@@ -13,6 +14,7 @@ use wasmi::*;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
+    pub block_index: &'a BlockIndex<'a>,
     pub memory: &'a Memory,
     pub storage: &'a Storage,
     pub transaction: &'a Transaction,
@@ -21,6 +23,7 @@ pub struct VM<'a> {
 
 impl<'a> VM<'a> {
     pub fn new(
+        block_index: &'a BlockIndex<'a>,
         memory: &'a Memory,
         storage: &'a Storage,
         env: &'a Env,
@@ -29,6 +32,7 @@ impl<'a> VM<'a> {
     ) -> VM<'a> {
         VM {
             instance: main,
+            block_index: block_index,
             memory: memory,
             storage: storage,
             transaction: transaction,
