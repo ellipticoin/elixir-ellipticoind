@@ -66,7 +66,7 @@ pub struct CompletedTransaction {
 pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (u32, Value) {
     let module = EllipticoinAPI::new_module(&transaction.code);
 
-    let mut vm = VM::new(db, &env, transaction, &module);
+    let mut vm = VM::new(db, db, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

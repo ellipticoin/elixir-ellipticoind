@@ -2,6 +2,7 @@ extern crate hex;
 extern crate serialize;
 use self::memory_units::Pages;
 use memory::Memory;
+use storage::Storage;
 use ellipticoin_api::*;
 use env::Env;
 use helpers::*;
@@ -13,6 +14,7 @@ use wasmi::*;
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub memory: &'a Memory,
+    pub storage: &'a Storage,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
 }
@@ -20,6 +22,7 @@ pub struct VM<'a> {
 impl<'a> VM<'a> {
     pub fn new(
         memory: &'a Memory,
+        storage: &'a Storage,
         env: &'a Env,
         transaction: &'a Transaction,
         main: &'a ModuleRef,
@@ -27,6 +30,7 @@ impl<'a> VM<'a> {
         VM {
             instance: main,
             memory: memory,
+            storage: storage,
             transaction: transaction,
             env: env,
         }
@@ -57,6 +61,29 @@ impl<'a> VM<'a> {
     }
 
     pub fn set_memory(&mut self, key: Vec<u8>, value: Vec<u8>) {
+        let contract_address = &self.transaction.contract_address;
+        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
+
+        let contract_name_len = contract_name.len();
+        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
+        let key = [contract_address.to_vec(), contract_name.to_vec(), key].concat();
+        self.memory
+            .write(self.env.block_number, key.as_slice(), value.as_slice());
+    }
+
+    pub fn get_storage(&mut self, key: Vec<u8>) -> Vec<u8> {
+        let contract_address = &self.transaction.contract_address;
+        let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
+
+        let contract_name_len = contract_name.clone().len();
+        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
+        let key = [contract_address.clone(), contract_name.to_vec(), key].concat();
+        let result = self.memory.read(key.as_slice());
+
+        result
+    }
+
+    pub fn set_storage(&mut self, key: Vec<u8>, value: Vec<u8>) {
         let contract_address = &self.transaction.contract_address;
         let mut contract_name = self.transaction.contract_name.as_bytes().to_vec().clone();
 
