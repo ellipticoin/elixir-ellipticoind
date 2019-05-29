@@ -21,7 +21,7 @@ defmodule Ellipticoind.Memory do
   def get(key) do
     if block_number = BlockIndex.get_latest(@prefix, key) do
       Redis.get_hash_value(
-        "memory_hash",
+        "memory",
         <<block_number::little-size(64)>> <> key
       )
     else
@@ -33,7 +33,7 @@ defmodule Ellipticoind.Memory do
     key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
     BlockIndex.set_at_block(@prefix, key, block_number)
     Redis.set_hash_value(
-      "memory_hash",
+      "memory",
       <<block_number::little-size(64)>> <> key,
       value
     )
