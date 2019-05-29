@@ -70,7 +70,7 @@ pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) ->
     let block_index = BlockIndex::new(db);
     let memory = Memory::new(db, &block_index);
 
-    let mut vm = VM::new(&block_index, &memory, db, &env, transaction, &module);
+    let mut vm = VM::new(&memory, db, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

@@ -98,7 +98,6 @@ impl EllipticoinAPI {
 
                 let module = EllipticoinAPI::new_module(&code);
                 let mut inner_vm = VM::new(
-                    vm.block_index,
                     vm.memory,
                     vm.storage,
                     vm.env,
