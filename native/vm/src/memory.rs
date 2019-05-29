@@ -1,4 +1,4 @@
-use block_index::BlockIndex;
+use block_index::{BlockIndex, StateType};
 use redis::Commands;
 
 const REDIS_KEY: &str = "memory";
@@ -24,7 +24,7 @@ impl<'a> Memory<'a> {
         }
     }
     pub fn set(&self, block_number: u64, key: &[u8], value: &[u8]) {
-        self.block_index.add(block_number, key);
+        self.block_index.add(StateType::Memory, block_number, key);
         let _: () = self
             .redis
             .hset(REDIS_KEY, hash_key(block_number, key), value)
@@ -32,7 +32,9 @@ impl<'a> Memory<'a> {
     }
 
     pub fn get(&self, key: &[u8]) -> Vec<u8> {
-        let latest_block = self.block_index.get_latest(key);
-        self.redis.hget(REDIS_KEY, hash_key(latest_block, key)).unwrap()
+        let latest_block = self.block_index.get_latest(StateType::Memory, key);
+        self.redis
+            .hget(REDIS_KEY, hash_key(latest_block, key))
+            .unwrap()
     }
 }
