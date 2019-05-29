@@ -73,14 +73,14 @@ impl EllipticoinAPI {
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.memory.get(vm.namespaced_key(key).as_slice());
+                let value: Vec<u8> = vm.storage.get(vm.namespaced_key(key).as_slice());
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.memory.set(
+                vm.storage.set(
                     vm.env.block_number,
                     vm.namespaced_key(key).as_slice(),
                     value.as_slice(),

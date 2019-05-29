@@ -61,8 +61,9 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
 
     port =
       run([
-        Config.redis_url(),
         "process_existing_block",
+        Config.redis_url(),
+        Config.rocksdb_path(),
         Cbor.encode(env) |> Base.encode16()
       ])
 

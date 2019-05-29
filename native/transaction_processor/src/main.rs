@@ -12,19 +12,23 @@ use serde_cbor::{from_slice, to_vec};
 use std::env::args;
 use std::{io, process, thread, time};
 use vm::{Commands, Transaction, CompletedTransaction, Env};
+use vm::{DB};
 
 lazy_static! {
     static ref COMMAND: String = {
-        args().nth(2).unwrap()
-    };
-    static ref TRANSACTION_PROCESSING_TIME: u64 = {
-        args().nth(4).unwrap().parse().unwrap()
-    };
-    static ref ENV: Vec<u8> = {
-        args().nth(3).unwrap().from_hex().unwrap()
+        args().nth(1).unwrap()
     };
     static ref REDIS: redis::Client ={
-        redis::Client::open(args().nth(1).unwrap().as_str()).unwrap()
+        redis::Client::open(args().nth(2).unwrap().as_str()).unwrap()
+    };
+    static ref ROCKSDB: vm::DB ={
+        DB::open_default(args().nth(3).unwrap().as_str()).unwrap()
+    };
+    static ref ENV: Vec<u8> = {
+        args().nth(4).unwrap().from_hex().unwrap()
+    };
+    static ref TRANSACTION_PROCESSING_TIME: u64 = {
+        args().nth(5).unwrap().parse().unwrap()
     };
 }
 
@@ -42,13 +46,13 @@ fn main() {
 }
 
 fn process_existing_block() {
-    let conn = REDIS.get_connection().unwrap();
+    let redis = REDIS.get_connection().unwrap();
     let env = from_slice::<Env>(&ENV).unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
-    for transaction in get_next_transaction(&conn, "block") {
-        let completed_transaction = run_transaction(&conn, &transaction, &env, execution_order);
+    for transaction in get_next_transaction(&redis, "block") {
+        let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
         completed_transactions.push(completed_transaction);
         execution_order += 1;
     }
@@ -58,12 +62,12 @@ fn process_existing_block() {
 fn process_new_block() {
     let mut execution_order = 0;
     let env = from_slice::<Env>(&ENV).unwrap();
-    let conn = REDIS.get_connection().unwrap();
+    let redis = REDIS.get_connection().unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
     run_for(*TRANSACTION_PROCESSING_TIME, || {
-        match get_next_transaction(&conn, "transactions::queued") {
+        match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
-                let completed_transaction = run_transaction(&conn, &transaction, &env, execution_order);
+                let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
                 completed_transactions.push(completed_transaction);
                 execution_order += 1;
             },
@@ -98,10 +102,10 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
     }
 }
 
-fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &Env, execution_order: u64) -> CompletedTransaction {
+fn run_transaction(redis: &vm::Connection, rocksdb: &vm::DB, transaction: &vm::Transaction, env: &Env, execution_order: u64) -> CompletedTransaction {
 
-    let (return_code, return_value) = vm::run_transaction(transaction, conn, env);
-    remove_from_processing(&conn, transaction);
+    let (return_code, return_value) = vm::run_transaction(transaction, redis, rocksdb, env);
+    remove_from_processing(&redis, transaction);
     CompletedTransaction {
         contract_address: transaction.contract_address.clone(),
         contract_name: transaction.contract_name.clone(),
@@ -115,17 +119,17 @@ fn run_transaction(conn: &vm::Connection, transaction: &vm::Transaction, env: &E
     }
 }
 
-fn remove_from_processing(conn: &vm::Connection, transaction: &Transaction) {
+fn remove_from_processing(redis: &vm::Connection, transaction: &Transaction) {
     let transaction_bytes = to_vec(&transaction).unwrap();
-    conn.lrem::<_, _, ()>(
+    redis.lrem::<_, _, ()>(
         "transactions::processing",
         0,
         transaction_bytes.as_slice()
         ).unwrap();
 }
 
-fn get_next_transaction(conn: &vm::Connection, source: &str) -> Option<Transaction> {
-    let transaction_bytes: Vec<u8> = conn.rpoplpush(source, "transactions::processing").unwrap();
+fn get_next_transaction(redis: &vm::Connection, source: &str) -> Option<Transaction> {
+    let transaction_bytes: Vec<u8> = redis.rpoplpush(source, "transactions::processing").unwrap();
 
     if transaction_bytes.len() == 0 {
         None

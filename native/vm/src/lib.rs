@@ -10,6 +10,7 @@ extern crate serialize;
 extern crate sha3;
 extern crate time;
 extern crate wasmi;
+extern crate rocksdb;
 
 mod block_index;
 mod ellipticoin_api;
@@ -29,6 +30,7 @@ pub use vm::VM;
 pub use wasmi::RuntimeValue;
 
 pub use redis::{pipe, Client, Commands, Connection, ControlFlow, PubSubCommands};
+pub use rocksdb::{DB};
 pub use rustler::resource::ResourceArc;
 pub use rustler::types::atom::Atom;
 pub use rustler::{Decoder, Encoder, NifResult, Term};

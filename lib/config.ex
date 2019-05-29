@@ -10,6 +10,7 @@ defmodule Config do
     do: Application.fetch_env!(:ellipticoind, :transaction_processing_time)
 
   def redis_url(), do: Application.fetch_env!(:ellipticoind, :redis_url)
+  def rocksdb_path(), do: Application.fetch_env!(:ellipticoind, :rocksdb_path)
 
   def public_key(),
     do:

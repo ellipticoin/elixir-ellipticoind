@@ -20,6 +20,7 @@ config :ellipticoind, P2P.Transport.Test,
 
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, :redis_url, "redis://127.0.0.1:6379/"
+config :ellipticoind, :rocksdb_path, "./var/storage"
 config :ellipticoind, bootnodes: ["http://localhost:4047/"]
 
 config :ellipticoind, Ellipticoind.Repo,

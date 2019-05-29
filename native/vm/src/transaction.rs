@@ -3,6 +3,7 @@ use ellipticoin_api::EllipticoinAPI;
 use env::Env;
 use heck::SnakeCase;
 use memory::Memory;
+use storage::Storage;
 use redis::Connection;
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
@@ -65,12 +66,13 @@ pub struct CompletedTransaction {
     pub execution_order: u64,
 }
 
-pub fn run_transaction(transaction: &Transaction, db: &Connection, env: &Env) -> (u32, Value) {
+pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
     let module = EllipticoinAPI::new_module(&transaction.code);
-    let block_index = BlockIndex::new(db);
-    let memory = Memory::new(db, &block_index);
+    let block_index = BlockIndex::new(redis);
+    let memory = Memory::new(redis, &block_index);
+    let storage = Storage::new(rocksdb, &block_index);
 
-    let mut vm = VM::new(&memory, db, &env, transaction, &module);
+    let mut vm = VM::new(&memory, &storage, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

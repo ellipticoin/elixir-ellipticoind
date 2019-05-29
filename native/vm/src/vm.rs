@@ -14,7 +14,7 @@ use wasmi::*;
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub memory: &'a Memory<'a>,
-    pub storage: &'a Storage,
+    pub storage: &'a Storage<'a>,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
 }

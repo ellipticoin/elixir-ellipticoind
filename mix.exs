@@ -79,6 +79,7 @@ defmodule Ellipticoind.Mixfile do
       {:redix, "0.8.0"},
       {:redix_pubsub, "~> 0.5.0"},
       {:remix, "~> 0.0.1", only: :dev},
+      {:rox, "~> 2.0"},
       {:rustler, "0.19.0"},
       {:temporary_env, "~> 2.0", only: :test, runtime: false}
     ]

@@ -1,5 +1,6 @@
 defmodule TransactionProcessor.VMTest do
   alias Ellipticoind.Memory
+  alias Ellipticoind.Storage
   import Test.Utils
   use ExUnit.Case
 
@@ -45,5 +46,18 @@ defmodule TransactionProcessor.VMTest do
                arguments: [:test]
              })
     assert Memory.get_value(<<0::256>>, :state, "value") == :test
+  end
+
+  @tag :skip
+  test "state.wasm - storage" do
+    insert_test_contract(:state)
+
+    run_transaction(
+             %{
+               contract_name: :state,
+               function: :set_storage,
+               arguments: [:test]
+             })
+    assert Storage.get_value(<<0::256>>, :state, "value") == :test
   end
 end

@@ -63,6 +63,7 @@
   "redix_pubsub": {:hex, :redix_pubsub, "0.5.0", "ce238708d8c0c98a13e912e1d5ff093fc7958816e3cdffae5763c33a439f7701", [:mix], [{:redix, "~> 0.8", [hex: :redix, repo: "hexpm", optional: false]}], "hexpm"},
   "remix": {:hex, :remix, "0.0.2", "f06115659d8ede8d725fae1708920ef73353a1b39efe6a232d2a38b1f2902109", [:mix], [], "hexpm"},
   "rocksdb": {:hex, :rocksdb, "0.26.2", "73339994d2f0d983e610f04d574d0b2c22b8a6ee5b166ac8308b29b1e5ff61dd", [:rebar3], [], "hexpm"},
+  "rox": {:hex, :rox, "2.3.0", "bfae34e87332e3c2160742f7b44209e41ac6009996a67f1b0c9d6009705c086b", [:mix], [{:rustler, "~> 0.18", [hex: :rustler, repo: "hexpm", optional: false]}], "hexpm"},
   "rustler": {:hex, :rustler, "0.19.0", "cad56cba1d9cfc0c9453a2a95b3d5f4d039933c418a82e79f58e070778fc728f", [:mix], [], "hexpm"},
   "snappyer": {:hex, :snappyer, "1.2.4", "6d739c534cd2339633127a2b40279be71f149e5842c5363a4d88e66efb7c1fec", [:make, :rebar, :rebar3], [], "hexpm"},
   "ssl_verify_fun": {:hex, :ssl_verify_fun, "1.1.4", "f0eafff810d2041e93f915ef59899c923f4568f4585904d010387ed74988e77b", [:make, :mix, :rebar3], [], "hexpm"},
