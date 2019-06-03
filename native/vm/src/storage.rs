@@ -1,4 +1,5 @@
 use block_index::{BlockIndex, StateType};
+use rocksdb::ops::{Get, Put};
 
 fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
     [u64_to_vec(block_number), key.to_vec()].concat()

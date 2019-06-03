@@ -1,0 +1,12 @@
+[package]
+name = "rocksdb"
+version = "0.1.0"
+authors = ["Mason Fischer <mason@kissr.co>"]
+
+[[bin]]
+name = "rocksdb"
+
+[dependencies]
+lazy_static = "1.3.0"
+base64 = "0.10.1"
+rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and-structure"}

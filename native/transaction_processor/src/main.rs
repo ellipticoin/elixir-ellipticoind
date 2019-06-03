@@ -12,7 +12,7 @@ use serde_cbor::{from_slice, to_vec};
 use std::env::args;
 use std::{io, process, thread, time};
 use vm::{Commands, Transaction, CompletedTransaction, Env};
-use vm::{DB};
+use vm::{DB, Open};
 
 lazy_static! {
     static ref COMMAND: String = {

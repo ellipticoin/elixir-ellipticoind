@@ -20,9 +20,7 @@ defmodule Ellipticoind.Storage do
 
   def get(key) do
     if block_number = BlockIndex.get_latest(@prefix, key) do
-      RocksDB.get(
-        <<block_number::little-size(64)>> <> key
-      )
+      RocksDB.get(block_number, key)
     else
       []
     end
@@ -31,9 +29,6 @@ defmodule Ellipticoind.Storage do
   def set(address, contract_name, block_number, key, value) do
     key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
     BlockIndex.set_at_block(@prefix, key, block_number)
-    RocksDB.put(
-      <<block_number::little-size(64)>> <> key,
-      value
-    )
+    RocksDB.put(block_number, key, value)
   end
 end

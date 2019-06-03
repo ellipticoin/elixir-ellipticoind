@@ -10,7 +10,7 @@ redis = "0.9.0"
 rustler = { git = "https://github.com/hansihe/rustler.git"}
 time = "*"
 lazy_static = "0.2"
-rocksdb = "0.12.2"
+rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and-structure"}
 wasmi = { git = "https://github.com/paritytech/wasmi.git"}
 serde = { version = "1.0.90", features = ["derive"] }
 serde_bytes = "0.11.1"

@@ -32,7 +32,11 @@ defmodule Ellipticoind.Mixfile do
       hashfactor: [
         path: "native/hashfactor",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ]
+      ],
+      rocksdb: [
+        path: "native/rocksdb",
+        mode: if(Mix.env() == :prod, do: :release, else: :debug)
+      ],
     ]
   end
 

@@ -4,7 +4,6 @@ use env::Env;
 use heck::SnakeCase;
 use memory::Memory;
 use storage::Storage;
-use redis::Connection;
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
 use std::collections::HashMap;
