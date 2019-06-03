@@ -1,3 +1,4 @@
+var/storage
 native/vm_nif/target
 native/vm/target
 /priv/native
@@ -31,3 +32,4 @@ config/*.pem
 test/support/wasm/src/adder/ellipticoind_modules
 staking_contract/ellipticoind_modules
 staking_contract/build
+var/storage

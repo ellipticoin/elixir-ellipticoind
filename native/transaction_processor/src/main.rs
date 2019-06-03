@@ -12,7 +12,7 @@ use serde_cbor::{from_slice, to_vec};
 use std::env::args;
 use std::{io, process, thread, time};
 use vm::{Commands, Transaction, CompletedTransaction, Env};
-use vm::{DB, Open};
+use vm::{Open};
 
 lazy_static! {
     static ref COMMAND: String = {
@@ -22,13 +22,23 @@ lazy_static! {
         redis::Client::open(args().nth(2).unwrap().as_str()).unwrap()
     };
     static ref ROCKSDB: vm::DB ={
-        DB::open_default(args().nth(3).unwrap().as_str()).unwrap()
+        vm::DB::open_default(args().nth(1).unwrap().as_str()).unwrap()
     };
     static ref ENV: Vec<u8> = {
         args().nth(4).unwrap().from_hex().unwrap()
     };
     static ref TRANSACTION_PROCESSING_TIME: u64 = {
         args().nth(5).unwrap().parse().unwrap()
+    };
+}
+
+fn rocksdb() -> vm::DB {
+    loop {
+        match vm::DB::open_default(args().nth(1).unwrap().as_str()) {
+            Err(_e) => (),
+            Ok(db) => { return db }
+        }
+        thread::sleep(std::time::Duration::from_millis(500))
     };
 }
 

@@ -1,0 +1,17 @@
+{
+  "name": "elipticoin-base-contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "author": "Mason Fischer",
+  "license": "MIT",
+  "dependencies": {
+    "wasm-rpc": "^0.2.1"
+  }
+}

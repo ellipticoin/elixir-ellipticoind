@@ -6,6 +6,7 @@ use rocksdb::ops::{Get, Put};
 use std::env::args;
 use rocksdb::{ReadOnlyDB, DB};
 use rocksdb::ops::Open;
+use std::thread;
 
 lazy_static! {
     static ref ROCKSDB: rocksdb::DB = {
@@ -13,7 +14,8 @@ lazy_static! {
     };
 
     static ref READ_ONLY_ROCKSDB: rocksdb::ReadOnlyDB = {
-        read_only_rocksdb()
+        // read_only_rocksdb()
+        ReadOnlyDB::open_default(args().nth(1).unwrap().as_str()).unwrap()
     };
 }
 
@@ -23,6 +25,7 @@ fn rocksdb() -> rocksdb::DB {
             Err(_e) => (),
             Ok(db) => { return db }
         }
+        thread::sleep(std::time::Duration::from_millis(500))
     };
 }
 
@@ -32,6 +35,7 @@ fn read_only_rocksdb() -> rocksdb::ReadOnlyDB {
             Err(_e) => (),
             Ok(db) => { return db }
         }
+        thread::sleep(std::time::Duration::from_millis(500))
     };
 }
 
@@ -54,13 +58,16 @@ fn main() {
 }
 
 fn put(key: Vec<u8>, value: Vec<u8>) {
-    ROCKSDB.put(key, value).unwrap();
+    {
+        ROCKSDB.put(key, value).unwrap();
+        println!("ok");
+    }
 }
 
 fn get(key: Vec<u8>) {
     let result = READ_ONLY_ROCKSDB.get(key);
     match result.unwrap() {
         Some(value) => println!("{}", base64::encode(&value)),
-        None => println!("{}", base64::encode(&vec![])),
+        None => println!("{}", base64::encode(&vec![123])),
     }
 }

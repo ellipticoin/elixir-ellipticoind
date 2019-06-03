@@ -29,10 +29,11 @@ defmodule RocksDB do
     command = "get " <> key_encoded <> "\n"
     send(port, {self(), {:command, command}})
     value = receive do
-      {_port, {:data, message}} ->  message
-        |> List.to_string()
-        |> String.trim("\n")
-        |> Base.decode64!()
+      {_port, {:data, message}} ->
+        message
+          |> List.to_string()
+          |> String.trim("\n")
+          |> Base.decode64!()
     end
     {:reply, value, port}
   end
@@ -42,6 +43,10 @@ defmodule RocksDB do
     value_encoded = value |> Base.encode64()
     command = "put " <> key_encoded <> " " <> value_encoded <> "\n"
     send(port, {self(), {:command, command}})
+    receive do
+      {_port, {:data, 'ok\n'}} -> nil
+    end
+    :timer.sleep(1000)
 
     {:reply, nil, port}
   end

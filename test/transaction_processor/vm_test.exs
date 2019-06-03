@@ -39,12 +39,11 @@ defmodule TransactionProcessor.VMTest do
   test "state.wasm - memory" do
     insert_test_contract(:state)
 
-    run_transaction(
-             %{
-               contract_name: :state,
-               function: :set_memory,
-               arguments: [:test]
-             })
+    run_transaction(%{
+      contract_name: :state,
+      function: :set_memory,
+      arguments: [:test]
+    })
     assert Memory.get_value(<<0::256>>, :state, "value") == :test
   end
 
