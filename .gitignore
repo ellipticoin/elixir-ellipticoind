@@ -33,3 +33,4 @@ test/support/wasm/src/adder/ellipticoind_modules
 staking_contract/ellipticoind_modules
 staking_contract/build
 var/storage
+var/storage/
