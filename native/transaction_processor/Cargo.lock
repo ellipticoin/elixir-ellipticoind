@@ -1036,6 +1036,7 @@ dependencies = [
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rocksdb 0.12.0 (git+https://github.com/iSynaptic/rust-rocksdb?branch=ops-and-structure)",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_bytes 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_cbor 0.9.0 (git+https://github.com/baloo/cbor?branch=baloo/fixup-serde_bytes_dependency)",

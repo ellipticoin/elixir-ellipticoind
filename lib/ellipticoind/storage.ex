@@ -1,4 +1,5 @@
 defmodule Ellipticoind.Storage do
+  alias Ellipticoind.Models.Block.TransactionProcessor
   alias Ellipticoind.BlockIndex
   import Binary
   @prefix "storage"
@@ -29,6 +30,6 @@ defmodule Ellipticoind.Storage do
   def set(address, contract_name, block_number, key, value) do
     key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
     BlockIndex.set_at_block(@prefix, key, block_number)
-    RocksDB.put(block_number, key, value)
+    TransactionProcessor.set_storage(block_number, key, value)
   end
 end

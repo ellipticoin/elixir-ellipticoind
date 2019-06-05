@@ -4,16 +4,18 @@
 extern crate lazy_static;
 extern crate serialize;
 extern crate serde;
+extern crate rocksdb;
 extern crate serde_cbor;
 extern crate vm;
 
 use serialize::hex::FromHex;
 use serde_cbor::{from_slice, to_vec};
 use std::env::args;
-use std::{io, process, thread, time};
+use std::{io, thread, time};
 use vm::{Commands, Transaction, CompletedTransaction, Env};
 use vm::{Open};
 use std::io::BufRead;
+use rocksdb::ops::Put;
 
 lazy_static! {
     static ref REDIS: redis::Client ={
@@ -30,16 +32,6 @@ lazy_static! {
     };
 }
 
-fn rocksdb() -> vm::DB {
-    loop {
-        match vm::DB::open_default(args().nth(1).unwrap().as_str()) {
-            Err(_e) => (),
-            Ok(db) => { return db }
-        }
-        thread::sleep(std::time::Duration::from_millis(500))
-    };
-}
-
 fn main() {
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
@@ -53,9 +45,18 @@ fn main() {
             process_new_block(&env, transaction_processing_time.parse().unwrap());
         }
         ["process_existing_block", env_bytes] => {
-            let env = from_slice::<Env>(&base64::decode(env_bytes).expect("env")).expect("env2");
+            let env = from_slice::<Env>(&base64::decode(env_bytes).unwrap()).unwrap();
             process_existing_block(&env);
         }
+        ["set_storage", block_number, key_encoded, value_encoded] => {
+            println!("ok");
+            // set_storage(
+            //     block_number.parse().unwrap(),
+            //     &base64::decode(key_encoded).unwrap(),
+            //     &base64::decode(value_encoded).unwrap(),
+            //
+            //     );
+        },
         _ => (),
             }
     }
@@ -89,6 +90,17 @@ fn process_new_block(env: &Env, transaction_processing_time: u64) {
         };
     });
     return_completed_transactions(completed_transactions);
+}
+
+fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
+    [u64_to_vec(block_number), key.to_vec()].concat()
+}
+fn u64_to_vec(n: u64) -> Vec<u8> {
+    return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec();
+}
+fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
+    ROCKSDB.put(hash_key(block_number, key), value).unwrap();
+    println!("ok");
 }
 
 fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>) {

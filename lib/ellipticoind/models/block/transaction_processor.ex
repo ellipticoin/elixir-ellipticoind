@@ -22,6 +22,10 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     GenServer.call(__MODULE__, {:process_new_block})
   end
 
+  def set_storage(block_number, key, value) do
+    GenServer.call(__MODULE__, {:set_storage, block_number, key, value})
+  end
+
   def process(block, env \\ %{}) do
     GenServer.call(__MODULE__, {:process, block, env})
   end
@@ -66,11 +70,20 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     end)
   end
 
+  def handle_port_data("ok\n", _port), do: :ok
   def handle_port_data("\n", _port), do: nil
 
   def handle_port_data(message, port) do
     IO.write(message)
     wait_until_done(port)
+  end
+
+  def handle_call({:set_storage, block_number, key, value}, _from, port) do
+    key_encoded = key |> Base.encode64()
+    value_encoded = value |> Base.encode64()
+    command = "set_storage " <> Integer.to_string(block_number) <> " " <> key_encoded <> " " <> value_encoded <> "\n"
+    send(port, {self(), {:command, command}})
+    {:reply, wait_until_done(port), port}
   end
 
   def handle_call({:process_new_block}, _from, port) do

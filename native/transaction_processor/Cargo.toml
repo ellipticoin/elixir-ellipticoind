@@ -10,6 +10,7 @@ name = "transaction_processor"
 lazy_static = "1.3.0"
 redis = "0.9.1"
 base64 = "0.10.1"
+rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and-structure"}
 serde_cbor = { git = "https://github.com/baloo/cbor", branch = "baloo/fixup-serde_bytes_dependency" }
 serde = { version = "1.0.90", features = ["derive"] }
 serde_bytes = "0.11.1"

@@ -47,7 +47,6 @@ defmodule TransactionProcessor.VMTest do
     assert Memory.get_value(<<0::256>>, :state, "value") == :test
   end
 
-  @tag :skip
   test "state.wasm - storage" do
     insert_test_contract(:state)
 
