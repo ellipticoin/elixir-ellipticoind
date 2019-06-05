@@ -1,6 +1,6 @@
 defmodule TransactionProcessor.BlockReorganizationTest do
   use ExUnit.Case
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.BlockIndex
   alias Ellipticoind.Memory
   import Test.Utils
 
@@ -52,7 +52,7 @@ defmodule TransactionProcessor.BlockReorganizationTest do
     push(:A, 1)
     push(:B, 2)
     push(:C, 3)
-    TransactionProcessor.revert_to(1)
+    BlockIndex.revert_to(1)
     push(:D, 2)
     push(:E, 3)
     push(:F, 4)
