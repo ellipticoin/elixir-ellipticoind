@@ -42,8 +42,6 @@ pub struct Transaction {
     pub contract_address: Vec<u8>,
     pub contract_name: String,
     #[serde(with = "serde_bytes")]
-    pub code: Vec<u8>,
-    #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
     pub nonce: u64,
     pub function: String,
@@ -64,12 +62,19 @@ pub struct CompletedTransaction {
     pub return_code: u32,
     pub execution_order: u64,
 }
+pub fn namespaced_key(mut contract_name: Vec<u8>, contract_address: Vec<u8>, key: Vec<u8>) -> Vec<u8> {
+
+    let contract_name_len = contract_name.clone().len();
+    contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
+    [contract_address.clone(), contract_name.to_vec(), key].concat()
+}
 
 pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
-    let module = EllipticoinAPI::new_module(&transaction.code);
     let block_index = BlockIndex::new(redis);
     let memory = Memory::new(redis, &block_index);
     let storage = Storage::new(rocksdb, &block_index);
+    let code = storage.get(&namespaced_key(transaction.contract_name.as_bytes().to_vec(), transaction.contract_address.clone(), "_code".as_bytes().to_vec()));
+    let module = EllipticoinAPI::new_module(&code);
 
     let mut vm = VM::new(&memory, &storage, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction

@@ -58,9 +58,7 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
         },
         env
       )
-
-    transactions = Enum.map(block.transactions, &Transaction.with_code/1)
-    call_native(port, :process_existing_block, [env, transactions])
+    call_native(port, :process_existing_block, [env, block.transactions])
 
     case receive_native(port) do
       :cancel ->
@@ -86,7 +84,9 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
 
   def receive_cancel_or_message(_port) do
     receive do
-      {_port, {:data, message}} -> message
+      {_port, {:data, message}} -> 
+        # IO.puts message
+        message
       :cancel -> :cancel
     end
   end

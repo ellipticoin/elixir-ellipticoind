@@ -89,7 +89,6 @@ defmodule Ellipticoind.Models.Transaction do
   def post(parameters) do
     transaction_bytes =
       parameters
-      |> with_code()
       |> Cbor.encode()
 
     Redis.push("transactions::queued", [transaction_bytes])

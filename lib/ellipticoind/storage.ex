@@ -14,6 +14,7 @@ defmodule Ellipticoind.Storage do
     end
   end
 
+  def set(block_number, address, contract_name, key, value), do: set(block_number, to_key(address, contract_name, key), value)
   def get(address, contract_name, key), do: get(to_key(address, contract_name, key))
 
   def to_key(address, contract_name, key),
@@ -27,8 +28,7 @@ defmodule Ellipticoind.Storage do
     end
   end
 
-  def set(address, contract_name, block_number, key, value) do
-    key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
+  def set(block_number, key, value) do
     BlockIndex.set_at_block(@prefix, key, block_number)
     TransactionProcessor.set_storage(block_number, key, value)
   end

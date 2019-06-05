@@ -5,6 +5,7 @@ defmodule Test.Utils do
   alias Crypto.Ed25519
   alias Ellipticoind.Models.{Block, Contract, Transaction}
   alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.Storage
   alias Ellipticoind.{Memory, Repo}
 
   def set_balances(balances) do
@@ -44,12 +45,7 @@ defmodule Test.Utils do
   end
 
   def insert_test_contract(contract_name) do
-    %Contract{
-      address: <<0::256>>,
-      name: contract_name,
-      code: File.read!(test_wasm_path(Atom.to_string(contract_name)))
-    }
-    |> Repo.insert!()
+    Storage.set(0, <<0::256>>, contract_name, "_code", File.read!(test_wasm_path(Atom.to_string(contract_name))))
   end
 
   def post_transaction(transaction) do
@@ -134,9 +130,9 @@ defmodule Test.Utils do
 
   def build_transaction(transaction, private_key \\ nil) do
     defaults = %{
-      address: <<0::256>>,
-      arguments: [],
+      contract_address: <<0::256>>,
       contract_name: :BaseToken,
+      arguments: [],
       nonce: 0,
       sender: <<0>>
     }
