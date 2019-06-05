@@ -10,6 +10,7 @@ defmodule Ellipticoind.StorageTest do
     end)
   end
 
+  @tag :skip
   test "Storage" do
     Storage.set(<<0::256>>, :test, 0, "key", "value")
     assert Storage.get(<<0::256>>, :test, "key") == "value"

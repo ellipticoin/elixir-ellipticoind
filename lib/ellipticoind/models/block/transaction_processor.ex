@@ -1,85 +1,29 @@
 defmodule Ellipticoind.Models.Block.TransactionProcessor do
   alias Ellipticoind.Models.{Block, Transaction}
-
+  use GenServer
   @crate "transaction_processor"
 
-  def init(state), do: {:ok, state}
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, %{}, opts)
+  end
 
-  def process_new_block() do
-    best_block = Block.best()
-
-    env = %{
-      block_number: if(best_block, do: best_block.number + 1, else: 0),
-      block_winner: Config.public_key(),
-      block_hash: <<>>
-    }
-
-    port =
-      run([
-        "process_new_block",
+  def init(_init_arg) do
+    port = Port.open({:spawn_executable, path_to_executable()},
+      args: [
         Config.redis_url(),
         Config.rocksdb_path(),
-        Cbor.encode(env) |> Base.encode16(),
-        Integer.to_string(Config.transaction_processing_time())
-      ])
+      ]
+    )
 
-    case wait_until_done(port) do
-      :cancelled ->
-        :cancelled
+    {:ok, port}
+  end
 
-      transactions ->
-        Block.next_block_params()
-        |> Map.merge(%{
-          changeset_hash: changeset_hash(),
-          transactions: transactions
-        })
-    end
+  def process_new_block() do
+    GenServer.call(__MODULE__, {:process_new_block})
   end
 
   def process(block, env \\ %{}) do
-    env =
-      Map.merge(
-        %{
-          block_number: block.number,
-          block_winner: block.winner,
-          block_hash: block.hash
-        },
-        env
-      )
-
-    encoded_transactions =
-      Enum.map(block.transactions, fn transaction ->
-        transaction
-        |> Transaction.with_code()
-        |> Map.drop([
-          :return_code,
-          :return_value
-        ])
-        |> Cbor.encode()
-      end)
-
-    Redis.push("block", encoded_transactions)
-
-    port =
-      run([
-        "process_existing_block",
-        Config.redis_url(),
-        Config.rocksdb_path(),
-        Cbor.encode(env) |> Base.encode16()
-      ])
-
-    case wait_until_done(port) do
-      :cancelled ->
-        :cancelled
-
-      transactions ->
-        changeset_hash = changeset_hash()
-
-        %{
-          changeset_hash: changeset_hash,
-          transactions: transactions
-        }
-    end
+    GenServer.call(__MODULE__, {:process, block, env})
   end
 
   def changeset_hash() do
@@ -129,8 +73,72 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     wait_until_done(port)
   end
 
-  defp run(args) do
-    Port.open({:spawn_executable, path_to_executable()}, args: args)
+  def handle_call({:process_new_block}, _from, port) do
+    best_block = Block.best()
+
+    env = %{
+      block_number: if(best_block, do: best_block.number + 1, else: 0),
+      block_winner: Config.public_key(),
+      block_hash: <<>>
+    }
+    env_encoded = Cbor.encode(env) |> Base.encode64()
+    command = "process_new_block " <> env_encoded <> " " <> Integer.to_string(Config.transaction_processing_time()) <> "\n"
+    send(port, {self(), {:command, command}})
+
+    return_value = case wait_until_done(port) do
+      :cancelled ->
+        :cancelled
+
+      transactions ->
+        Block.next_block_params()
+        |> Map.merge(%{
+          changeset_hash: changeset_hash(),
+          transactions: transactions
+        })
+    end
+
+    {:reply, return_value, port}
+  end
+
+  def handle_call({:process, block, env}, _from, port) do
+    env =
+      Map.merge(
+        %{
+          block_number: block.number,
+          block_winner: block.winner,
+          block_hash: block.hash
+        },
+        env
+      )
+
+    encoded_transactions =
+      Enum.map(block.transactions, fn transaction ->
+        transaction
+        |> Transaction.with_code()
+        |> Map.drop([
+          :return_code,
+          :return_value
+        ])
+        |> Cbor.encode()
+      end)
+    Redis.push("block", encoded_transactions)
+    env_encoded = Cbor.encode(env) |> Base.encode64()
+    command = "process_existing_block " <> env_encoded <> "\n"
+    send(port, {self(), {:command, command}})
+    return_value = case wait_until_done(port) do
+      :cancelled ->
+        :cancelled
+
+      transactions ->
+        changeset_hash = changeset_hash()
+
+        %{
+          changeset_hash: changeset_hash,
+          transactions: transactions
+        }
+      end
+
+      {:reply, return_value, port}
   end
 
   def path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])

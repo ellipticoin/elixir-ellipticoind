@@ -13,16 +13,14 @@ use std::env::args;
 use std::{io, process, thread, time};
 use vm::{Commands, Transaction, CompletedTransaction, Env};
 use vm::{Open};
+use std::io::BufRead;
 
 lazy_static! {
-    static ref COMMAND: String = {
-        args().nth(1).unwrap()
-    };
     static ref REDIS: redis::Client ={
-        redis::Client::open(args().nth(2).unwrap().as_str()).unwrap()
+        redis::Client::open(args().nth(1).unwrap().as_str()).unwrap()
     };
     static ref ROCKSDB: vm::DB ={
-        vm::DB::open_default(args().nth(1).unwrap().as_str()).unwrap()
+        vm::DB::open_default(args().nth(2).expect("rocksdb").as_str()).expect("rocksdb2")
     };
     static ref ENV: Vec<u8> = {
         args().nth(4).unwrap().from_hex().unwrap()
@@ -43,21 +41,28 @@ fn rocksdb() -> vm::DB {
 }
 
 fn main() {
-    exit_on_close();
-    match COMMAND.as_ref() {
-        "process_new_block" => {
-            process_new_block();
+    let stdin = io::stdin();
+    for line in stdin.lock().lines() {
+        match line
+            .unwrap()
+            .split(" ")
+            .collect::<Vec<&str>>()
+            .as_slice() {
+        ["process_new_block", env_bytes, transaction_processing_time] => {
+            let env = from_slice::<Env>(&base64::decode(env_bytes).unwrap()).unwrap();
+            process_new_block(&env, transaction_processing_time.parse().unwrap());
         }
-        "process_existing_block" => {
-            process_existing_block();
+        ["process_existing_block", env_bytes] => {
+            let env = from_slice::<Env>(&base64::decode(env_bytes).expect("env")).expect("env2");
+            process_existing_block(&env);
         }
         _ => (),
+            }
     }
 }
 
-fn process_existing_block() {
+fn process_existing_block(env: &Env) {
     let redis = REDIS.get_connection().unwrap();
-    let env = from_slice::<Env>(&ENV).unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
@@ -69,12 +74,11 @@ fn process_existing_block() {
     return_completed_transactions(completed_transactions);
 }
 
-fn process_new_block() {
+fn process_new_block(env: &Env, transaction_processing_time: u64) {
     let mut execution_order = 0;
-    let env = from_slice::<Env>(&ENV).unwrap();
     let redis = REDIS.get_connection().unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
-    run_for(*TRANSACTION_PROCESSING_TIME, || {
+    run_for(transaction_processing_time, || {
         match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
                 let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
@@ -144,26 +148,6 @@ fn get_next_transaction(redis: &vm::Connection, source: &str) -> Option<Transact
     if transaction_bytes.len() == 0 {
         None
     } else {
-        Some(from_slice::<Transaction>(&transaction_bytes).expect("from_slice failed"))
+        Some(from_slice::<Transaction>(&transaction_bytes).unwrap())
     }
-}
-
-//
-//  https://stackoverflow.com/a/39772976/1356670
-// "When a process is exited (the port is closed) the spawned program / port should get an EOF on
-// its STDIN. This is the "standard" way for the process to detect when the port has been closed:
-// an end-of-file on STDIN."
-
-fn exit_on_close() {
-    thread::spawn(move || {
-        let mut input = String::new();
-        match io::stdin().read_line(&mut input) {
-            Ok(_) => {
-                process::exit(0);
-            }
-            Err(error) => {
-                panic!("{}", error);
-            }
-        }
-    });
 }
