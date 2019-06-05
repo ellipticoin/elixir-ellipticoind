@@ -40,34 +40,34 @@ fn main() {
             .split(" ")
             .collect::<Vec<&str>>()
             .as_slice() {
-        ["process_new_block", env_bytes, transaction_processing_time] => {
-            let env = from_slice::<Env>(&base64::decode(env_bytes).unwrap()).unwrap();
+        ["process_new_block", env_encoded, transaction_processing_time] => {
+            let env = from_slice::<Env>(&base64::decode(env_encoded).unwrap()).unwrap();
             process_new_block(&env, transaction_processing_time.parse().unwrap());
         }
-        ["process_existing_block", env_bytes] => {
-            let env = from_slice::<Env>(&base64::decode(env_bytes).unwrap()).unwrap();
-            process_existing_block(&env);
+        ["process_existing_block", env_encoded, transactions_encoded] => {
+            let env = from_slice::<Env>(&base64::decode(env_encoded).unwrap()).unwrap();
+            let transactions = from_slice::<Vec<Transaction>>(&base64::decode(transactions_encoded).unwrap()).unwrap();
+            process_existing_block(&env, &transactions);
         }
         ["set_storage", block_number, key_encoded, value_encoded] => {
-            println!("ok");
-            // set_storage(
-            //     block_number.parse().unwrap(),
-            //     &base64::decode(key_encoded).unwrap(),
-            //     &base64::decode(value_encoded).unwrap(),
-            //
-            //     );
+            set_storage(
+                block_number.parse().unwrap(),
+                &base64::decode(key_encoded).unwrap(),
+                &base64::decode(value_encoded).unwrap(),
+
+                );
         },
         _ => (),
             }
     }
 }
 
-fn process_existing_block(env: &Env) {
+fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
     let redis = REDIS.get_connection().unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
-    for transaction in get_next_transaction(&redis, "block") {
+    for transaction in transactions {
         let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
         completed_transactions.push(completed_transaction);
         execution_order += 1;
@@ -100,20 +100,11 @@ fn u64_to_vec(n: u64) -> Vec<u8> {
 }
 fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
     ROCKSDB.put(hash_key(block_number, key), value).unwrap();
-    println!("ok");
+    println!("{}", base64::encode(&to_vec(&serde_cbor::Value::String("ok".to_string())).unwrap()));
 }
 
 fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>) {
-    let base64_encoded_results = completed_transactions
-        .iter()
-        .map(&to_vec)
-        .map(|v| {v.unwrap()})
-        .map(|completed_transaction_bytes| {
-            base64::encode(&completed_transaction_bytes)
-        })
-        .collect::<Vec<String>>()
-        .join(" ");
-    println!("completed_transactions:{}", base64_encoded_results);
+    println!("{}", base64::encode(&to_vec(&completed_transactions).unwrap()));
 }
 
 fn sleep_1_milli() {

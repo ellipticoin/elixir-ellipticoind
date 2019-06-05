@@ -36,7 +36,7 @@ defmodule Ellipticoind.Mixfile do
       rocksdb: [
         path: "native/rocksdb",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
-      ],
+      ]
     ]
   end
 

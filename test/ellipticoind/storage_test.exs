@@ -2,6 +2,7 @@ defmodule Ellipticoind.StorageTest do
   alias Ellipticoind.Storage
   import Test.Utils
   use ExUnit.Case
+
   setup do
     checkout_repo()
 

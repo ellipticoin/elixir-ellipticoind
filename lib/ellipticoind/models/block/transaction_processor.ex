@@ -18,38 +18,6 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     GenServer.call(__MODULE__, {:process, block, env})
   end
 
-  def receive_native(port) do
-    receive do
-      :cancel ->
-        Port.close(port)
-        :cancelled
-
-      {_port, {:data, message}} ->
-        message
-        |> List.to_string()
-        |> handle_port_data(port)
-    end
-  end
-
-  def handle_port_data("completed_transactions:" <> completed_transactions, _port) do
-    completed_transactions
-    |> String.trim("\n")
-    |> String.split(" ")
-    |> Enum.map(fn completed_transaction ->
-      completed_transaction
-      |> Base.decode64!()
-      |> Cbor.decode!()
-    end)
-  end
-
-  def handle_port_data("ok\n", _port), do: :ok
-  def handle_port_data("\n", _port), do: nil
-
-  def handle_port_data(message, port) do
-    IO.write(message)
-    receive_native(port)
-  end
-
   def handle_call({:set_storage, block_number, key, value}, _from, port) do
     call_native(port, :set_storage, [block_number, key, value])
     {:reply, receive_native(port), port}
@@ -61,17 +29,21 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
       block_winner: Config.public_key(),
       block_hash: <<>>
     }
+
     call_native(port, :process_new_block, [env, Config.transaction_processing_time()])
 
     case receive_native(port) do
-      :cancelled ->
+      :cancel ->
         {:reply, :cancelled, port}
+
       transactions ->
-        block = Block.next_block_params()
-        |> Map.merge(%{
-          changeset_hash: changeset_hash(),
-          transactions: transactions
-        })
+        block =
+          Block.next_block_params()
+          |> Map.merge(%{
+            changeset_hash: changeset_hash(),
+            transactions: transactions
+          })
+
         {:reply, block, port}
     end
   end
@@ -87,34 +59,36 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
         env
       )
 
-    encoded_transactions =
-      Enum.map(block.transactions, fn transaction ->
-        transaction
-        |> Transaction.with_code()
-        |> Map.drop([
-          :return_code,
-          :return_value
-        ])
-        |> Cbor.encode()
-      end)
-    Redis.push("block", encoded_transactions)
-    env_encoded = Cbor.encode(env) |> Base.encode64()
-    command = "process_existing_block " <> env_encoded <> "\n"
-    send(port, {self(), {:command, command}})
-    return_value = case receive_native(port) do
-      :cancelled ->
-        :cancelled
+    transactions = Enum.map(block.transactions, &Transaction.with_code/1)
+    call_native(port, :process_existing_block, [env, transactions])
+
+    case receive_native(port) do
+      :cancel ->
+        {:reply, :cancelled, port}
 
       transactions ->
-        changeset_hash = changeset_hash()
-
-        %{
-          changeset_hash: changeset_hash,
+        return_value = %{
+          changeset_hash: changeset_hash(),
           transactions: transactions
         }
-      end
 
-      {:reply, return_value, port}
+        {:reply, return_value, port}
+    end
+  end
+
+  def receive_native(port) do
+    receive_cancel_or_message(port)
+    |> List.to_string()
+    |> String.trim("\n")
+    |> Base.decode64!()
+    |> Cbor.decode!()
+  end
+
+  def receive_cancel_or_message(_port) do
+    receive do
+      {_port, {:data, message}} -> message
+      :cancel -> :cancel
+    end
   end
 
   def changeset_hash() do

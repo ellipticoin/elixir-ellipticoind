@@ -71,6 +71,10 @@ defmodule Ellipticoind.Models.Transaction do
       contract_address: <<0::256>>,
       code: code
     })
+    |> Map.drop([
+      :return_code,
+      :return_value
+    ])
   end
 
   def sign(transaction, private_key) do
