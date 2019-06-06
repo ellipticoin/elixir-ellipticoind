@@ -83,8 +83,8 @@ pub fn run_in_vm(transaction: &Transaction, redis: &redis::Connection, rocksdb: 
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
     let code = storage.get("_code".as_bytes());
     // let key = [transaction.namespace(), "_code".as_bytes().to_vec()].concat();
-    // println!("{}", base64::encode(&key));
-    // println!("{}", code.len());
+    // println!("namespace: {}", base64::encode(&[&transaction.namespace(), "value".as_bytes()].concat()));
+    // println!("contract_address: {}", base64::encode(&transaction.contract_address));
     let module = EllipticoinAPI::new_module(&code);
 
     let mut vm = VM::new(&memory, &storage, &env, transaction, &module);

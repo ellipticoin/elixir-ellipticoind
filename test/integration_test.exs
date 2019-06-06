@@ -2,6 +2,7 @@ defmodule Integration.MiningTest do
   import Test.Utils
   use NamedAccounts
   use ExUnit.Case
+  alias Ellipticoind.Storage
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.Miner
   use OK.Pipe
@@ -142,24 +143,24 @@ defmodule Integration.MiningTest do
       },
       @alices_private_key
     )
-    # post(
-    #   %{
-    #     contract_address: @alice,
-    #     contract_name: :state,
-    #     nonce: 1,
-    #     function: :set_memory,
-    #     arguments: [:value]
-    #   },
-    #   @alices_private_key
-    # )
+    post(
+      %{
+        contract_address: @alice,
+        contract_name: :state,
+        nonce: 1,
+        function: :set_memory,
+        arguments: [:value]
+      },
+      @alices_private_key
+    )
 
     Miner.start_link()
 
     poll_for_block(0)
     :timer.sleep(100)
 
-    # key = Storage.to_key(@alice, :adder, "value")
-    # {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
-    # assert Cbor.decode(body) == [:value]
+    key = Storage.to_key(@alice, :state, "value")
+    {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
+    assert Cbor.decode!(body) == :value
   end
 end

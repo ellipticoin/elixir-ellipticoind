@@ -1,6 +1,6 @@
 defmodule Ellipticoind.Models.Block.TransactionProcessor do
   use NativeModule
-  alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Models.Block
 
   def args() do
     [Config.redis_url(), Config.rocksdb_path()]
@@ -22,17 +22,16 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     GenServer.call(__MODULE__, {:process, block, env})
   end
 
-  def handle_call({:set_storage, block_number, key, value}, _from, port) do
-    call_native(port, :set_storage, [block_number, key, value])
-    {:reply, receive_native(port), port}
-  end
-
-  def handle_info({_port, {:data, message}}, port) do
+  def handle_info({_port, {:data, _message}}, port) do
     {:noreply, port}
   end
 
   def handle_info(:cancel, state) do
     {:noreply, state}
+  end
+  def handle_call({:set_storage, block_number, key, value}, _from, port) do
+    call_native(port, :set_storage, [block_number, key, value])
+    {:reply, receive_native(port), port}
   end
 
   def handle_call({:process_new_block}, _from, port) do
@@ -89,7 +88,8 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   def receive_native(port) do
     case receive_cancel_or_message(port) do
       :cancel -> :cancel
-      message -> message
+      message ->
+        message
         |> List.to_string()
         |> String.trim("\n")
         |> Base.decode64!()
@@ -98,12 +98,12 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   end
 
 
-  def receive_cancel_or_message(_port, message \\ '') do
+  def receive_cancel_or_message(port, message \\ '') do
     receive do
       :cancel -> :cancel
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
-          receive_cancel_or_message(_port, Enum.concat(message, message_part))
+          receive_cancel_or_message(port, Enum.concat(message, message_part))
         else
           Enum.concat(message, message_part)
         end
