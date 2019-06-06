@@ -1,3 +1,4 @@
+extern crate base64;
 use block_index::BlockIndex;
 use ellipticoin_api::EllipticoinAPI;
 use env::Env;
@@ -10,6 +11,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
+use rocksdb::ops::{Put, Get};
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -64,18 +66,25 @@ pub struct CompletedTransaction {
 }
 impl Transaction {
     fn namespace(&self) -> Vec<u8>{
-        let mut contract_name = self.contract_name.as_bytes().to_vec();
-        let contract_name_len = contract_name.clone().len();
-        contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        [self.contract_address.clone(), contract_name.to_vec()].concat()
+        namespace(&self.contract_name, &self.contract_address)
     }
 }
+fn namespace(contract_name_string: &str, contract_address: &[u8])
+-> Vec<u8> {
+    let mut contract_name = contract_name_string.as_bytes().to_vec();
+    let contract_name_len = contract_name.clone().len();
+    contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
+    [contract_address.clone(), &contract_name.to_vec()].concat()
+}
 
-pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
+pub fn run_in_vm(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
     let block_index = BlockIndex::new(redis);
     let memory = Memory::new(redis, &block_index, transaction.namespace());
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
     let code = storage.get("_code".as_bytes());
+    // let key = [transaction.namespace(), "_code".as_bytes().to_vec()].concat();
+    // println!("{}", base64::encode(&key));
+    // println!("{}", code.len());
     let module = EllipticoinAPI::new_module(&code);
 
     let mut vm = VM::new(&memory, &storage, &env, transaction, &module);
@@ -97,5 +106,30 @@ pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, roc
     let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
     let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
 
+    // println!("{:?}", return_value);
     (return_code, return_value)
+}
+
+pub fn run_system_contract(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
+    match transaction.function.as_str() {
+        "create_contract" => {
+            let contract_name = transaction.arguments[0].as_string().unwrap();
+            let code = transaction.arguments[1].as_bytes().unwrap();
+            let namespace = namespace(contract_name, &transaction.sender);
+            let key = [namespace.clone(), "_code".as_bytes().to_vec()].concat();
+            let block_index = BlockIndex::new(redis);
+            let storage = Storage::new(rocksdb, &block_index, namespace);
+            storage.set(env.block_number, "_code".as_bytes(), code);
+            (0, Value::Null)
+        }
+        _ => (0, Value::Null)
+    }
+}
+pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
+    if transaction.contract_address == [0; 32] &&
+        transaction.contract_name == "system" {
+        run_system_contract(transaction, redis, rocksdb, env)
+    } else {
+        run_in_vm(transaction, redis, rocksdb, env)
+    }
 }

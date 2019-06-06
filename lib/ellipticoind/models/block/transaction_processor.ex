@@ -82,11 +82,15 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     |> Cbor.decode!()
   end
 
-  def receive_cancel_or_message(_port) do
+
+  def receive_cancel_or_message(_port, message \\ '') do
     receive do
-      {_port, {:data, message}} -> 
-        # IO.puts message
-        message
+      {_port, {:data, message_part}} ->
+        if length(message_part) > 65535 do
+          receive_cancel_or_message(_port, Enum.concat(message, message_part))
+        else
+          Enum.concat(message, message_part)
+        end
       :cancel -> :cancel
     end
   end

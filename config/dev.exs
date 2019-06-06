@@ -5,6 +5,7 @@ config :ellipticoind, mining_target_time: 1
 config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
+config :ellipticoind, :rocksdb_path, "./var/storage"
 
 config :ellipticoind,
   port:

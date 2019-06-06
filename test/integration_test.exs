@@ -126,4 +126,34 @@ defmodule Integration.MiningTest do
     assert get_balance(@alice) == 50
     assert get_balance(@bob) == 150
   end
+
+  test "creating a contract" do
+    post(
+      %{
+        contract_name: :system,
+        nonce: 0,
+        function: :create_contract,
+        arguments: [:state, test_contract_code(:state)]
+      },
+      @alices_private_key
+    )
+    # post(
+    #   %{
+    #     contract_address: @alice,
+    #     contract_name: :state,
+    #     nonce: 1,
+    #     function: :set_memory,
+    #     arguments: [:value]
+    #   },
+    #   @alices_private_key
+    # )
+
+    Miner.start_link()
+
+    poll_for_block(0)
+
+    # key = Storage.to_key(@alice, :adder, "value")
+    # {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
+    # assert Cbor.decode(body) == [:value]
+  end
 end

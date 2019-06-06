@@ -2,6 +2,7 @@ defmodule Hashfactor do
   @crate "hashfactor"
 
   def run(data) do
+    IO.puts "run()"
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: [
@@ -12,6 +13,7 @@ defmodule Hashfactor do
 
     receive do
       {_port, {:data, message}} ->
+        IO.puts message
         message
         |> List.to_string()
         |> String.trim("\n")
@@ -32,7 +34,6 @@ defmodule Hashfactor do
          :binary.encode_unsigned(nonce, :little))
       |> Crypto.hash()
 
-    # IO.inspect "#{:binary.decode_unsigned(numerator, :little)} % #{target + 1}", label: "testing"
     target = Config.hashfactor_target()
     rem(:binary.decode_unsigned(numerator, :little), target + 1) == 0
   end

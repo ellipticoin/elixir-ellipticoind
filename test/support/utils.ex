@@ -45,7 +45,11 @@ defmodule Test.Utils do
   end
 
   def insert_test_contract(contract_name) do
-    Storage.set(0, <<0::256>>, contract_name, "_code", File.read!(test_wasm_path(Atom.to_string(contract_name))))
+    Storage.set(0, <<0::256>>, contract_name, "_code", test_contract_code(contract_name))
+  end
+
+  def test_contract_code(contract_name) do
+    File.read!(test_wasm_path(Atom.to_string(contract_name)))
   end
 
   def post_transaction(transaction) do
