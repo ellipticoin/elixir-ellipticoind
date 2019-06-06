@@ -58,7 +58,6 @@ defmodule RocksDB do
   end
 
   def handle_info({_port, {:data, message}}, port) do
-    IO.puts(message)
     {:noreply, port}
   end
 

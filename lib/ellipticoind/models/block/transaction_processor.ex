@@ -27,6 +27,10 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     {:reply, receive_native(port), port}
   end
 
+  def handle_info({_port, {:data, message}}, port) do
+    {:noreply, port}
+  end
+
   def handle_info(:cancel, state) do
     {:noreply, state}
   end

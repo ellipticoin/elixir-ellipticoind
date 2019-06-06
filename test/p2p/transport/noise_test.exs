@@ -1,7 +1,17 @@
 defmodule P2P.NoiseTest do
   alias P2P.Transport.Noise
+  import Test.Utils
   use NamedAccounts
   use ExUnit.Case
+
+  setup do
+    checkout_repo()
+
+    on_exit(fn ->
+      Redis.reset()
+      File.rm_rf!(Config.rocksdb_path())
+    end)
+  end
 
   test "sending and recieving messages" do
     {:ok, client1} =

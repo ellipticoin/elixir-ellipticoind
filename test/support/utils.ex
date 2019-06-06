@@ -46,6 +46,7 @@ defmodule Test.Utils do
 
   def insert_test_contract(contract_name) do
     Storage.set(0, <<0::256>>, contract_name, "_code", test_contract_code(contract_name))
+    :timer.sleep(1000)
   end
 
   def test_contract_code(contract_name) do
