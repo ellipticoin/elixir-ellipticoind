@@ -21,8 +21,8 @@ lazy_static! {
     static ref REDIS: redis::Client ={
         redis::Client::open(args().nth(1).unwrap().as_str()).unwrap()
     };
-    static ref ROCKSDB: vm::DB ={
-        vm::DB::open_default(args().nth(2).expect("rocksdb").as_str()).expect("rocksdb2")
+    static ref ROCKSDB_PATH: String = {
+        args().nth(2).expect("rocksdb").to_string()
     };
     static ref ENV: Vec<u8> = {
         args().nth(4).unwrap().from_hex().unwrap()
@@ -64,11 +64,12 @@ fn main() {
 
 fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
     let redis = REDIS.get_connection().unwrap();
+    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
     for transaction in transactions {
-        let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
+        let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order);
         completed_transactions.push(completed_transaction);
         execution_order += 1;
     }
@@ -78,11 +79,12 @@ fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
 fn process_new_block(env: &Env, transaction_processing_time: u64) {
     let mut execution_order = 0;
     let redis = REDIS.get_connection().unwrap();
+    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
     run_for(transaction_processing_time, || {
         match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
-                let completed_transaction = run_transaction(&redis, &ROCKSDB, &transaction, &env, execution_order);
+                let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order);
                 completed_transactions.push(completed_transaction);
                 execution_order += 1;
             },
@@ -99,7 +101,8 @@ fn u64_to_vec(n: u64) -> Vec<u8> {
     return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec();
 }
 fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
-    ROCKSDB.put(hash_key(block_number, key), value).unwrap();
+    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+    rocksdb.put(hash_key(block_number, key), value).unwrap();
     println!("{}", base64::encode(&to_vec(&serde_cbor::Value::String("ok".to_string())).unwrap()));
 }
 

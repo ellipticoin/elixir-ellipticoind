@@ -150,7 +150,6 @@ defmodule Ellipticoind.Models.Block do
       changeset(%__MODULE__{}, attributes)
       |> Repo.insert!()
 
-    IO.inspect block, label: :inserting
     WebsocketHandler.broadcast(:blocks, block)
     block
   end

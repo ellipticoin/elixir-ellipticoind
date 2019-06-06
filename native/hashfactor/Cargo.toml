@@ -7,8 +7,11 @@ authors = ["Mason Fischer <mason@kissr.co>"]
 name = "hashfactor"
 
 [dependencies]
+base64 = "0.10.1"
 rand = "0.6.5"
 lazy_static = "1.1.0"
 sha2 = "0.8.0"
 num-bigint = "0.2.2"
 num-traits = "0.2.6"
+serde_cbor = { git = "https://github.com/baloo/cbor", branch = "baloo/fixup-serde_bytes_dependency" }
+serde = { version = "1.0.90", features = ["derive"] }

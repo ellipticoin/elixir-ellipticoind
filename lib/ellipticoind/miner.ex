@@ -23,6 +23,7 @@ defmodule Ellipticoind.Miner do
   comes in.
   """
   def cancel() do
+    TransactionProcessor.cancel()
     if Enum.member?(Process.registered(), __MODULE__) do
       send(__MODULE__, :cancel)
     end
@@ -63,20 +64,18 @@ defmodule Ellipticoind.Miner do
   end
 
   defp hashfactor(new_block) do
-    IO.inspect "hashfactor()"
     new_block
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :cancelled -> handle_cancel()
+      :cancelled ->
+        handle_cancel()
       proof_of_work_value -> 
-        IO.puts "got a proof_of_work_value"
         insert(new_block, proof_of_work_value)
     end
   end
 
   defp insert(new_block, proof_of_work_value) do
-    IO.inspect "insert()"
     new_block = Map.put(new_block, :proof_of_work_value, proof_of_work_value)
 
     block = Block.insert(new_block)

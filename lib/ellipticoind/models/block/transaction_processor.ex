@@ -10,6 +10,10 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     GenServer.call(__MODULE__, {:process_new_block})
   end
 
+  def cancel() do
+    send(__MODULE__, :cancel)
+  end
+
   def set_storage(block_number, key, value) do
     GenServer.call(__MODULE__, {:set_storage, block_number, key, value})
   end
@@ -21,6 +25,10 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   def handle_call({:set_storage, block_number, key, value}, _from, port) do
     call_native(port, :set_storage, [block_number, key, value])
     {:reply, receive_native(port), port}
+  end
+
+  def handle_info(:cancel, state) do
+    {:noreply, state}
   end
 
   def handle_call({:process_new_block}, _from, port) do
@@ -75,23 +83,26 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   end
 
   def receive_native(port) do
-    receive_cancel_or_message(port)
-    |> List.to_string()
-    |> String.trim("\n")
-    |> Base.decode64!()
-    |> Cbor.decode!()
+    case receive_cancel_or_message(port) do
+      :cancel -> :cancel
+      message -> message
+        |> List.to_string()
+        |> String.trim("\n")
+        |> Base.decode64!()
+        |> Cbor.decode!()
+    end
   end
 
 
   def receive_cancel_or_message(_port, message \\ '') do
     receive do
+      :cancel -> :cancel
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
           receive_cancel_or_message(_port, Enum.concat(message, message_part))
         else
           Enum.concat(message, message_part)
         end
-      :cancel -> :cancel
     end
   end
 

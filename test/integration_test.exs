@@ -11,6 +11,11 @@ defmodule Integration.MiningTest do
     checkout_repo()
     SystemContracts.deploy()
 
+    on_exit(fn ->
+      Redis.reset()
+      File.rm_rf!(Config.rocksdb_path())
+    end)
+
     :ok
   end
 
@@ -151,6 +156,7 @@ defmodule Integration.MiningTest do
     Miner.start_link()
 
     poll_for_block(0)
+    :timer.sleep(100)
 
     # key = Storage.to_key(@alice, :adder, "value")
     # {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
