@@ -57,7 +57,7 @@ defmodule RocksDB do
     {:reply, nil, port}
   end
 
-  def handle_info({_port, {:data, message}}, port) do
+  def handle_info({_port, {:data, _message}}, port) do
     {:noreply, port}
   end
 

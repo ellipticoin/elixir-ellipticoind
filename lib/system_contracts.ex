@@ -1,5 +1,4 @@
 defmodule SystemContracts do
-  alias Ellipticoind.Repo
   alias Ellipticoind.Storage
   alias Ellipticoind.Models.Contract
 

@@ -31,11 +31,11 @@ defmodule Hashfactor do
   end
 
 
-  def receive_cancel_or_message(_port, message \\ '') do
+  def receive_cancel_or_message(port, message \\ '') do
     receive do
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
-          receive_cancel_or_message(_port, Enum.concat(message, message_part))
+          receive_cancel_or_message(port, Enum.concat(message, message_part))
         else
           Enum.concat(message, message_part)
         end
