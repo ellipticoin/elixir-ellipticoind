@@ -10,7 +10,6 @@ defmodule Ellipticoind.Application do
       {Redis, name: Redis},
       {RocksDB, name: RocksDB},
       {TransactionProcessor, name: TransactionProcessor},
-      {Hashfactor, name: Hashfactor},
       Config.p2p_transport(),
       P2P,
       Config.cowboy()

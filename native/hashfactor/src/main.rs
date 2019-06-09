@@ -1,48 +1,27 @@
 #![feature(rustc_private)]
-#[macro_use]
-extern crate lazy_static;
 extern crate serialize;
 extern crate num_bigint;
 extern crate num_traits;
 extern crate sha2;
 extern crate rand;
 extern crate base64;
-extern crate serde_cbor;
 
-use serde_cbor::{to_vec};
 use rand::Rng;
 use num_bigint::BigUint;
 use sha2::{Sha256, Digest};
 use num_traits::{ToPrimitive, FromPrimitive};
 use serialize::hex::{FromHex};
 use std::{io, process, thread, env::args};
-use std::io::BufRead;
 
 const NUMERATOR_BYTE_LENGTH: usize = 8;
-lazy_static! {
-    static ref TARGET_NUMBER_OF_HASHES: u64 ={
-        args().nth(1).unwrap().as_str().parse().unwrap()
-    };
-}
 
 fn main() {
-    // let data = args().nth(1).unwrap().from_hex().unwrap();
-    // let target_number_of_hashes = args().nth(2).unwrap().parse().unwrap();
+    exit_on_close();
+    let data = base64::decode(&args().nth(1).unwrap()).unwrap();
+    let target_number_of_hashes = args().nth(2).unwrap().parse().unwrap();
     // thread::sleep(std::time::Duration::from_millis(2000));
-    let stdin = io::stdin();
-    for line in stdin.lock().lines() {
-        match line
-            .unwrap()
-            .split(" ")
-            .collect::<Vec<&str>>()
-            .as_slice() {
-        ["run", data] => {
-            let nonce = hashfactor(base64::decode(data).unwrap(), *TARGET_NUMBER_OF_HASHES);
-            println!("{}", base64::encode(&to_vec(&serde_cbor::Value::U64(nonce)).unwrap()));
-        }
-        _ => (),
-            }
-    }
+    let nonce = hashfactor(data, target_number_of_hashes);
+    println!("{}", nonce);
 }
 
 fn hashfactor(data: Vec<u8>, target_number_of_hashes: u64) -> u64 {

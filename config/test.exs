@@ -4,7 +4,7 @@ config :bypass, adapter: Plug.Adapters.Cowboy2
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
 config :ellipticoind, port: 4047
 config :ellipticoind, transaction_processing_time: 1000
-config :ellipticoind, mining_target_time: 1
+config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: false
 config :ellipticoind, bootellipticoind: true
 config :ellipticoind, https: false

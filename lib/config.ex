@@ -2,7 +2,7 @@ defmodule Config do
   @hashes_per_millisecond 1000
 
   def hashfactor_target(),
-    do: Application.fetch_env!(:ellipticoind, :mining_target_time) * @hashes_per_millisecond
+    do: Application.fetch_env!(:ellipticoind, :hashfactor_target)
 
   def private_key(), do: Application.fetch_env!(:ellipticoind, :private_key)
 
