@@ -69,7 +69,7 @@ defmodule Ellipticoind.Mixfile do
       {:ecto_sql, "~> 3.1.3", override: true},
       {:ex_machina, "~> 2.2"},
       {:exth_crypto, "~> 0.1.4", override: true},
-      {:golang_compiler, path: "../elixir_golang_compiler"},
+      {:golang_compiler, "~> 0.2.1"},
       {:httpoison, "~> 1.4"},
       {:httpotion, "~> 3.1.0"},
       {:libsodium, "~> 0.0.10"},
