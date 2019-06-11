@@ -7,20 +7,22 @@ defmodule P2P.Transport.Noise do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def init(%{
-        port: port,
-        bootnodes: bootnodes
-      }) do
+  def init(options) do
+    defaults = %{
+      port: 4045,
+      host: "0.0.0.0"
+    }
+    %{
+      host: host,
+      port: port,
+      bootnodes: bootnodes,
+    } = Map.merge(defaults, options)
     port =
       Port.open(
         {:spawn_executable, path_to_executable()},
         [
           :stderr_to_stdout,
-          args:
-            [
-              "-p",
-              Integer.to_string(port)
-            ] ++ bootnodes
+          args: ["#{host}:#{port}"] ++ bootnodes
         ]
       )
 
@@ -87,12 +89,21 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_port_data("message:" <> message, state = %{subscribers: subscribers}) do
-    [address, message] = String.split(message, ":")
+    case String.split(message, " ") do
+      [address, message] ->
+        Enum.each(subscribers, fn subscriber ->
+          send(subscriber, {:p2p, address, Base.decode64!(message)})
+        end)
+      message -> 
+        IO.puts "Invalid message:"
+        IO.inspect message
+    end
 
-    Enum.each(subscribers, fn subscriber ->
-      send(subscriber, {:p2p, address, Base.decode64!(message)})
-    end)
+    state
+  end
 
+  def handle_port_data("log:" <> message, state) do
+    Logger.info message
     state
   end
 

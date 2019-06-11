@@ -1,134 +1,147 @@
+// Copyright (c) 2019 Perlin
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of
+// this software and associated documentation files (the "Software"), to deal in
+// the Software without restriction, including without limitation the rights to
+// use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+// the Software, and to permit persons to whom the Software is furnished to do so,
+// subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+// FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 package main
 
 import (
 	"bufio"
-	"encoding/base64"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/perlin-network/noise"
-	"github.com/perlin-network/noise/cipher/aead"
-	"github.com/perlin-network/noise/handshake/ecdh"
-	"github.com/perlin-network/noise/log"
-	"github.com/perlin-network/noise/payload"
-	"github.com/perlin-network/noise/protocol"
+	"github.com/perlin-network/noise/cipher"
+	"github.com/perlin-network/noise/handshake"
 	"github.com/perlin-network/noise/skademlia"
-	"github.com/pkg/errors"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/peer"
 )
 
-var (
-	opcodeMessage noise.Opcode
-)
+type chatHandler struct{}
 
-type message struct {
-	bytes []byte
-}
+func (chatHandler) Stream(stream Chat_StreamServer) error {
+	for {
+		txt, err := stream.Recv()
 
-func (message) Read(reader payload.Reader) (noise.Message, error) {
-	bytes, err := reader.ReadBytes()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read chat msg")
+		if err != nil {
+			return err
+		}
+
+		p, ok := peer.FromContext(stream.Context())
+
+		if !ok {
+			panic("cannot get peer from context")
+		}
+
+		info := noise.InfoFromPeer(p)
+
+		if info == nil {
+			panic("cannot get info from peer")
+		}
+
+		id := info.Get(skademlia.KeyID)
+
+		if id == nil {
+			panic("cannot get id from peer")
+		}
+
+		fmt.Printf("message:%s %s\n", id, txt.Message)
 	}
-
-	return message{
-		bytes: bytes,
-	}, nil
 }
 
-func (m message) Write() []byte {
-	return payload.NewWriter(nil).WriteBytes(m.bytes).Bytes()
+const (
+	C1 = 1
+	C2 = 1
+)
+
+func log(args ...interface{}) {
+	args[0] = fmt.Sprintf("log:%s", args[0])
+	fmt.Println(args...)
 }
-
-func setup(node *noise.Node) {
-	opcodeMessage = noise.RegisterMessage(noise.NextAvailableOpcode(), (*message)(nil))
-
-	node.OnPeerInit(func(node *noise.Node, peer *noise.Peer) error {
-		peer.OnDisconnect(func(node *noise.Node, peer *noise.Peer) error {
-			log.Info().Msgf("Peer %v has disconnected.", peer.RemoteIP().String()+":"+strconv.Itoa(int(peer.RemotePort())))
-
-			os.Exit(1)
-			return nil
-		})
-
-		go func() {
-			for {
-				msg := <-peer.Receive(opcodeMessage)
-				bytes, err := payload.NewReader(msg.Write()).ReadBytes()
-				if err != nil {
-					panic(err)
-				}
-
-				fmt.Printf(
-					"message:%s:%s\n", "",
-					base64.StdEncoding.EncodeToString(bytes))
-			}
-		}()
-
-		return nil
-	})
-
-}
-
 func main() {
-	log.Disable()
-	hostFlag := flag.String("h", "127.0.0.1", "host to listen for peers on")
-	portFlag := flag.Uint("p", 3000, "port to listen for peers on")
 	flag.Parse()
+	listenAddress := flag.Args()[0]
 
-	params := noise.DefaultParams()
-	//params.NAT = nat.NewPMP()
-	params.Keys = skademlia.RandomKeys()
-	params.Host = *hostFlag
-	params.Port = uint16(*portFlag)
-
-	node, err := noise.NewNode(params)
+	listener, err := net.Listen("tcp", listenAddress)
 	if err != nil {
 		panic(err)
 	}
-	defer node.Kill()
 
-	p := protocol.New()
-	p.Register(ecdh.New())
-	p.Register(aead.New())
-	p.Register(skademlia.New())
-	p.Enforce(node)
+	log("Listening for peers on port:", listener.Addr().(*net.TCPAddr).Port)
 
-	setup(node)
-	go node.Listen()
-	// Wait for the server to boot.
-	// TODO add this as a hook in `noise`
+	keys, err := skademlia.NewKeys(C1, C2)
+	if err != nil {
+		panic(err)
+	}
+
+	addr := net.JoinHostPort("127.0.0.1", strconv.Itoa(listener.Addr().(*net.TCPAddr).Port))
+
+	client := skademlia.NewClient(addr, keys, skademlia.WithC1(C1), skademlia.WithC2(C2))
+	client.SetCredentials(noise.NewCredentials(addr, handshake.NewECDH(), cipher.NewAEAD(), client.Protocol()))
+
+	go func() {
+
+		server := client.Listen()
+		RegisterChatServer(server, &chatHandler{})
+
+		if err := server.Serve(listener); err != nil {
+			panic(err)
+		}
+	}()
+
 	time.Sleep(100 * time.Millisecond)
-	println("started")
 
-	if len(flag.Args()) > 0 {
-		for _, address := range flag.Args() {
-			peer, err := node.Dial(address)
-			if err == nil {
-				skademlia.WaitUntilAuthenticated(peer)
-			}
+	for _, addr := range flag.Args()[1:] {
+		if _, err := client.Dial(addr); err != nil {
+			panic(err)
 		}
 	}
+
+	client.Bootstrap()
+	fmt.Println("started")
 
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		txt, err := reader.ReadString('\n')
+		line, _, err := reader.ReadLine()
 
 		if err != nil {
 			panic(err)
 		}
 
-		decoded, err := base64.StdEncoding.DecodeString(txt)
+		conns := client.ClosestPeers()
 
-		if err != nil {
-			panic(err)
+		for _, conn := range conns {
+			chat := NewChatClient(conn)
+
+			stream, err := chat.Stream(context.Background())
+			if err != nil {
+				continue
+			}
+
+			if err := stream.Send(&Text{Message: string(line)}); err != nil {
+				continue
+			}
 		}
 
-		skademlia.BroadcastAsync(node, message{
-			bytes: decoded,
-		})
 	}
 }

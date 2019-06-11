@@ -1,6 +1,4 @@
 defmodule Config do
-  @hashes_per_millisecond 1000
-
   def hashfactor_target(),
     do: Application.fetch_env!(:ellipticoind, :hashfactor_target)
 
