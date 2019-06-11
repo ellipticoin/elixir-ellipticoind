@@ -112,7 +112,7 @@ func main() {
 
 	for _, addr := range flag.Args()[1:] {
 		if _, err := client.Dial(addr); err != nil {
-			panic(err)
+			//panic(err)
 		}
 	}
 
