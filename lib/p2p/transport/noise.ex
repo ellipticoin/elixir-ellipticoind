@@ -22,7 +22,7 @@ defmodule P2P.Transport.Noise do
         {:spawn_executable, path_to_executable()},
         [
           :stderr_to_stdout,
-          args: ["#{host}:#{port}"] ++ bootnodes
+          args: [host, Integer.to_string(port)] ++ bootnodes
         ]
       )
 

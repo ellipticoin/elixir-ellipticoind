@@ -79,9 +79,10 @@ func log(args ...interface{}) {
 }
 func main() {
 	flag.Parse()
-	listenAddress := flag.Args()[0]
+	host := flag.Args()[0]
+	port := flag.Args()[1]
 
-	listener, err := net.Listen("tcp", listenAddress)
+	listener, err := net.Listen("tcp", host+":"+port)
 	if err != nil {
 		panic(err)
 	}
@@ -93,7 +94,7 @@ func main() {
 		panic(err)
 	}
 
-	addr := net.JoinHostPort(listener.Addr().(*net.TCPAddr).IP.String(), strconv.Itoa(listener.Addr().(*net.TCPAddr).Port))
+	addr := net.JoinHostPort(host, strconv.Itoa(listener.Addr().(*net.TCPAddr).Port))
 
 	client := skademlia.NewClient(addr, keys, skademlia.WithC1(C1), skademlia.WithC2(C2))
 	client.SetCredentials(noise.NewCredentials(addr, handshake.NewECDH(), cipher.NewAEAD(), client.Protocol()))
