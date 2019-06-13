@@ -31,6 +31,8 @@ github.com/perlin-network/noise v0.0.0-20190219190757-3c13535b725d h1:3j9/C2miuL
 github.com/perlin-network/noise v0.0.0-20190219190757-3c13535b725d/go.mod h1:1fxN8YGP4+w4qNtZLQSmcX3bTwQeJMgQ7cu1z6Qh3gE=
 github.com/perlin-network/noise v0.0.0-20190527215535-1ac7a50b5eac h1:Q3ua9sYMv6SmtuGMjD/TAWMz9FrIYVvX0tskGBxSxis=
 github.com/perlin-network/noise v0.0.0-20190527215535-1ac7a50b5eac/go.mod h1:1Ca3rEoDZseet9F06+H47KpsOr+ZgpbbJO7Dg9WC4lM=
+github.com/perlin-network/noise v0.0.0-20190613155744-eedfb3a1730f h1:Nf8E81fXBm0d3l+E3L2u5zCjTea+jB5LwD63Rzqve2c=
+github.com/perlin-network/noise v0.0.0-20190613155744-eedfb3a1730f/go.mod h1:1Ca3rEoDZseet9F06+H47KpsOr+ZgpbbJO7Dg9WC4lM=
 github.com/perlin-network/noise v1.1.0 h1:jvFmgOXwB5VqC8iu9zX+GjGjPEMKPKfhcHmHnCX2xzQ=
 github.com/perlin-network/noise v1.1.0/go.mod h1:QCORppHESoRRJ4FOhcpg30nbr1wachSOv5BZ1SRcRhE=
 github.com/phf/go-queue v0.0.0-20170504031614-9abe38d0371d h1:U+PMnTlV2tu7RuMK5etusZG3Cf+rpow5hqQByeCzJ2g=

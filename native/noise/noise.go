@@ -82,7 +82,7 @@ func main() {
 	host := flag.Args()[0]
 	port := flag.Args()[1]
 
-	listener, err := net.Listen("tcp", host+":"+port)
+	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		panic(err)
 	}
@@ -111,9 +111,9 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
-	for _, addr := range flag.Args()[1:] {
+	for _, addr := range flag.Args()[2:] {
 		if _, err := client.Dial(addr); err != nil {
-			//panic(err)
+			fmt.Println(err)
 		}
 	}
 
