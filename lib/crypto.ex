@@ -17,4 +17,5 @@ defmodule Crypto do
     do: sign(Cbor.encode(message), private_key)
 
   defdelegate sign(message, private_key), to: Ed25519
+  defdelegate valid_signature?(signature, message, public_key), to: Ed25519
 end

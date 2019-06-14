@@ -77,9 +77,16 @@ defmodule Router do
   end
 
   post "/transactions" do
-    Transaction.post(conn.params)
+    case Transaction.from_signed_transaction(conn.params) do
+      {:ok, transaction} ->
+        Transaction.post(transaction)
+        send_resp(conn, 200, "")
+      {:error, :invalid_signature} ->
+        send_resp(conn, 401, "invalid_signature")
+      {:error, reason} ->
+        send_resp(conn, 500, Atom.to_string(reason))
+    end
 
-    send_resp(conn, 200, Cbor.encode(""))
   end
 
   match _ do

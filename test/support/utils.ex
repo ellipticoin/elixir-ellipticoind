@@ -119,13 +119,6 @@ defmodule Test.Utils do
     Path.join([File.cwd!(), "test", "support"])
   end
 
-  def post(transaction, private_key) do
-    http_post_signed(
-      "/transactions",
-      Cbor.encode(build_transaction(transaction, private_key)),
-      private_key
-    )
-  end
 
   def build_signed_transaction(options, private_key) do
     transaction = build_transaction(options, private_key)
@@ -158,38 +151,13 @@ defmodule Test.Utils do
     HTTPoison.get(@host <> path)
   end
 
-  def join_network(port) do
-    HTTPoison.post(
-      @host <> "/peers",
-      Cbor.encode(%{
-        url: "http://localhost:#{port}"
-      }),
-      headers()
+  def post(transaction, private_key) do
+    http_post(
+      "/transactions",
+      Cbor.encode(Transaction.sign(build_transaction(transaction), private_key))
     )
   end
-
-  def http_post_signed(path, message, private_key) do
-    signature = Crypto.sign(message, private_key)
-
-    HTTPoison.post(
-      @host <> path,
-      message,
-      headers(signature),
-      timeout: 50_000,
-      recv_timeout: 50_000
-    )
-  end
-
-  def headers(signature \\ nil) do
-    if signature do
-      %{
-        "Content-Type": "application/cbor",
-        Authorization: "Signature " <> Base.encode16(signature, case: :lower)
-      }
-    else
-      %{
-        "Content-Type": "application/cbor"
-      }
-    end
+  def http_post(path, body, headers \\ %{"Content-Type" => "application/cbor"}) do
+    HTTPoison.post(@host <> path, body, headers)
   end
 end

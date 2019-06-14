@@ -79,11 +79,23 @@ defmodule Ellipticoind.Models.Transaction do
 
   def sign(transaction, private_key) do
     sender = Crypto.private_key_to_public_key(private_key)
+    transaction = transaction
+    |> Map.put(:sender, sender)
+
     signature = Crypto.sign(as_map(transaction), private_key)
 
     transaction
-    |> Map.put(:sender, sender)
     |> Map.put(:signature, signature)
+  end
+
+  def from_signed_transaction(signed_transaction) do
+    {signature, transaction} = Map.pop(signed_transaction, :signature)
+    if Crypto.valid_signature?(signature, as_binary(transaction), signed_transaction.sender) do
+      {:ok, transaction}
+    else
+      {:error, :invalid_signature}
+    end
+
   end
 
   def post(parameters) do

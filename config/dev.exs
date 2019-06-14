@@ -1,8 +1,8 @@
 use Mix.Config
 
-config :ellipticoind, transaction_processing_time: 1000
-config :ellipticoind, mining_target_time: 1
-config :ellipticoind, enable_miner: false
+config :ellipticoind, transaction_processing_time: 3000
+config :ellipticoind, hashfactor_target: 1
+config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
 config :ellipticoind, :rocksdb_path, "./var/storage"
