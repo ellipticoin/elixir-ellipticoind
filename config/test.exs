@@ -8,11 +8,9 @@ config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: false
 config :ellipticoind, bootellipticoind: true
 config :ellipticoind, https: false
-config :ellipticoind, private_key: File.read!("./config/private_key.pem")
 config :ellipticoind, p2p_transport: P2P.Transport.Test
 
 config :ellipticoind, P2P.Transport.Test,
-  private_key: File.read!("./config/private_key.pem"),
   port: 4045,
   bootnodes:
     File.read!("./priv/bootnodes.txt")
@@ -25,9 +23,9 @@ config :ellipticoind, bootnodes: ["http://localhost:4047/"]
 
 config :ellipticoind, Ellipticoind.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
-  username: "masonf",
+  username: "postgres",
   password: "",
-  database: "blacksmith_test",
+  database: "ellipticoin_test",
   hostname: "localhost",
   pool_size: 10,
   log: false

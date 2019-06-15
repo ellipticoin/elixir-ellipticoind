@@ -75,11 +75,19 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_info({_port, {:data, message}}, state) do
-    state =
+    message =
       message
       |> to_string()
       |> String.trim()
-      |> handle_port_data(state)
+
+      state = if String.contains?(message, "\n") do
+        String.split(message, "\n")
+        |> Enum.reduce(state, fn message, state ->
+		handle_port_data(message, state)
+        end)
+      else
+	handle_port_data(message, state)
+      end
 
     {:noreply, state}
   end
