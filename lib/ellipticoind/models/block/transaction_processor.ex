@@ -50,6 +50,9 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
       :cancel ->
         {:reply, :cancelled, port}
 
+      :ok ->
+        {:reply, :cancelled, port}
+
       transactions ->
         block =
           Block.next_block_params()
