@@ -24,6 +24,7 @@ defmodule Ellipticoind.Miner do
   """
   def cancel() do
     TransactionProcessor.cancel()
+
     if Enum.member?(Process.registered(), __MODULE__) do
       send(__MODULE__, :cancel)
     end
@@ -71,7 +72,8 @@ defmodule Ellipticoind.Miner do
     |> case do
       :cancelled ->
         handle_cancel()
-      proof_of_work_value -> 
+
+      proof_of_work_value ->
         insert(new_block, proof_of_work_value)
     end
   end

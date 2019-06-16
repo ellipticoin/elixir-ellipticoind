@@ -119,7 +119,6 @@ defmodule Test.Utils do
     Path.join([File.cwd!(), "test", "support"])
   end
 
-
   def build_signed_transaction(options, private_key) do
     transaction = build_transaction(options, private_key)
     signature = Crypto.sign(transaction, private_key)
@@ -157,6 +156,7 @@ defmodule Test.Utils do
       Cbor.encode(Transaction.sign(build_transaction(transaction), private_key))
     )
   end
+
   def http_post(path, body, headers \\ %{"Content-Type" => "application/cbor"}) do
     HTTPoison.post(@host <> path, body, headers)
   end

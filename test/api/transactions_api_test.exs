@@ -10,13 +10,15 @@ defmodule API.TransactionsApiTest do
 
   test "POST /transactions with a valid  signature" do
     {_public_key, private_key} = Crypto.keypair()
+
     unsigned_transaction = %{
       contract_name: "test",
       contract_address: <<0::256>>,
       nonce: 0,
       function: :function,
-      arguments: [],
+      arguments: []
     }
+
     signed_transaction = Transaction.sign(unsigned_transaction, private_key)
     assert {:ok, response} = http_post("/transactions", Cbor.encode(signed_transaction))
     assert response.body == ""
@@ -25,17 +27,21 @@ defmodule API.TransactionsApiTest do
 
   test "POST /transactions with an invalid a signature" do
     {_public_key, private_key} = Crypto.keypair()
+
     unsigned_transaction = %{
       contract_name: "test",
       contract_address: <<0::256>>,
       function: :function,
-      arguments: [],
+      arguments: []
     }
+
     signed_transaction = Transaction.sign(unsigned_transaction, private_key)
+
     signed_transaction = %{
-      signed_transaction |
-      signature: <<0::512>> 
+      signed_transaction
+      | signature: <<0::512>>
     }
+
     assert {:ok, response} = http_post("/transactions", Cbor.encode(signed_transaction))
     assert response.body == "invalid_signature"
     assert response.status_code == 401

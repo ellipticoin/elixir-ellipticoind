@@ -81,12 +81,13 @@ defmodule Router do
       {:ok, transaction} ->
         Transaction.post(transaction)
         send_resp(conn, 200, "")
+
       {:error, :invalid_signature} ->
         send_resp(conn, 401, "invalid_signature")
+
       {:error, reason} ->
         send_resp(conn, 500, Atom.to_string(reason))
     end
-
   end
 
   match _ do

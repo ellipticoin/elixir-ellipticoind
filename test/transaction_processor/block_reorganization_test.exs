@@ -6,6 +6,7 @@ defmodule TransactionProcessor.BlockReorganizationTest do
 
   setup do
     checkout_repo()
+
     on_exit(fn ->
       Redis.reset()
       File.rm_rf!(Config.rocksdb_path())

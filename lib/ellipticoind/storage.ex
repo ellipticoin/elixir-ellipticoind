@@ -14,7 +14,9 @@ defmodule Ellipticoind.Storage do
     end
   end
 
-  def set(block_number, address, contract_name, key, value), do: set(block_number, to_key(address, contract_name, key), value)
+  def set(block_number, address, contract_name, key, value),
+    do: set(block_number, to_key(address, contract_name, key), value)
+
   def get(address, contract_name, key), do: get(to_key(address, contract_name, key))
 
   def to_key(address, contract_name, key),

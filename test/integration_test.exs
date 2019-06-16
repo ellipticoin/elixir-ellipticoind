@@ -143,6 +143,7 @@ defmodule Integration.MiningTest do
       },
       @alices_private_key
     )
+
     post(
       %{
         contract_address: @alice,

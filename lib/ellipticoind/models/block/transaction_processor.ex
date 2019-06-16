@@ -6,7 +6,6 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     [Config.redis_url(), Config.rocksdb_path()]
   end
 
-
   def cancel() do
     send(__MODULE__, :cancel)
   end
@@ -32,6 +31,7 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   def handle_info(:cancel, state) do
     {:noreply, state}
   end
+
   def handle_call({:set_storage, block_number, key, value}, _from, port) do
     call_native(port, :set_storage, [block_number, key, value])
     {:reply, receive_native(port), port}
@@ -72,6 +72,7 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
         },
         env
       )
+
     call_native(port, :process_existing_block, [env, block.transactions])
 
     case receive_native(port) do
@@ -90,7 +91,9 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
 
   def receive_native(port) do
     case receive_cancel_or_message(port) do
-      :cancel -> :cancel
+      :cancel ->
+        :cancel
+
       message ->
         message
         |> List.to_string()
@@ -100,10 +103,11 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     end
   end
 
-
   def receive_cancel_or_message(port, message \\ '') do
     receive do
-      :cancel -> :cancel
+      :cancel ->
+        :cancel
+
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
           receive_cancel_or_message(port, Enum.concat(message, message_part))
