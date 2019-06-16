@@ -34,6 +34,10 @@ defmodule Ellipticoind.Mixfile do
         path: "native/hashfactor",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
       ],
+      ed25519: [
+        path: "native/ed25519",
+        mode: if(Mix.env() == :prod, do: :release, else: :debug)
+      ],
       rocksdb: [
         path: "native/rocksdb",
         mode: if(Mix.env() == :prod, do: :release, else: :debug)
@@ -68,12 +72,8 @@ defmodule Ellipticoind.Mixfile do
       {:ecto, "~> 3.1.4", override: true},
       {:ecto_sql, "~> 3.1.3", override: true},
       {:ex_machina, "~> 2.2"},
-      {:exth_crypto, "~> 0.1.4", override: true},
       {:golang_compiler, "~> 0.2.1"},
       {:httpoison, "~> 1.4"},
-      {:httpotion, "~> 3.1.0"},
-      {:libsodium, "~> 0.0.10"},
-      {:logger_file_backend, "~> 0.0.10"},
       {:ok, "~> 2.0"},
       {:phoenix, "~> 1.4.0"},
       {:phoenix_ecto, "~> 4.0"},

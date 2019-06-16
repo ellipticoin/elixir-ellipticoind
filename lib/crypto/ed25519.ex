@@ -1,20 +1,11 @@
 defmodule Crypto.Ed25519 do
-  def keypair do
-    :libsodium_crypto_sign_ed25519.keypair()
-  end
+  use Rustler, otp_app: :ellipticoind, crate: :ed25519
 
-  def valid_signature?(signature, message, public_key) do
-    case :libsodium_crypto_sign_ed25519.verify_detached(signature, message, public_key) do
-      0 -> true
-      -1 -> false
-    end
-  end
-
-  def private_key_to_public_key(private_key) do
-    :libsodium_crypto_sign_ed25519.sk_to_pk(private_key)
-  end
-
-  def sign(message, secret_key) do
-    :libsodium_crypto_sign_ed25519.detached(message, secret_key)
-  end
+  def keypair(), do: error()
+  def valid_signature(_signature, _message, _public_key), do: error()
+  def valid_signature?(signature, message, public_key), do:
+    valid_signature(signature, message, public_key)
+  def private_key_to_public_key(_private_key), do: error()
+  def sign(_message, _secret_key), do: error()
+  defp error, do: :erlang.nif_error(:nif_not_loaded)
 end
