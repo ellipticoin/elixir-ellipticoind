@@ -6,9 +6,6 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
     [Config.redis_url(), Config.rocksdb_path()]
   end
 
-  def process_new_block() do
-    GenServer.call(__MODULE__, {:process_new_block})
-  end
 
   def cancel() do
     send(__MODULE__, :cancel)
@@ -19,7 +16,13 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
   end
 
   def process(block, env \\ %{}) do
+    cancel()
     GenServer.call(__MODULE__, {:process, block, env})
+  end
+
+  def process_new_block() do
+    cancel()
+    GenServer.call(__MODULE__, {:process_new_block})
   end
 
   def handle_info({_port, {:data, _message}}, port) do
