@@ -54,6 +54,7 @@ defmodule Ellipticoind.Miner do
 
     case TransactionProcessor.process_new_block() do
       :cancelled -> handle_cancel()
+      :ok -> handle_cancel()
       new_block -> hashfactor(new_block)
     end
   end

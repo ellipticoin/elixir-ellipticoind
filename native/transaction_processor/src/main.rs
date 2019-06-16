@@ -100,6 +100,7 @@ fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
 fn u64_to_vec(n: u64) -> Vec<u8> {
     return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec();
 }
+
 fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
     let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
     rocksdb.put(hash_key(block_number, key), value).unwrap();
@@ -107,7 +108,6 @@ fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
 }
 
 fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>) {
-    // println!("{}", &to_vec(&completed_transactions).unwrap().len());
     println!("{}", base64::encode(&to_vec(&completed_transactions).unwrap()));
 }
 
