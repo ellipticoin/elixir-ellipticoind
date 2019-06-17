@@ -82,6 +82,9 @@ defmodule Ellipticoind.Models.Block.TransactionProcessor do
       :cancel ->
         {:reply, :cancelled, port}
 
+      :ok ->
+        {:reply, :cancelled, port}
+
       transactions ->
         return_value = %{
           changeset_hash: changeset_hash(),
