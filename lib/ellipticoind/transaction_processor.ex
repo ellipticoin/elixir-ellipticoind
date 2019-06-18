@@ -1,6 +1,6 @@
 defmodule Ellipticoind.TransactionProcessor do
   use NativeModule
-  alias Ellipticoind.Models.Block
+  alias Ellipticoind.Models.{Block, Transaction}
 
   def args() do
     [Config.redis_url(), Config.rocksdb_path()]
@@ -76,7 +76,7 @@ defmodule Ellipticoind.TransactionProcessor do
         env
       )
 
-    call_native(port, :process_existing_block, [env, block.transactions])
+    call_native(port, :process_existing_block, [env, Enum.map(block.transactions, &Transaction.as_map/1)])
 
     case receive_native(port) do
       :cancel ->

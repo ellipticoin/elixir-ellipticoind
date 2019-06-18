@@ -41,7 +41,7 @@ defmodule Integration.MiningTest do
 
     broadcasted_block =
       receive do
-        {:p2p, nil, block} -> block |> Cbor.decode!()
+        {:p2p, nil, block} -> block
       end
 
     new_block = poll_for_block(0)
@@ -114,7 +114,7 @@ defmodule Integration.MiningTest do
       }
       |> Transaction.sign(@alices_private_key)
 
-    block_bytes =
+    block =
       %Block{
         number: 0,
         proof_of_work_value: 777,
@@ -124,9 +124,8 @@ defmodule Integration.MiningTest do
         transactions: [transaction],
         winner: @bob
       }
-      |> Block.as_binary()
 
-    P2P.Transport.Test.receive(block_bytes)
+    P2P.Transport.Test.receive(block)
 
     poll_for_block(0)
     assert get_balance(@alice) == 50

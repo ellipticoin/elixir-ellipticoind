@@ -67,7 +67,10 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
-    Port.command(port, "#{Base.encode64(message)}\n")
+      apply(message.__struct__, :as_binary, [message])
+      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :new, [[bytes: &1]]))).()
+      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :encode, [&1]))).()
+      |>(&Port.command(port, "#{Base.encode64(&1)}\n")).()
     {:noreply, state}
   end
 
