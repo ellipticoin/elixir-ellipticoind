@@ -12,7 +12,9 @@ crate-type = ["dylib"]
 
 
 [dependencies]
-sodiumoxide = "0.2.2"
+sha2 = "0.8.0"
+rand = "0.6.5"
+ed25519-dalek = "0.9.1"
 rustler = { git = "https://github.com/hansihe/rustler" }
 rustler_codegen = { git = "https://github.com/hansihe/rustler" }
 lazy_static = "1.0.0"
