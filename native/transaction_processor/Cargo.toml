@@ -8,6 +8,7 @@ name = "transaction_processor"
 
 [dependencies]
 lazy_static = "1.3.0"
+libc = "*"
 redis = "0.9.1"
 base64 = "0.10.1"
 rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and-structure"}

@@ -7,6 +7,7 @@ extern crate serde;
 extern crate rocksdb;
 extern crate serde_cbor;
 extern crate vm;
+extern crate libc;
 
 use serialize::hex::FromHex;
 use serde_cbor::{from_slice, to_vec};
@@ -33,6 +34,11 @@ lazy_static! {
 }
 
 fn main() {
+    // Fixes https://github.com/rust-lang/rust/issues/46016
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_DFL);
+    }
+
     let stdin = io::stdin();
     for line in stdin.lock().lines() {
         match line
