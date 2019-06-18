@@ -21,11 +21,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
+	strings "strings"
 	"time"
 
 	"github.com/perlin-network/noise"
@@ -38,7 +40,7 @@ import (
 
 type chatHandler struct{}
 
-func (chatHandler) Stream(stream Chat_StreamServer) error {
+func (chatHandler) Stream(stream Ellipticoin_StreamServer) error {
 	for {
 		txt, err := stream.Recv()
 
@@ -64,7 +66,7 @@ func (chatHandler) Stream(stream Chat_StreamServer) error {
 			panic("cannot get id from peer")
 		}
 
-		fmt.Printf("message:%s %s\n", id, txt.Message)
+		fmt.Printf("message:%s %s\n", id, base64.StdEncoding.EncodeToString(txt.Bytes))
 	}
 }
 
@@ -102,7 +104,7 @@ func main() {
 	go func() {
 
 		server := client.Listen()
-		RegisterChatServer(server, &chatHandler{})
+		RegisterEllipticoinServer(server, &chatHandler{})
 
 		if err := server.Serve(listener); err != nil {
 			panic(err)
@@ -132,14 +134,15 @@ func main() {
 		conns := client.ClosestPeers()
 
 		for _, conn := range conns {
-			chat := NewChatClient(conn)
+			chat := NewEllipticoinClient(conn)
 
 			stream, err := chat.Stream(context.Background())
 			if err != nil {
 				continue
 			}
 
-			if err := stream.Send(&Text{Message: string(line)}); err != nil {
+			bytes, _ := base64.StdEncoding.DecodeString(strings.TrimSuffix(string(line), "\n"))
+			if err := stream.Send(&Block{Bytes: bytes}); err != nil {
 				continue
 			}
 		}
