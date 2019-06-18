@@ -1,4 +1,4 @@
-defmodule TransactionProcessor.VMTest do
+defmodule Ellipticoind.TransactionProcessorTest do
   alias Ellipticoind.Memory
   alias Ellipticoind.Storage
   import Test.Utils

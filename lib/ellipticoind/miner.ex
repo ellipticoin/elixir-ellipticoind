@@ -3,7 +3,7 @@ defmodule Ellipticoind.Miner do
   use GenServer
   alias Ellipticoind.BlockIndex
   alias Ellipticoind.Models.{Block, Transaction}
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.TransactionProcessor
 
   def start_link([]), do: start_link()
 

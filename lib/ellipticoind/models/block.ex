@@ -6,7 +6,7 @@ defmodule Ellipticoind.Models.Block do
   alias Ellipticoind.Repo
   alias Ellipticoind.Models.Transaction
   alias Ellipticoind.Models.Block.Validations
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.TransactionProcessor
 
   @primary_key false
   schema "blocks" do

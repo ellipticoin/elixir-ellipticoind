@@ -1,4 +1,4 @@
-defmodule Ellipticoind.Models.Block.TransactionProcessor do
+defmodule Ellipticoind.TransactionProcessor do
   use NativeModule
   alias Ellipticoind.Models.Block
 

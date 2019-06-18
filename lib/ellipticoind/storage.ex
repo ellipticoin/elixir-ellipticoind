@@ -1,5 +1,5 @@
 defmodule Ellipticoind.Storage do
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.TransactionProcessor
   alias Ellipticoind.BlockIndex
   import Binary
   @prefix "storage"

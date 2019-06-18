@@ -1,6 +1,6 @@
 defmodule Ellipticoind.Application do
   alias Ellipticoind.Miner
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.TransactionProcessor
   use Application
 
   def start(_type, _args) do

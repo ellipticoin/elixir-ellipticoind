@@ -4,7 +4,7 @@ defmodule Test.Utils do
   require Integer
   alias Crypto.Ed25519
   alias Ellipticoind.Models.{Block, Contract, Transaction}
-  alias Ellipticoind.Models.Block.TransactionProcessor
+  alias Ellipticoind.TransactionProcessor
   alias Ellipticoind.Storage
   alias Ellipticoind.{Memory, Repo}
 
