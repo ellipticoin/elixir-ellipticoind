@@ -101,9 +101,21 @@ defmodule P2P.Transport.Noise do
 
   def handle_port_data("message:" <> message, state = %{subscribers: subscribers}) do
     case String.split(message, " ") do
-      [address, message] ->
+      [address, type, raw_message] ->
         Enum.each(subscribers, fn subscriber ->
-          send(subscriber, {:p2p, address, Base.decode64!(message)})
+          message = apply(
+            String.to_existing_atom("Elixir.P2P.Messages.#{type}"),
+            :decode,
+            [Base.decode64!(raw_message)]
+          )
+          |> Map.get(:bytes)
+          |> Cbor.decode!()
+          |> (&(struct(
+            String.to_existing_atom("Elixir.Ellipticoind.Models.#{type}"),
+
+            &1
+          ))).()
+          send(subscriber, {:p2p, address, message})
         end)
 
       message ->

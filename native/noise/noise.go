@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	reflect "reflect"
 	"strconv"
 	strings "strings"
 	"time"
@@ -42,11 +43,7 @@ type chatHandler struct{}
 
 func (chatHandler) Stream(stream Ellipticoin_StreamServer) error {
 	for {
-		txt, err := stream.Recv()
-
-		if err != nil {
-			return err
-		}
+		txt, _ := stream.Recv()
 
 		p, ok := peer.FromContext(stream.Context())
 
@@ -66,7 +63,7 @@ func (chatHandler) Stream(stream Ellipticoin_StreamServer) error {
 			panic("cannot get id from peer")
 		}
 
-		fmt.Printf("message:%s %s\n", id, base64.StdEncoding.EncodeToString(txt.Bytes))
+		fmt.Printf("message:%s %s %s\n", id, reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(txt.Bytes))
 	}
 }
 

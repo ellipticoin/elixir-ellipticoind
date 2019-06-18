@@ -16,12 +16,10 @@ defmodule P2P do
   def broadcast(%{__struct__: _} = message),
     do:
       apply(message.__struct__, :as_binary, [message])
-      |> broadcast()
+      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :new, [[bytes: &1]]))).()
+      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :encode, [&1]))).()
+      |> (&(apply(transport(), :broadcast, [&1]))).()
 
-  def broadcast(message),
-    do:
-      transport()
-      |> apply(:broadcast, [message])
 
   def subscribe(),
     do:
@@ -30,12 +28,8 @@ defmodule P2P do
 
   def receive(message) do
     Miner.cancel()
-
-    Cbor.decode!(message)
-    |> Block.apply()
-
-    block = Cbor.decode!(message)
-    Logger.info("Applied block #{block.number}")
+    Block.apply(message)
+    Logger.info("Applied block #{message.number}")
   end
 
   def handle_info({:p2p, _from, message}, state) do

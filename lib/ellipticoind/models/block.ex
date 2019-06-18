@@ -139,7 +139,7 @@ defmodule Ellipticoind.Models.Block do
       block
       |> TransactionProcessor.process()
 
-      insert(block)
+      Repo.insert!(block)
     else
       IO.puts("Received invalid block ##{block.number}")
     end

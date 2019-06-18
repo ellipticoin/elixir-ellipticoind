@@ -2,7 +2,7 @@ use Mix.Config
 
 config :ellipticoind, transaction_processing_time: 3000
 config :ellipticoind, hashfactor_target: 1
-config :ellipticoind, enable_miner: false
+config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
 config :ellipticoind, :rocksdb_path, "./var/storage"
@@ -35,6 +35,7 @@ config :ellipticoind, bootellipticoind: true
 
 # config :ellipticoind, :redis_url, "redis://127.0.0.1:6379/"
 config :ellipticoind, :redis_url, System.get_env("REDIS_URL") || "redis://127.0.0.1:6379/"
+config :ellipticoind, :rocksdb_path, System.get_env("ROCKSDB_PATH") || "./var/storage"
 
 config :ellipticoind, Ellipticoind.Repo,
   username: "masonf",
