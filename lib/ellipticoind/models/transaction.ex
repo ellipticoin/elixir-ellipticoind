@@ -17,8 +17,6 @@ defmodule Ellipticoind.Models.Transaction do
     field(:return_value, Types.Cbor)
     field(:signature, :binary)
     field(:execution_order, :integer)
-
-    timestamps()
   end
 
   def changeset(transaction, attrs) do

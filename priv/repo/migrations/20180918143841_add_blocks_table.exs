@@ -9,8 +9,6 @@ defmodule Ellipticoind.Repo.Migrations.AddBlocksTable do
       add :winner, :binary
       add :changeset_hash, :binary
       add :proof_of_work_value, :integer
-
-      timestamps()
     end
 
     create unique_index(:blocks, [:hash])

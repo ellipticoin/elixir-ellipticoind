@@ -1,5 +1,6 @@
 defmodule Ellipticoind.Models.Block do
   use Ecto.Schema
+  use CborEncodable
   require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
@@ -25,7 +26,6 @@ defmodule Ellipticoind.Models.Block do
     field(:winner, :binary, default: <<0::256>>)
     field(:changeset_hash, :binary, default: Crypto.hash(<<>>))
     field(:proof_of_work_value, :integer)
-    timestamps()
   end
 
   def next_block_params() do
@@ -65,13 +65,6 @@ defmodule Ellipticoind.Models.Block do
   def latest(query \\ __MODULE__, count),
     do: from(q in query, order_by: [desc: q.number], limit: ^count)
 
-  def log(message, block) do
-    Logger.info(
-      "#{message}: " <>
-        "Number=#{block.number}"
-    )
-  end
-
   def changeset(block, params \\ %{}) do
     block_hash = hash(params)
     params = Map.put(params, :hash, block_hash)
@@ -94,31 +87,15 @@ defmodule Ellipticoind.Models.Block do
     ])
   end
 
-  def hash(block), do: Crypto.hash(as_binary(block))
 
-  def as_map(attributes) do
-    Map.take(attributes, [
-      :hash,
-      :proof_of_work_value,
-      :total_burned,
-      :changeset_hash,
-      :number,
-      :winner
-    ])
-    |> Map.put(
-      :transactions,
-      transactions_as_map(attributes.transactions)
-    )
-    |> Map.put(
-      :parent_hash,
-      if(Map.has_key?(attributes, :parent) && Ecto.assoc_loaded?(attributes.parent),
-        do: attributes.parent.hash,
-        else: nil
-      )
-    )
+  def as_map(block) do
+    fields = __schema__(:fields)
+    Map.take(block, fields)
+    |> Map.put(:transactions, transactions_as_map(block.transactions))
+    |> Map.put(:parent_hash, parent_hash(block))
   end
 
-  def transactions_as_map(transactions),
+  defp transactions_as_map(transactions),
     do:
       if(Ecto.assoc_loaded?(transactions),
         do:
@@ -134,10 +111,13 @@ defmodule Ellipticoind.Models.Block do
         else: []
       )
 
+  defp parent_hash(block), do: 
+      if Map.has_key?(block, :parent) && Ecto.assoc_loaded?(block.parent),
+        do: block.parent.hash
+
   def apply(block) do
     if Validations.valid_next_block?(block) do
-      block
-      |> TransactionProcessor.process()
+      TransactionProcessor.process(block)
 
       Repo.insert!(block)
       WebsocketHandler.broadcast(:blocks, block)
@@ -145,11 +125,6 @@ defmodule Ellipticoind.Models.Block do
       IO.puts("Received invalid block ##{block.number}")
     end
   end
-
-  def as_binary(block),
-    do:
-      as_map(block)
-      |> Cbor.encode()
 
   def as_binary_pre_pow(block),
     do:
@@ -164,9 +139,4 @@ defmodule Ellipticoind.Models.Block do
       ])
       |> Cbor.encode()
 
-  def from_binary(bytes) do
-    attributes = Cbor.decode!(bytes)
-
-    struct(__MODULE__, attributes)
-  end
 end
