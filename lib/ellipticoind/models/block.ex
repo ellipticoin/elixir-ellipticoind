@@ -140,18 +140,10 @@ defmodule Ellipticoind.Models.Block do
       |> TransactionProcessor.process()
 
       Repo.insert!(block)
+      WebsocketHandler.broadcast(:blocks, block)
     else
       IO.puts("Received invalid block ##{block.number}")
     end
-  end
-
-  def insert(attributes) do
-    block =
-      changeset(%__MODULE__{}, attributes)
-      |> Repo.insert!()
-
-    WebsocketHandler.broadcast(:blocks, block)
-    block
   end
 
   def as_binary(block),
@@ -173,8 +165,8 @@ defmodule Ellipticoind.Models.Block do
       |> Cbor.encode()
 
   def from_binary(bytes) do
-    params = Cbor.decode!(bytes)
+    attributes = Cbor.decode!(bytes)
 
-    struct(__MODULE__, params)
+    struct(__MODULE__, attributes)
   end
 end

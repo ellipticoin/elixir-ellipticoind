@@ -1,6 +1,7 @@
 defmodule Ellipticoind.Miner do
   require Logger
   use GenServer
+  alias Ellipticoind.Repo
   alias Ellipticoind.BlockIndex
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.TransactionProcessor
@@ -74,16 +75,17 @@ defmodule Ellipticoind.Miner do
         handle_cancel()
 
       proof_of_work_value ->
-        insert(new_block, proof_of_work_value)
+        Map.put(new_block, :proof_of_work_value, proof_of_work_value)
+        |> insert_block()
     end
   end
 
-  defp insert(new_block, proof_of_work_value) do
-    new_block = Map.put(new_block, :proof_of_work_value, proof_of_work_value)
-
-    block = Block.insert(new_block)
+  defp insert_block(attributes) do
+    block = Block.changeset(%Block{}, attributes)
+    |> Repo.insert!()
+    WebsocketHandler.broadcast(:blocks, block)
     P2P.broadcast(block)
-    Logger.info("Mined block #{new_block.number}")
+    Logger.info("Mined block #{block.number}")
     mining_loop()
   end
 end
