@@ -79,6 +79,7 @@ defmodule Router do
   post "/transactions" do
     case Transaction.from_signed_transaction(conn.params) do
       {:ok, transaction} ->
+        P2P.broadcast(transaction)
         Transaction.post(transaction)
         send_resp(conn, 200, "")
 

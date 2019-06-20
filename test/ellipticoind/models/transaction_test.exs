@@ -14,7 +14,9 @@ defmodule Ellipticoind.Models.TransactionTest do
     }
 
     signed_transaction = Transaction.sign(unsigned_transaction, private_key)
-    assert {:ok, unsigned_transaction} == Transaction.from_signed_transaction(signed_transaction)
+
+    assert {:ok, struct(Transaction, unsigned_transaction)} ==
+             Transaction.from_signed_transaction(signed_transaction)
   end
 
   test "Transaction.from_signed_transaction returns :error with an invalid signature" do

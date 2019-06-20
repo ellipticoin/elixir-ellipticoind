@@ -1,4 +1,5 @@
 defmodule Ellipticoind.Models.Transaction do
+  use CborEncodable
   use Ecto.Schema
   alias Ellipticoind.Models.Contract
   alias Ellipticoind.Ecto.Types
@@ -59,22 +60,6 @@ defmodule Ellipticoind.Models.Transaction do
     ])
   end
 
-  def with_code(attributes) do
-    code =
-      Repo.get_by(Contract, name: attributes.contract_name)
-      |> Map.get(:code)
-
-    attributes
-    |> Map.merge(%{
-      contract_address: <<0::256>>,
-      code: code
-    })
-    |> Map.drop([
-      :return_code,
-      :return_value
-    ])
-  end
-
   def sign(transaction, private_key) do
     sender = Crypto.private_key_to_public_key(private_key)
 
@@ -84,30 +69,20 @@ defmodule Ellipticoind.Models.Transaction do
 
     signature = Crypto.sign(as_map(transaction), private_key)
 
-    transaction
-    |> Map.put(:signature, signature)
+    Map.put(transaction, :signature, signature)
   end
 
   def from_signed_transaction(signed_transaction) do
     {signature, transaction} = Map.pop(signed_transaction, :signature)
 
     if Crypto.valid_signature?(signature, as_binary(transaction), signed_transaction.sender) do
-      {:ok, transaction}
+      {:ok, struct(__MODULE__, transaction)}
     else
       {:error, :invalid_signature}
     end
   end
 
-  def post(parameters) do
-    transaction_bytes =
-      parameters
-      |> Cbor.encode()
-
-    Redis.push("transactions::queued", [transaction_bytes])
+  def post(transaction) do
+    Redis.push("transactions::queued", [as_binary(transaction)])
   end
-
-  def as_binary(transaction),
-    do:
-      as_map(transaction)
-      |> Cbor.encode()
 end

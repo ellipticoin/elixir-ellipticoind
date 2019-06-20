@@ -67,10 +67,27 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
-      apply(message.__struct__, :as_binary, [message])
-      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :new, [[bytes: &1]]))).()
-      |> (&(apply(String.to_existing_atom("Elixir.P2P.Messages.#{message.__struct__ |> to_string() |> String.split(".") |> List.last()}"), :encode, [&1]))).()
-      |>(&Port.command(port, "#{Base.encode64(&1)}\n")).()
+    apply(message.__struct__, :as_binary, [message])
+    |> (&apply(
+          String.to_existing_atom(
+            "Elixir.P2P.Messages.#{
+              message.__struct__ |> to_string() |> String.split(".") |> List.last()
+            }"
+          ),
+          :new,
+          [[bytes: &1]]
+        )).()
+    |> (&apply(
+          String.to_existing_atom(
+            "Elixir.P2P.Messages.#{
+              message.__struct__ |> to_string() |> String.split(".") |> List.last()
+            }"
+          ),
+          :encode,
+          [&1]
+        )).()
+    |> (&Port.command(port, "#{Base.encode64(&1)}\n")).()
+
     {:noreply, state}
   end
 
@@ -106,18 +123,19 @@ defmodule P2P.Transport.Noise do
     case String.split(message, " ") do
       [address, type, raw_message] ->
         Enum.each(subscribers, fn subscriber ->
-          message = apply(
-            String.to_existing_atom("Elixir.P2P.Messages.#{type}"),
-            :decode,
-            [Base.decode64!(raw_message)]
-          )
-          |> Map.get(:bytes)
-          |> Cbor.decode!()
-          |> (&(struct(
-            String.to_existing_atom("Elixir.Ellipticoind.Models.#{type}"),
+          message =
+            apply(
+              String.to_existing_atom("Elixir.P2P.Messages.#{type}"),
+              :decode,
+              [Base.decode64!(raw_message)]
+            )
+            |> Map.get(:bytes)
+            |> Cbor.decode!()
+            |> (&struct(
+                  String.to_existing_atom("Elixir.Ellipticoind.Models.#{type}"),
+                  &1
+                )).()
 
-            &1
-          ))).()
           send(subscriber, {:p2p, address, message})
         end)
 

@@ -1,7 +1,6 @@
 defmodule P2P do
   require Logger
-  alias Ellipticoind.Models.Block
-  alias Ellipticoind.Miner
+  alias Ellipticoind.Models.{Block, Transaction}
   use GenServer
 
   def start_link(opts) do
@@ -16,14 +15,14 @@ defmodule P2P do
   def broadcast(message),
     do: apply(transport(), :broadcast, [message])
 
-
   def subscribe(),
     do: apply(transport(), :subscribe)
 
   def receive(message) do
-    Miner.cancel()
-    Block.apply(message)
-    Logger.info("Applied block #{message.number}")
+    case message.__struct__ do
+      Block -> Block.apply(message)
+      Transaction -> Transaction.post(message)
+    end
   end
 
   def handle_info({:p2p, _from, message}, state) do

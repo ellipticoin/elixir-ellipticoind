@@ -21,6 +21,8 @@ defmodule Integration.MiningTest do
   end
 
   test "mining a block" do
+    P2P.Transport.Test.subscribe_to_test_broadcasts(self())
+
     set_balances(%{
       @alice => 100,
       @bob => 100
@@ -37,12 +39,19 @@ defmodule Integration.MiningTest do
 
     Miner.start_link()
 
-    P2P.Transport.Test.subscribe_to_test_broadcasts(self())
+    broadcasted_transaction =
+      receive do
+        {:p2p, nil, %Transaction{} = transaction} -> transaction
+      end
+
+    assert !is_nil(broadcasted_transaction)
 
     broadcasted_block =
       receive do
-        {:p2p, nil, block} -> block
+        {:p2p, nil, %Block{} = block} -> block
       end
+
+    assert !is_nil(broadcasted_block)
 
     new_block = poll_for_block(0)
     assert Block.Validations.valid_proof_of_work_value?(broadcasted_block)
@@ -114,16 +123,15 @@ defmodule Integration.MiningTest do
       }
       |> Transaction.sign(@alices_private_key)
 
-    block =
-      %Block{
-        number: 0,
-        proof_of_work_value: 777,
-        hash: <<0::256>>,
-        changeset_hash:
-          Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
-        transactions: [transaction],
-        winner: @bob
-      }
+    block = %Block{
+      number: 0,
+      proof_of_work_value: 777,
+      hash: <<0::256>>,
+      changeset_hash:
+        Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
+      transactions: [transaction],
+      winner: @bob
+    }
 
     P2P.Transport.Test.receive(block)
 

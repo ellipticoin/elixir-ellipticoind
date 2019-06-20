@@ -87,9 +87,9 @@ defmodule Ellipticoind.Models.Block do
     ])
   end
 
-
   def as_map(block) do
     fields = __schema__(:fields)
+
     Map.take(block, fields)
     |> Map.put(:transactions, transactions_as_map(block.transactions))
     |> Map.put(:parent_hash, parent_hash(block))
@@ -111,9 +111,11 @@ defmodule Ellipticoind.Models.Block do
         else: []
       )
 
-  defp parent_hash(block), do: 
-      if Map.has_key?(block, :parent) && Ecto.assoc_loaded?(block.parent),
+  defp parent_hash(block),
+    do:
+      if(Map.has_key?(block, :parent) && Ecto.assoc_loaded?(block.parent),
         do: block.parent.hash
+      )
 
   def apply(block) do
     if Validations.valid_next_block?(block) do
@@ -121,8 +123,9 @@ defmodule Ellipticoind.Models.Block do
 
       Repo.insert!(block)
       WebsocketHandler.broadcast(:blocks, block)
+      Logger.info("Applied block #{block.number}")
     else
-      IO.puts("Received invalid block ##{block.number}")
+      Logger.info("Received invalid block ##{block.number}")
     end
   end
 
@@ -138,5 +141,4 @@ defmodule Ellipticoind.Models.Block do
         :total_burned
       ])
       |> Cbor.encode()
-
 end
