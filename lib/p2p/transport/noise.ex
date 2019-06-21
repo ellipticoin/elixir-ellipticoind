@@ -67,6 +67,7 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
+    type = String.to_existing_atom(message.__struct__ |> to_string() |> String.split(".") |> List.last())
     apply(message.__struct__, :as_binary, [message])
     |> (&apply(
           String.to_existing_atom(
@@ -86,7 +87,7 @@ defmodule P2P.Transport.Noise do
           :encode,
           [&1]
         )).()
-    |> (&Port.command(port, "#{Base.encode64(&1)}\n")).()
+    |> (&Port.command(port, "#{type} #{Base.encode64(&1)}\n")).()
 
     {:noreply, state}
   end

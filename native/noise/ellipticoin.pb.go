@@ -26,6 +26,41 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
+type Empty struct {
+}
+
+func (m *Empty) Reset()      { *m = Empty{} }
+func (*Empty) ProtoMessage() {}
+func (*Empty) Descriptor() ([]byte, []int) {
+	return fileDescriptor_083d03b4de75fdc2, []int{0}
+}
+func (m *Empty) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Empty) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Empty.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Empty) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Empty.Merge(m, src)
+}
+func (m *Empty) XXX_Size() int {
+	return m.Size()
+}
+func (m *Empty) XXX_DiscardUnknown() {
+	xxx_messageInfo_Empty.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Empty proto.InternalMessageInfo
+
 type Block struct {
 	Bytes []byte `protobuf:"bytes,1,opt,name=bytes,proto3" json:"bytes,omitempty"`
 }
@@ -33,7 +68,7 @@ type Block struct {
 func (m *Block) Reset()      { *m = Block{} }
 func (*Block) ProtoMessage() {}
 func (*Block) Descriptor() ([]byte, []int) {
-	return fileDescriptor_083d03b4de75fdc2, []int{0}
+	return fileDescriptor_083d03b4de75fdc2, []int{1}
 }
 func (m *Block) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -70,26 +105,49 @@ func (m *Block) GetBytes() []byte {
 }
 
 func init() {
+	proto.RegisterType((*Empty)(nil), "main.Empty")
 	proto.RegisterType((*Block)(nil), "main.Block")
 }
 
 func init() { proto.RegisterFile("ellipticoin.proto", fileDescriptor_083d03b4de75fdc2) }
 
 var fileDescriptor_083d03b4de75fdc2 = []byte{
-	// 170 bytes of a gzipped FileDescriptorProto
+	// 184 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4c, 0xcd, 0xc9, 0xc9,
 	0x2c, 0x28, 0xc9, 0x4c, 0xce, 0xcf, 0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xc9,
-	0x4d, 0xcc, 0xcc, 0x53, 0x92, 0xe5, 0x62, 0x75, 0xca, 0xc9, 0x4f, 0xce, 0x16, 0x12, 0xe1, 0x62,
-	0x4d, 0xaa, 0x2c, 0x49, 0x2d, 0x96, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x09, 0x82, 0x70, 0x8c, 0x4c,
-	0xb9, 0xb8, 0x5d, 0x11, 0x3a, 0x85, 0xd4, 0xb8, 0xd8, 0x82, 0x4b, 0x8a, 0x52, 0x13, 0x73, 0x85,
-	0xb8, 0xf5, 0x40, 0xda, 0xf5, 0xc0, 0x7a, 0xa5, 0x90, 0x39, 0x4a, 0x0c, 0x1a, 0x8c, 0x4e, 0x26,
-	0x17, 0x1e, 0xca, 0x31, 0xdc, 0x78, 0x28, 0xc7, 0xf0, 0xe1, 0xa1, 0x1c, 0x63, 0xc3, 0x23, 0x39,
-	0xc6, 0x15, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23,
-	0x39, 0xc6, 0x17, 0x8f, 0xe4, 0x18, 0x3e, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2,
-	0x63, 0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0x92, 0xd8, 0xc0, 0x0e, 0x33, 0x06, 0x04, 0x00, 0x00,
-	0xff, 0xff, 0x07, 0x6e, 0x55, 0x08, 0xad, 0x00, 0x00, 0x00,
+	0x4d, 0xcc, 0xcc, 0x53, 0x62, 0xe7, 0x62, 0x75, 0xcd, 0x2d, 0x28, 0xa9, 0x54, 0x92, 0xe5, 0x62,
+	0x75, 0xca, 0xc9, 0x4f, 0xce, 0x16, 0x12, 0xe1, 0x62, 0x4d, 0xaa, 0x2c, 0x49, 0x2d, 0x96, 0x60,
+	0x54, 0x60, 0xd4, 0xe0, 0x09, 0x82, 0x70, 0x8c, 0x6c, 0xb9, 0xb8, 0x5d, 0x11, 0x46, 0x08, 0xe9,
+	0x71, 0xf1, 0x05, 0x14, 0xe5, 0x17, 0x24, 0xa6, 0x27, 0x96, 0xa4, 0x42, 0xb4, 0x71, 0xeb, 0x81,
+	0xcc, 0xd3, 0x03, 0x73, 0xa4, 0xa0, 0x1c, 0x88, 0xc9, 0x0c, 0x1a, 0x8c, 0x4e, 0x26, 0x17, 0x1e,
+	0xca, 0x31, 0xdc, 0x78, 0x28, 0xc7, 0xf0, 0xe1, 0xa1, 0x1c, 0x63, 0xc3, 0x23, 0x39, 0xc6, 0x15,
+	0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6,
+	0x17, 0x8f, 0xe4, 0x18, 0x3e, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39,
+	0x86, 0x1b, 0x8f, 0xe5, 0x18, 0x92, 0xd8, 0xc0, 0x2e, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff,
+	0x21, 0xa6, 0xb6, 0xe2, 0xbe, 0x00, 0x00, 0x00,
 }
 
+func (this *Empty) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Empty)
+	if !ok {
+		that2, ok := that.(Empty)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	return true
+}
 func (this *Block) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -113,6 +171,15 @@ func (this *Block) Equal(that interface{}) bool {
 		return false
 	}
 	return true
+}
+func (this *Empty) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 4)
+	s = append(s, "&main.Empty{")
+	s = append(s, "}")
+	return strings.Join(s, "")
 }
 func (this *Block) GoString() string {
 	if this == nil {
@@ -145,7 +212,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type EllipticoinClient interface {
-	Stream(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_StreamClient, error)
+	PropagateBlock(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_PropagateBlockClient, error)
 }
 
 type ellipticoinClient struct {
@@ -156,34 +223,34 @@ func NewEllipticoinClient(cc *grpc.ClientConn) EllipticoinClient {
 	return &ellipticoinClient{cc}
 }
 
-func (c *ellipticoinClient) Stream(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Ellipticoin_serviceDesc.Streams[0], "/main.Ellipticoin/Stream", opts...)
+func (c *ellipticoinClient) PropagateBlock(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_PropagateBlockClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Ellipticoin_serviceDesc.Streams[0], "/main.Ellipticoin/PropagateBlock", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &ellipticoinStreamClient{stream}
+	x := &ellipticoinPropagateBlockClient{stream}
 	return x, nil
 }
 
-type Ellipticoin_StreamClient interface {
+type Ellipticoin_PropagateBlockClient interface {
 	Send(*Block) error
-	CloseAndRecv() (*Block, error)
+	CloseAndRecv() (*Empty, error)
 	grpc.ClientStream
 }
 
-type ellipticoinStreamClient struct {
+type ellipticoinPropagateBlockClient struct {
 	grpc.ClientStream
 }
 
-func (x *ellipticoinStreamClient) Send(m *Block) error {
+func (x *ellipticoinPropagateBlockClient) Send(m *Block) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *ellipticoinStreamClient) CloseAndRecv() (*Block, error) {
+func (x *ellipticoinPropagateBlockClient) CloseAndRecv() (*Empty, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(Block)
+	m := new(Empty)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -192,32 +259,32 @@ func (x *ellipticoinStreamClient) CloseAndRecv() (*Block, error) {
 
 // EllipticoinServer is the server API for Ellipticoin service.
 type EllipticoinServer interface {
-	Stream(Ellipticoin_StreamServer) error
+	PropagateBlock(Ellipticoin_PropagateBlockServer) error
 }
 
 func RegisterEllipticoinServer(s *grpc.Server, srv EllipticoinServer) {
 	s.RegisterService(&_Ellipticoin_serviceDesc, srv)
 }
 
-func _Ellipticoin_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(EllipticoinServer).Stream(&ellipticoinStreamServer{stream})
+func _Ellipticoin_PropagateBlock_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(EllipticoinServer).PropagateBlock(&ellipticoinPropagateBlockServer{stream})
 }
 
-type Ellipticoin_StreamServer interface {
-	SendAndClose(*Block) error
+type Ellipticoin_PropagateBlockServer interface {
+	SendAndClose(*Empty) error
 	Recv() (*Block, error)
 	grpc.ServerStream
 }
 
-type ellipticoinStreamServer struct {
+type ellipticoinPropagateBlockServer struct {
 	grpc.ServerStream
 }
 
-func (x *ellipticoinStreamServer) SendAndClose(m *Block) error {
+func (x *ellipticoinPropagateBlockServer) SendAndClose(m *Empty) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *ellipticoinStreamServer) Recv() (*Block, error) {
+func (x *ellipticoinPropagateBlockServer) Recv() (*Block, error) {
 	m := new(Block)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -231,12 +298,30 @@ var _Ellipticoin_serviceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Stream",
-			Handler:       _Ellipticoin_Stream_Handler,
+			StreamName:    "PropagateBlock",
+			Handler:       _Ellipticoin_PropagateBlock_Handler,
 			ClientStreams: true,
 		},
 	},
 	Metadata: "ellipticoin.proto",
+}
+
+func (m *Empty) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Empty) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	return i, nil
 }
 
 func (m *Block) Marshal() (dAtA []byte, err error) {
@@ -272,6 +357,15 @@ func encodeVarintEllipticoin(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
+func (m *Empty) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *Block) Size() (n int) {
 	if m == nil {
 		return 0
@@ -298,6 +392,15 @@ func sovEllipticoin(x uint64) (n int) {
 func sozEllipticoin(x uint64) (n int) {
 	return sovEllipticoin(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+func (this *Empty) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Empty{`,
+		`}`,
+	}, "")
+	return s
+}
 func (this *Block) String() string {
 	if this == nil {
 		return "nil"
@@ -315,6 +418,59 @@ func valueToStringEllipticoin(v interface{}) string {
 	}
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("*%v", pv)
+}
+func (m *Empty) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEllipticoin
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Empty: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Empty: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEllipticoin(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *Block) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

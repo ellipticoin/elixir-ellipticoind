@@ -21,6 +21,7 @@ package main
 
 import (
 	"bufio"
+	context "context"
 	"encoding/base64"
 	"flag"
 	"fmt"
@@ -35,13 +36,12 @@ import (
 	"github.com/perlin-network/noise/cipher"
 	"github.com/perlin-network/noise/handshake"
 	"github.com/perlin-network/noise/skademlia"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 )
 
 type chatHandler struct{}
 
-func (chatHandler) Stream(stream Ellipticoin_StreamServer) error {
+func (chatHandler) PropagateBlock(stream Ellipticoin_PropagateBlockServer) error {
 	for {
 		txt, _ := stream.Recv()
 
@@ -62,8 +62,8 @@ func (chatHandler) Stream(stream Ellipticoin_StreamServer) error {
 		if id == nil {
 			panic("cannot get id from peer")
 		}
-
-		fmt.Printf("message:%s %s %s\n", id, reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(txt.Bytes))
+		bytes, _ := txt.Marshal()
+		fmt.Printf("message:%s %s %s\n", id, reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(bytes))
 	}
 }
 
@@ -128,21 +128,21 @@ func main() {
 			panic(err)
 		}
 
+		parts := strings.Split(strings.TrimSuffix(string(line), "\n"), " ")
+
 		conns := client.ClosestPeers()
 
 		for _, conn := range conns {
 			chat := NewEllipticoinClient(conn)
+			bytes, _ := base64.StdEncoding.DecodeString(parts[1])
 
-			stream, err := chat.Stream(context.Background())
-			if err != nil {
-				continue
-			}
-
-			bytes, _ := base64.StdEncoding.DecodeString(strings.TrimSuffix(string(line), "\n"))
-			if err := stream.Send(&Block{Bytes: bytes}); err != nil {
-				continue
+			switch parts[0] {
+			case "Block":
+				stream, _ := chat.PropagateBlock(context.Background())
+				var block Block
+				block.Unmarshal(bytes)
+				stream.Send(&block)
 			}
 		}
-
 	}
 }

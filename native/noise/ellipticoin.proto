@@ -19,13 +19,16 @@
 
 syntax = "proto3";
 
-package ellipticoind;
+package main;
+
+message Empty {
+}
 
 message Block {
     bytes bytes = 1;
 }
 
 service Ellipticoin {
-    rpc Stream(stream Block) returns (Block) {}
+    rpc PropagateBlock(stream Block) returns (Empty) {}
 }
 
