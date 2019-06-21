@@ -36,7 +36,6 @@ import (
 	"github.com/perlin-network/noise/cipher"
 	"github.com/perlin-network/noise/handshake"
 	"github.com/perlin-network/noise/skademlia"
-	"google.golang.org/grpc/peer"
 )
 
 type chatHandler struct{}
@@ -44,26 +43,16 @@ type chatHandler struct{}
 func (chatHandler) PropagateBlock(stream Ellipticoin_PropagateBlockServer) error {
 	for {
 		txt, _ := stream.Recv()
-
-		p, ok := peer.FromContext(stream.Context())
-
-		if !ok {
-			panic("cannot get peer from context")
-		}
-
-		info := noise.InfoFromPeer(p)
-
-		if info == nil {
-			panic("cannot get info from peer")
-		}
-
-		id := info.Get(skademlia.KeyID)
-
-		if id == nil {
-			panic("cannot get id from peer")
-		}
 		bytes, _ := txt.Marshal()
-		fmt.Printf("message:%s %s %s\n", id, reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(bytes))
+		fmt.Printf("message:%s %s\n", reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(bytes))
+	}
+}
+
+func (chatHandler) PropagateTransaction(stream Ellipticoin_PropagateTransactionServer) error {
+	for {
+		txt, _ := stream.Recv()
+		bytes, _ := txt.Marshal()
+		fmt.Printf("message:%s %s\n", reflect.TypeOf(*txt).Name(), base64.StdEncoding.EncodeToString(bytes))
 	}
 }
 
@@ -142,6 +131,11 @@ func main() {
 				var block Block
 				block.Unmarshal(bytes)
 				stream.Send(&block)
+			case "Transaction":
+				stream, _ := chat.PropagateTransaction(context.Background())
+				var transaction Transaction
+				transaction.Unmarshal(bytes)
+				stream.Send(&transaction)
 			}
 		}
 	}

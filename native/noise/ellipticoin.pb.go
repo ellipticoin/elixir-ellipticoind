@@ -104,27 +104,73 @@ func (m *Block) GetBytes() []byte {
 	return nil
 }
 
+type Transaction struct {
+	Bytes []byte `protobuf:"bytes,1,opt,name=bytes,proto3" json:"bytes,omitempty"`
+}
+
+func (m *Transaction) Reset()      { *m = Transaction{} }
+func (*Transaction) ProtoMessage() {}
+func (*Transaction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_083d03b4de75fdc2, []int{2}
+}
+func (m *Transaction) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Transaction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Transaction.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Transaction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Transaction.Merge(m, src)
+}
+func (m *Transaction) XXX_Size() int {
+	return m.Size()
+}
+func (m *Transaction) XXX_DiscardUnknown() {
+	xxx_messageInfo_Transaction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Transaction proto.InternalMessageInfo
+
+func (m *Transaction) GetBytes() []byte {
+	if m != nil {
+		return m.Bytes
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*Empty)(nil), "main.Empty")
 	proto.RegisterType((*Block)(nil), "main.Block")
+	proto.RegisterType((*Transaction)(nil), "main.Transaction")
 }
 
 func init() { proto.RegisterFile("ellipticoin.proto", fileDescriptor_083d03b4de75fdc2) }
 
 var fileDescriptor_083d03b4de75fdc2 = []byte{
-	// 184 bytes of a gzipped FileDescriptorProto
+	// 217 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4c, 0xcd, 0xc9, 0xc9,
 	0x2c, 0x28, 0xc9, 0x4c, 0xce, 0xcf, 0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xc9,
 	0x4d, 0xcc, 0xcc, 0x53, 0x62, 0xe7, 0x62, 0x75, 0xcd, 0x2d, 0x28, 0xa9, 0x54, 0x92, 0xe5, 0x62,
 	0x75, 0xca, 0xc9, 0x4f, 0xce, 0x16, 0x12, 0xe1, 0x62, 0x4d, 0xaa, 0x2c, 0x49, 0x2d, 0x96, 0x60,
-	0x54, 0x60, 0xd4, 0xe0, 0x09, 0x82, 0x70, 0x8c, 0x6c, 0xb9, 0xb8, 0x5d, 0x11, 0x46, 0x08, 0xe9,
-	0x71, 0xf1, 0x05, 0x14, 0xe5, 0x17, 0x24, 0xa6, 0x27, 0x96, 0xa4, 0x42, 0xb4, 0x71, 0xeb, 0x81,
-	0xcc, 0xd3, 0x03, 0x73, 0xa4, 0xa0, 0x1c, 0x88, 0xc9, 0x0c, 0x1a, 0x8c, 0x4e, 0x26, 0x17, 0x1e,
-	0xca, 0x31, 0xdc, 0x78, 0x28, 0xc7, 0xf0, 0xe1, 0xa1, 0x1c, 0x63, 0xc3, 0x23, 0x39, 0xc6, 0x15,
-	0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6,
-	0x17, 0x8f, 0xe4, 0x18, 0x3e, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63, 0x39,
-	0x86, 0x1b, 0x8f, 0xe5, 0x18, 0x92, 0xd8, 0xc0, 0x2e, 0x35, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff,
-	0x21, 0xa6, 0xb6, 0xe2, 0xbe, 0x00, 0x00, 0x00,
+	0x54, 0x60, 0xd4, 0xe0, 0x09, 0x82, 0x70, 0x94, 0x94, 0xb9, 0xb8, 0x43, 0x8a, 0x12, 0xf3, 0x8a,
+	0x13, 0x93, 0x4b, 0x32, 0xf3, 0xf3, 0xb0, 0x2b, 0x32, 0xaa, 0xe4, 0xe2, 0x76, 0x45, 0xd8, 0x23,
+	0xa4, 0xc7, 0xc5, 0x17, 0x50, 0x94, 0x5f, 0x90, 0x98, 0x9e, 0x58, 0x92, 0x0a, 0x31, 0x9b, 0x5b,
+	0x0f, 0x64, 0xa9, 0x1e, 0x98, 0x23, 0x05, 0xe5, 0x40, 0xac, 0x67, 0xd0, 0x60, 0x14, 0xb2, 0xe2,
+	0x12, 0x81, 0xab, 0x47, 0xb6, 0x4c, 0x10, 0xa2, 0x10, 0x49, 0x08, 0x43, 0xaf, 0x93, 0xc9, 0x85,
+	0x87, 0x72, 0x0c, 0x37, 0x1e, 0xca, 0x31, 0x7c, 0x78, 0x28, 0xc7, 0xd8, 0xf0, 0x48, 0x8e, 0x71,
+	0xc5, 0x23, 0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e,
+	0xf1, 0xc5, 0x23, 0x39, 0x86, 0x0f, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58,
+	0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x24, 0x36, 0x70, 0x50, 0x18, 0x03, 0x02, 0x00, 0x00, 0xff,
+	0xff, 0xc6, 0x13, 0x0a, 0xff, 0x1f, 0x01, 0x00, 0x00,
 }
 
 func (this *Empty) Equal(that interface{}) bool {
@@ -172,6 +218,30 @@ func (this *Block) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *Transaction) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*Transaction)
+	if !ok {
+		that2, ok := that.(Transaction)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !bytes.Equal(this.Bytes, that1.Bytes) {
+		return false
+	}
+	return true
+}
 func (this *Empty) GoString() string {
 	if this == nil {
 		return "nil"
@@ -187,6 +257,16 @@ func (this *Block) GoString() string {
 	}
 	s := make([]string, 0, 5)
 	s = append(s, "&main.Block{")
+	s = append(s, "Bytes: "+fmt.Sprintf("%#v", this.Bytes)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *Transaction) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&main.Transaction{")
 	s = append(s, "Bytes: "+fmt.Sprintf("%#v", this.Bytes)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
@@ -213,6 +293,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type EllipticoinClient interface {
 	PropagateBlock(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_PropagateBlockClient, error)
+	PropagateTransaction(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_PropagateTransactionClient, error)
 }
 
 type ellipticoinClient struct {
@@ -257,9 +338,44 @@ func (x *ellipticoinPropagateBlockClient) CloseAndRecv() (*Empty, error) {
 	return m, nil
 }
 
+func (c *ellipticoinClient) PropagateTransaction(ctx context.Context, opts ...grpc.CallOption) (Ellipticoin_PropagateTransactionClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Ellipticoin_serviceDesc.Streams[1], "/main.Ellipticoin/PropagateTransaction", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &ellipticoinPropagateTransactionClient{stream}
+	return x, nil
+}
+
+type Ellipticoin_PropagateTransactionClient interface {
+	Send(*Transaction) error
+	CloseAndRecv() (*Empty, error)
+	grpc.ClientStream
+}
+
+type ellipticoinPropagateTransactionClient struct {
+	grpc.ClientStream
+}
+
+func (x *ellipticoinPropagateTransactionClient) Send(m *Transaction) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *ellipticoinPropagateTransactionClient) CloseAndRecv() (*Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // EllipticoinServer is the server API for Ellipticoin service.
 type EllipticoinServer interface {
 	PropagateBlock(Ellipticoin_PropagateBlockServer) error
+	PropagateTransaction(Ellipticoin_PropagateTransactionServer) error
 }
 
 func RegisterEllipticoinServer(s *grpc.Server, srv EllipticoinServer) {
@@ -292,6 +408,32 @@ func (x *ellipticoinPropagateBlockServer) Recv() (*Block, error) {
 	return m, nil
 }
 
+func _Ellipticoin_PropagateTransaction_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(EllipticoinServer).PropagateTransaction(&ellipticoinPropagateTransactionServer{stream})
+}
+
+type Ellipticoin_PropagateTransactionServer interface {
+	SendAndClose(*Empty) error
+	Recv() (*Transaction, error)
+	grpc.ServerStream
+}
+
+type ellipticoinPropagateTransactionServer struct {
+	grpc.ServerStream
+}
+
+func (x *ellipticoinPropagateTransactionServer) SendAndClose(m *Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *ellipticoinPropagateTransactionServer) Recv() (*Transaction, error) {
+	m := new(Transaction)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 var _Ellipticoin_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "main.Ellipticoin",
 	HandlerType: (*EllipticoinServer)(nil),
@@ -300,6 +442,11 @@ var _Ellipticoin_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "PropagateBlock",
 			Handler:       _Ellipticoin_PropagateBlock_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "PropagateTransaction",
+			Handler:       _Ellipticoin_PropagateTransaction_Handler,
 			ClientStreams: true,
 		},
 	},
@@ -348,6 +495,30 @@ func (m *Block) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *Transaction) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Transaction) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.Bytes) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintEllipticoin(dAtA, i, uint64(len(m.Bytes)))
+		i += copy(dAtA[i:], m.Bytes)
+	}
+	return i, nil
+}
+
 func encodeVarintEllipticoin(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -367,6 +538,19 @@ func (m *Empty) Size() (n int) {
 }
 
 func (m *Block) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Bytes)
+	if l > 0 {
+		n += 1 + l + sovEllipticoin(uint64(l))
+	}
+	return n
+}
+
+func (m *Transaction) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -406,6 +590,16 @@ func (this *Block) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&Block{`,
+		`Bytes:` + fmt.Sprintf("%v", this.Bytes) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *Transaction) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&Transaction{`,
 		`Bytes:` + fmt.Sprintf("%v", this.Bytes) + `,`,
 		`}`,
 	}, "")
@@ -499,6 +693,93 @@ func (m *Block) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: Block: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bytes", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEllipticoin
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Bytes = append(m.Bytes[:0], dAtA[iNdEx:postIndex]...)
+			if m.Bytes == nil {
+				m.Bytes = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEllipticoin(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthEllipticoin
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Transaction) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEllipticoin
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Transaction: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Transaction: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -28,7 +28,12 @@ message Block {
     bytes bytes = 1;
 }
 
+message Transaction {
+    bytes bytes = 1;
+}
+
 service Ellipticoin {
     rpc PropagateBlock(stream Block) returns (Empty) {}
+    rpc PropagateTransaction(stream Transaction) returns (Empty) {}
 }
 

@@ -122,7 +122,7 @@ defmodule P2P.Transport.Noise do
 
   def handle_port_data("message:" <> message, state = %{subscribers: subscribers}) do
     case String.split(message, " ") do
-      [address, type, raw_message] ->
+      [type, raw_message] ->
         Enum.each(subscribers, fn subscriber ->
           message =
             apply(
@@ -137,7 +137,7 @@ defmodule P2P.Transport.Noise do
                   &1
                 )).()
 
-          send(subscriber, {:p2p, address, message})
+          send(subscriber, {:p2p, message})
         end)
 
       message ->

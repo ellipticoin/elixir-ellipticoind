@@ -47,7 +47,7 @@ defmodule P2P.NoiseTest do
     Noise.subscribe(client1, self())
 
     receive do
-      {:p2p, _peer_id, message} -> assert message == %Block{number: 1, transactions: []}
+      {:p2p, message} -> assert message == %Block{number: 1, transactions: []}
     end
   end
 end

@@ -25,7 +25,7 @@ defmodule P2P do
     end
   end
 
-  def handle_info({:p2p, _from, message}, state) do
+  def handle_info({:p2p, message}, state) do
     __MODULE__.receive(message)
     {:noreply, state}
   end
