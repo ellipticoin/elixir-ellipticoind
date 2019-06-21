@@ -11,7 +11,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
-use rocksdb::ops::{Put, Get};
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -112,7 +111,6 @@ pub fn run_system_contract(transaction: &Transaction, redis: &redis::Connection,
             let contract_name = transaction.arguments[0].as_string().unwrap();
             let code = transaction.arguments[1].as_bytes().unwrap();
             let namespace = namespace(contract_name, &transaction.sender);
-            let key = [namespace.clone(), "_code".as_bytes().to_vec()].concat();
             let block_index = BlockIndex::new(redis);
             let storage = Storage::new(rocksdb, &block_index, namespace);
             storage.set(env.block_number, "_code".as_bytes(), code);
