@@ -146,18 +146,7 @@ defmodule Integration.MiningTest do
         contract_name: :system,
         nonce: 0,
         function: :create_contract,
-        arguments: [:state, test_contract_code(:state)]
-      },
-      @alices_private_key
-    )
-
-    post(
-      %{
-        contract_address: @alice,
-        contract_name: :state,
-        nonce: 1,
-        function: :set_memory,
-        arguments: [:value]
+        arguments: [:test_contract, test_contract_code(:constructor), [<<1, 2, 3>>]]
       },
       @alices_private_key
     )
@@ -167,8 +156,8 @@ defmodule Integration.MiningTest do
     poll_for_block(0)
     :timer.sleep(100)
 
-    key = Storage.to_key(@alice, :state, "value")
+    key = Storage.to_key(@alice, :test_contract, "value")
     {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
-    assert Cbor.decode!(body) == :value
+    assert body == <<1, 2, 3>>
   end
 end

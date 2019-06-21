@@ -82,9 +82,6 @@ pub fn run_in_vm(transaction: &Transaction, redis: &redis::Connection, rocksdb: 
     let memory = Memory::new(redis, &block_index, transaction.namespace());
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
     let code = storage.get("_code".as_bytes());
-    // let key = [transaction.namespace(), "_code".as_bytes().to_vec()].concat();
-    // println!("namespace: {}", base64::encode(&[&transaction.namespace(), "value".as_bytes()].concat()));
-    // println!("contract_address: {}", base64::encode(&transaction.contract_address));
     let module = EllipticoinAPI::new_module(&code);
 
     let mut vm = VM::new(&memory, &storage, &env, transaction, &module);
@@ -106,7 +103,6 @@ pub fn run_in_vm(transaction: &Transaction, redis: &redis::Connection, rocksdb: 
     let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
     let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
 
-    // println!("{:?}", return_value);
     (return_code, return_value)
 }
 
@@ -120,7 +116,14 @@ pub fn run_system_contract(transaction: &Transaction, redis: &redis::Connection,
             let block_index = BlockIndex::new(redis);
             let storage = Storage::new(rocksdb, &block_index, namespace);
             storage.set(env.block_number, "_code".as_bytes(), code);
-            (0, Value::Null)
+            run_in_vm(&Transaction {
+                function: "constructor".to_string(),
+                arguments: transaction.arguments[2].as_array().unwrap().to_vec(),
+                sender: transaction.sender.clone(),
+                nonce: transaction.nonce,
+                contract_name: contract_name.to_string(),
+                contract_address: transaction.sender.clone(),
+            }, redis, rocksdb, env)
         }
         _ => (0, Value::Null)
     }
