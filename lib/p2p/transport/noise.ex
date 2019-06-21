@@ -1,4 +1,5 @@
 defmodule P2P.Transport.Noise do
+  alias P2P.Messages
   require Logger
   use GenServer
   @crate "noise"
@@ -67,27 +68,9 @@ defmodule P2P.Transport.Noise do
   end
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
-    type = String.to_existing_atom(message.__struct__ |> to_string() |> String.split(".") |> List.last())
-    apply(message.__struct__, :as_binary, [message])
-    |> (&apply(
-          String.to_existing_atom(
-            "Elixir.P2P.Messages.#{
-              message.__struct__ |> to_string() |> String.split(".") |> List.last()
-            }"
-          ),
-          :new,
-          [[bytes: &1]]
-        )).()
-    |> (&apply(
-          String.to_existing_atom(
-            "Elixir.P2P.Messages.#{
-              message.__struct__ |> to_string() |> String.split(".") |> List.last()
-            }"
-          ),
-          :encode,
-          [&1]
-        )).()
-    |> (&Port.command(port, "#{type} #{Base.encode64(&1)}\n")).()
+    encoded_message = Messages.encode(message)
+
+    Port.command(port, "#{Messages.type(message)} #{Base.encode64(encoded_message)}\n")
 
     {:noreply, state}
   end
@@ -124,18 +107,7 @@ defmodule P2P.Transport.Noise do
     case String.split(message, " ") do
       [type, raw_message] ->
         Enum.each(subscribers, fn subscriber ->
-          message =
-            apply(
-              String.to_existing_atom("Elixir.P2P.Messages.#{type}"),
-              :decode,
-              [Base.decode64!(raw_message)]
-            )
-            |> Map.get(:bytes)
-            |> Cbor.decode!()
-            |> (&struct(
-                  String.to_existing_atom("Elixir.Ellipticoind.Models.#{type}"),
-                  &1
-                )).()
+          message = Messages.decode(raw_message, type)
 
           send(subscriber, {:p2p, message})
         end)
