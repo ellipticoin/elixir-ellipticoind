@@ -5,11 +5,10 @@ defmodule Hashfactor do
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: [
-          Base.encode64(data),
           Integer.to_string(Config.hashfactor_target())
         ]
       )
-
+    send(port, {self(), {:command, Base.encode64(data) <> "\n"}})
     receive do
       {_port, {:data, message}} ->
         message

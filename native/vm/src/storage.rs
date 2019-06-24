@@ -46,6 +46,5 @@ impl<'a> Storage<'a> {
                 Ok(None) => vec![],
                 Err(e) => panic!(e),
             }
-        
     }
 }

@@ -104,11 +104,13 @@ defmodule Ellipticoind.TransactionProcessor do
         :cancel
 
       message ->
-        message
-        |> List.to_string()
-        |> String.trim("\n")
-        |> Base.decode64!()
-        |> Cbor.decode!()
+        case List.to_string(message) do
+          "debug:" <> message -> IO.puts message
+          message -> message
+            |> String.trim("\n")
+            |> Base.decode64!()
+            |> Cbor.decode!()
+        end
     end
   end
 
