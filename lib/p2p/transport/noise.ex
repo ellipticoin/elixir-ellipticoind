@@ -80,10 +80,12 @@ defmodule P2P.Transport.Noise do
     System.halt(1)
   end
 
+
   def handle_info({_port, {:data, message}}, state) do
+    message = keep_receiving("", message)
+
     message =
       message
-      |> to_string()
       |> String.trim()
 
     state =
@@ -97,6 +99,17 @@ defmodule P2P.Transport.Noise do
       end
 
     {:noreply, state}
+  end
+
+  def keep_receiving(message, part) do
+    if byte_size(List.to_string(part)) > 65515 do
+      receive do
+        {_port, {:data, new_part}} ->
+          keep_receiving(message <> List.to_string(part), new_part)
+      end
+    else
+      message <> List.to_string(part)
+    end
   end
 
   def handle_port_data("started", state) do

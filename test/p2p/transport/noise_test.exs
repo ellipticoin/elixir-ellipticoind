@@ -1,5 +1,5 @@
 defmodule P2P.NoiseTest do
-  alias Ellipticoind.Models.Block
+  alias Ellipticoind.Models.Transaction
   alias P2P.Transport.Noise
   import Test.Utils
   use NamedAccounts
@@ -43,11 +43,11 @@ defmodule P2P.NoiseTest do
 
     Noise.ensure_started(client1)
     Noise.ensure_started(client2)
-    spawn(fn -> Noise.broadcast(client2, %Block{number: 1}) end)
+    spawn(fn -> Noise.broadcast(client2, %Transaction{arguments: [test_contract_code(:constructor)]}) end)
     Noise.subscribe(client1, self())
 
     receive do
-      {:p2p, message} -> assert message == %Block{number: 1, transactions: []}
+      {:p2p, message} -> assert message == %Transaction{arguments: [test_contract_code(:constructor)]}
     end
   end
 end
