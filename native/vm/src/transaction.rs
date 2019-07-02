@@ -85,8 +85,9 @@ pub fn run_in_vm(transaction: &Transaction, redis: &redis::Connection, rocksdb: 
         return (1, format!("{} not found", transaction.contract_name.to_string()).into())
     }
     let module = EllipticoinAPI::new_module(&code);
+    let mut memory_changeset = HashMap::new();
 
-    let mut vm = VM::new(&memory, &storage, &env, transaction, &module);
+    let mut vm = VM::new(&mut memory_changeset, &memory, &storage, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()

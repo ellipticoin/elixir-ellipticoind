@@ -10,10 +10,12 @@ use storage::Storage;
 use transaction::Transaction;
 use wasmi::RuntimeValue;
 use wasmi::*;
+use std::collections::HashMap;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub memory: &'a Memory<'a>,
+    pub memory_changeset: &'a mut HashMap<Vec<u8>, Vec<u8>>,
     pub storage: &'a Storage<'a>,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
@@ -21,6 +23,7 @@ pub struct VM<'a> {
 
 impl<'a> VM<'a> {
     pub fn new(
+        memory_changeset: &'a mut HashMap<Vec<u8>, Vec<u8>>,
         memory: &'a Memory,
         storage: &'a Storage,
         env: &'a Env,
@@ -30,6 +33,7 @@ impl<'a> VM<'a> {
         VM {
             instance: instance,
             memory: memory,
+            memory_changeset: memory_changeset,
             storage: storage,
             transaction: transaction,
             env: env,
