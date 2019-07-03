@@ -29,10 +29,18 @@ defmodule Ellipticoind.Memory do
     end
   end
 
-  def set(address, contract_name, block_number, key, value) do
-    key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
-    BlockIndex.set_at_block(@prefix, key, block_number)
+  def write_changeset(changeset, block_number) do
+    for {key, value} <- changeset do
+      set(block_number, key, value)
+    end
+  end
 
+  def set(address, contract_name, block_number, key, value) do
+    set(block_number, address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key, value)
+
+  end
+  def set(block_number, key, value) do
+    BlockIndex.set_at_block(@prefix, key, block_number)
     Redis.set_hash_value(
       "memory",
       <<block_number::little-size(64)>> <> key,

@@ -865,6 +865,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_cbor"
+version = "0.10.0"
+source = "git+https://github.com/pyfisch/cbor#2eec6be74d80896f67cdeb108bb2e2103c10f5e2"
+dependencies = [
+ "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "half 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "serde_derive"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1045,7 +1055,7 @@ dependencies = [
  "rocksdb 0.12.0 (git+https://github.com/iSynaptic/rust-rocksdb?branch=ops-and-structure)",
  "serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_bytes 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_cbor 0.9.0 (git+https://github.com/baloo/cbor?branch=baloo/fixup-serde_bytes_dependency)",
+ "serde_cbor 0.10.0 (git+https://github.com/pyfisch/cbor)",
  "vm 0.1.0",
 ]
 
@@ -1342,6 +1352,7 @@ dependencies = [
 "checksum serde 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)" = "32746bf0f26eab52f06af0d0aa1984f641341d06d8d673c693871da2d188c9be"
 "checksum serde_bytes 0.10.5 (registry+https://github.com/rust-lang/crates.io-index)" = "defbb8a83d7f34cc8380751eeb892b825944222888aff18996ea7901f24aec88"
 "checksum serde_bytes 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)" = "aaff47db6ef8771cca5d88febef2f22f47f645420e51226374049f68c6b08569"
+"checksum serde_cbor 0.10.0 (git+https://github.com/pyfisch/cbor)" = "<none>"
 "checksum serde_cbor 0.9.0 (git+https://github.com/baloo/cbor?branch=baloo/fixup-serde_bytes_dependency)" = "<none>"
 "checksum serde_derive 1.0.92 (registry+https://github.com/rust-lang/crates.io-index)" = "46a3223d0c9ba936b61c0d2e3e559e3217dbfb8d65d06d26e8b3c25de38bae3e"
 "checksum sha1 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"

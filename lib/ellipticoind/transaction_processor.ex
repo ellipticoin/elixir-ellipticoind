@@ -1,6 +1,7 @@
 defmodule Ellipticoind.TransactionProcessor do
   use NativeModule
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Memory
 
   def args() do
     [Config.redis_url(), Config.rocksdb_path()]
@@ -53,7 +54,8 @@ defmodule Ellipticoind.TransactionProcessor do
       :ok ->
         {:reply, :cancelled, port}
 
-      transactions ->
+      [transactions, memory_changeset] ->
+        Memory.write_changeset(memory_changeset, env.block_number)
         block =
           Block.next_block_params()
           |> Map.merge(%{
@@ -88,7 +90,8 @@ defmodule Ellipticoind.TransactionProcessor do
       :ok ->
         {:reply, :cancelled, port}
 
-      transactions ->
+      [transactions, memory_changeset] ->
+        Memory.write_changeset(memory_changeset, env.block_number)
         return_value = %{
           changeset_hash: changeset_hash(),
           transactions: transactions
@@ -108,8 +111,12 @@ defmodule Ellipticoind.TransactionProcessor do
           "debug:" <> message -> IO.puts message
           message -> message
             |> String.trim("\n")
-            |> Base.decode64!()
-            |> Cbor.decode!()
+            |> String.split(" ")
+            |> Enum.map(fn(item) ->
+              item
+                |> Base.decode64!()
+                |> Cbor.decode!()
+            end)
         end
     end
   end

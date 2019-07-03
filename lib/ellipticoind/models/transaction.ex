@@ -1,9 +1,7 @@
 defmodule Ellipticoind.Models.Transaction do
   use CborEncodable
   use Ecto.Schema
-  alias Ellipticoind.Models.Contract
   alias Ellipticoind.Ecto.Types
-  alias Ellipticoind.Repo
   import Ecto.Changeset
 
   schema "transactions" do

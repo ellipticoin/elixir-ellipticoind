@@ -12,7 +12,7 @@ libc = "*"
 redis = "0.9.1"
 base64 = "0.10.1"
 rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and-structure"}
-serde_cbor = { git = "https://github.com/baloo/cbor", branch = "baloo/fixup-serde_bytes_dependency" }
+serde_cbor = { git = "https://github.com/pyfisch/cbor" }
 serde = { version = "1.0.90", features = ["derive"] }
 serde_bytes = "0.11.1"
 vm = { "path" = "../vm" }

@@ -7,15 +7,14 @@ use helpers::*;
 use memory::Memory;
 use std::mem::transmute;
 use storage::Storage;
-use transaction::Transaction;
+use transaction::{Transaction, Changeset};
 use wasmi::RuntimeValue;
 use wasmi::*;
-use std::collections::HashMap;
 
 pub struct VM<'a> {
     pub instance: &'a ModuleRef,
     pub memory: &'a Memory<'a>,
-    pub memory_changeset: &'a mut HashMap<Vec<u8>, Vec<u8>>,
+    pub memory_changeset: &'a mut Changeset,
     pub storage: &'a Storage<'a>,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
@@ -23,7 +22,7 @@ pub struct VM<'a> {
 
 impl<'a> VM<'a> {
     pub fn new(
-        memory_changeset: &'a mut HashMap<Vec<u8>, Vec<u8>>,
+        memory_changeset: &'a mut Changeset,
         memory: &'a Memory,
         storage: &'a Storage,
         env: &'a Env,

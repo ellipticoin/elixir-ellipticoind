@@ -25,7 +25,7 @@ pub use ellipticoin_api::EllipticoinAPI;
 pub use env::Env;
 pub use memory::Memory;
 pub use storage::Storage;
-pub use transaction::{run_transaction, CompletedTransaction, Transaction};
+pub use transaction::{run_transaction, CompletedTransaction, Transaction, Changeset};
 pub use vm::VM;
 pub use wasmi::RuntimeValue;
 
