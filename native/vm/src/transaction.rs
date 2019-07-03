@@ -112,22 +112,32 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, transaction: &Transaction
 pub fn run_system_contract(memory_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
     match transaction.function.as_str() {
         "create_contract" => {
-            let contract_name = transaction.arguments[0].as_string().unwrap();
-            let code = transaction.arguments[1].as_bytes().unwrap();
-            let namespace = namespace(&transaction.sender, contract_name);
-            let block_index = BlockIndex::new(redis);
-            let storage = Storage::new(rocksdb, &block_index, namespace.clone());
-            storage.set(env.block_number, "_code".as_bytes(), code);
-            run_in_vm(
-                memory_changeset,
-                &Transaction {
-                    function: "constructor".to_string(),
-                    arguments: transaction.arguments[2].as_array().unwrap().to_vec(),
-                    sender: transaction.sender.clone(),
-                    nonce: transaction.nonce,
-                    contract_name: contract_name.to_string(),
-                    contract_address: transaction.sender.clone(),
-                }, redis, rocksdb, env)
+            if let Value::Text(contract_name) = &transaction.arguments[0] {
+                if let serde_cbor::Value::Bytes(code) = &transaction.arguments[1] {
+                    let namespace = namespace(&transaction.sender, &contract_name);
+                    let block_index = BlockIndex::new(redis);
+                    let storage = Storage::new(rocksdb, &block_index, namespace.clone());
+                    storage.set(env.block_number, "_code".as_bytes(), &code);
+                    if let serde_cbor::Value::Array(arguments) = &transaction.arguments[2] {
+                        run_in_vm(
+                            memory_changeset,
+                            &Transaction {
+                                function: "constructor".to_string(),
+                                arguments: arguments.to_vec(),
+                                sender: transaction.sender.clone(),
+                                nonce: transaction.nonce,
+                                contract_name: contract_name.to_string(),
+                                contract_address: transaction.sender.clone(),
+                            }, redis, rocksdb, env)
+                    } else {
+                        (0, Value::Null)
+                    }
+                } else {
+                    (0, Value::Null)
+                }
+            } else {
+                (0, Value::Null)
+            }
         }
         _ => (0, Value::Null)
     }

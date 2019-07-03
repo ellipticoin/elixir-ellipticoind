@@ -15,5 +15,5 @@ rocksdb = { git = "https://github.com/iSynaptic/rust-rocksdb", branch = "ops-and
 wasmi = { git = "https://github.com/paritytech/wasmi.git"}
 serde = { version = "1.0.90", features = ["derive"] }
 serde_bytes = "0.11.1"
-serde_cbor = { git = "https://github.com/baloo/cbor", branch = "baloo/fixup-serde_bytes_dependency" }
+serde_cbor = { git = "https://github.com/pyfisch/cbor" }
 hex = "*"

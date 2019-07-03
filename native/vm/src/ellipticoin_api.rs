@@ -95,25 +95,28 @@ impl EllipticoinAPI {
                 let code = vm.read_pointer(args.nth(0));
                 let method = vm.read_pointer(args.nth(1));
                 let args_value = from_slice::<Value>(&vm.read_pointer(args.nth(2))).unwrap();
-                let args_iter: &Vec<Value> = args_value.as_array().unwrap();
-                let _storage = vm.read_pointer(args.nth(3));
+                if let Value::Array(args_iter) = args_value {
+                    let _storage = vm.read_pointer(args.nth(3));
 
-                let module = EllipticoinAPI::new_module(&code);
-                let mut inner_vm = VM::new(vm.memory_changeset, vm.memory, vm.storage, vm.env, vm.transaction, &module);
-                let mut args = Vec::new();
-                for arg in args_iter {
-                    if arg.is_number() {
-                        args.push(RuntimeValue::I32(arg.as_u64().unwrap() as i32));
-                    } else {
-                        let arg_pointer = inner_vm.write_pointer(to_vec(&arg).unwrap());
-                        args.push(RuntimeValue::I32(arg_pointer as i32));
+                    let module = EllipticoinAPI::new_module(&code);
+                    let mut inner_vm = VM::new(vm.memory_changeset, vm.memory, vm.storage, vm.env, vm.transaction, &module);
+                    let mut args = Vec::new();
+                    for arg in args_iter {
+                        if let Value::Integer(integer_arg) = arg {
+                            args.push(RuntimeValue::I32(integer_arg as i32));
+                        } else {
+                            let arg_pointer = inner_vm.write_pointer(to_vec(&arg).unwrap());
+                            args.push(RuntimeValue::I32(arg_pointer as i32));
+                        }
                     }
+
+                    let result_ptr = inner_vm.call(str::from_utf8(&method).unwrap(), &args);
+
+                    let result = inner_vm.read_pointer(result_ptr).clone();
+                    Ok(Some(vm.write_pointer(result.to_vec()).into()))
+                } else {
+                    Ok(None)
                 }
-
-                let result_ptr = inner_vm.call(str::from_utf8(&method).unwrap(), &args);
-
-                let result = inner_vm.read_pointer(result_ptr).clone();
-                Ok(Some(vm.write_pointer(result.to_vec()).into()))
             }
             LOG_WRITE => {
                 let _log_level = vm.read_pointer(args.nth(0));
