@@ -40,7 +40,12 @@ defmodule Ellipticoind.Memory do
 
   end
   def set(block_number, key, value) do
+    # IO.inspect key |> Base.encode64(), label: "setting"
     BlockIndex.set_at_block(@prefix, key, block_number)
+    Redis.add_set(
+      "memory_keys",
+      key
+    )
     Redis.set_hash_value(
       "memory",
       <<block_number::little-size(64)>> <> key,

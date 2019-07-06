@@ -91,6 +91,10 @@ defmodule Redis do
     GenServer.call(Redis, {:get_set, key})
   end
 
+  def add_set(key, value) do
+    GenServer.call(Redis, {:add_set, key, value})
+  end
+
   def handle_cast(:reset, redis) do
     Redix.command(redis, [
       "FLUSHALL"
@@ -267,6 +271,17 @@ defmodule Redis do
         key,
         0,
         -1
+      ])
+
+    {:reply, value, redis}
+  end
+
+  def handle_call({:add_set, key, value}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "SADD",
+        key,
+        value
       ])
 
     {:reply, value, redis}

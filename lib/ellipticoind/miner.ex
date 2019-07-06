@@ -62,7 +62,7 @@ defmodule Ellipticoind.Miner do
   end
 
   defp handle_cancel() do
-    BlockIndex.revert_to(Block.next_block_number() - 1)
+    BlockIndex.revert_to("memory", Block.next_block_number() - 1)
     mining_loop()
   end
 

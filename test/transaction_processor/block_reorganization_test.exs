@@ -56,7 +56,7 @@ defmodule TransactionProcessor.BlockReorganizationTest do
     push(:A, 1)
     push(:B, 2)
     push(:C, 3)
-    BlockIndex.revert_to(1)
+    BlockIndex.revert_to("memory", 1)
     push(:D, 2)
     push(:E, 3)
     push(:F, 4)

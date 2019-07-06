@@ -1,8 +1,8 @@
 defmodule Ellipticoind.BlockIndex do
-  def revert_to(block_number) do
+  def revert_to(prefix, block_number) do
     for key <- Redis.get_set("memory_keys") do
       Redis.remove_range_by_reverse_score(
-        key,
+        "#{prefix}:#{key}",
         block_number,
         "+inf"
       )
@@ -17,7 +17,9 @@ defmodule Ellipticoind.BlockIndex do
            0,
            1
          ) do
-      [block_number] -> String.to_integer(block_number)
+      [block_number] ->
+             # IO.inspect block_number
+             String.to_integer(block_number)
       _ -> nil
     end
   end
@@ -25,7 +27,7 @@ defmodule Ellipticoind.BlockIndex do
   def set_at_block(prefix, key, block_number) do
     Redis.add_to_sorted_set(
       "#{prefix}:#{key}",
-      0,
+      block_number,
       block_number
     )
   end
