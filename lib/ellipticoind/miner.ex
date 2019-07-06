@@ -2,7 +2,6 @@ defmodule Ellipticoind.Miner do
   require Logger
   use GenServer
   alias Ellipticoind.Repo
-  alias Ellipticoind.BlockIndex
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.TransactionProcessor
 
@@ -62,7 +61,6 @@ defmodule Ellipticoind.Miner do
   end
 
   defp handle_cancel() do
-    BlockIndex.revert_to("memory", Block.next_block_number() - 1)
     mining_loop()
   end
 

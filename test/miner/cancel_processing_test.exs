@@ -26,7 +26,7 @@ defmodule Miner.CancelProcessingTest do
       Miner.start_link()
       :timer.sleep(1500)
       Miner.cancel()
-      :timer.sleep(1500)
+      :timer.sleep(500)
     end
 
     assert Memory.get_value(<<0::256>>, :stack, "value") == nil

@@ -87,7 +87,7 @@ defmodule Ellipticoind.TransactionProcessor do
       :cancel ->
         {:reply, :cancelled, port}
 
-      :ok ->
+      [:ok] ->
         {:reply, :cancelled, port}
 
       [transactions, memory_changeset] ->

@@ -6,7 +6,6 @@ config :ellipticoind, port: 4047
 config :ellipticoind, transaction_processing_time: 1000
 config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: false
-config :ellipticoind, bootellipticoind: true
 config :ellipticoind, https: false
 config :ellipticoind, p2p_transport: P2P.Transport.Test
 

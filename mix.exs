@@ -63,7 +63,7 @@ defmodule Ellipticoind.Mixfile do
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:binary, "~> 0.0.5"},
       {:bypass, "~> 1.0", only: :test},
-      {:cbor, "~>  0.1.7"},
+      {:cbor, "~>  0.1.8"},
       {:cors_plug, "~> 2.0"},
       {:cowboy, "~> 2.6"},
       {:decimal, "~> 1.7", override: true},
