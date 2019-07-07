@@ -30,7 +30,7 @@ pub use vm::VM;
 pub use wasmi::RuntimeValue;
 
 pub use redis::{pipe, Client, Commands, Connection, ControlFlow, PubSubCommands};
-pub use rocksdb::{DB};
+pub use rocksdb::{DB, ReadOnlyDB};
 pub use rocksdb::ops::Open;
 pub use rustler::resource::ResourceArc;
 pub use rustler::types::atom::Atom;

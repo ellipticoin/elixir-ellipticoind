@@ -65,7 +65,7 @@ fn put(key: Vec<u8>, value: Vec<u8>) {
 }
 
 fn get(key: Vec<u8>) {
-    let result = READ_ONLY_ROCKSDB.get(key);
+    let result = ROCKSDB.get(key);
     match result.unwrap() {
         Some(value) => println!("{}", base64::encode(&value)),
         None => println!("{}", base64::encode(&vec![123])),

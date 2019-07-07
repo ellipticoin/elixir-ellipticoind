@@ -10,7 +10,6 @@ defmodule P2P.NoiseTest do
 
     on_exit(fn ->
       Redis.reset()
-      File.rm_rf!(Config.rocksdb_path())
     end)
   end
 

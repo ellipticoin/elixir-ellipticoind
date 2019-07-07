@@ -10,14 +10,14 @@ fn u64_to_vec(n: u64) -> Vec<u8> {
 }
 
 pub struct Storage<'a> {
-    pub rocksdb: &'a rocksdb::DB,
+    pub rocksdb: &'a rocksdb::ReadOnlyDB,
     pub block_index: &'a BlockIndex<'a>,
     pub namespace: Vec<u8>,
 }
 
 impl<'a> Storage<'a> {
     pub fn new(
-        rocksdb: &'a rocksdb::DB,
+        rocksdb: &'a rocksdb::ReadOnlyDB,
         block_index: &'a BlockIndex<'a>,
         namespace: Vec<u8>
         ) -> Storage<'a> {
@@ -31,11 +31,11 @@ impl<'a> Storage<'a> {
         [self.namespace.clone(), key.to_vec()].concat()
     }
     pub fn set(&self, block_number: u64, key: &[u8], value: &[u8]) {
-        self.block_index.add(StateType::Storage, block_number, &self.namespaced_key(key));
-        let _: () = self
-            .rocksdb
-            .put(hash_key(block_number, &self.namespaced_key(key)), value)
-            .unwrap();
+        // self.block_index.add(StateType::Storage, block_number, &self.namespaced_key(key));
+        // let _: () = self
+        //     .rocksdb
+        //     .put(hash_key(block_number, &self.namespaced_key(key)), value)
+        //     .unwrap();
     }
 
     pub fn get(&self, key: &[u8]) -> Vec<u8> {

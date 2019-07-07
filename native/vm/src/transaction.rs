@@ -77,7 +77,7 @@ fn namespace(contract_address: &[u8], contract_name_string: &str)
     [contract_address.clone(), &contract_name.to_vec()].concat()
 }
 
-pub fn run_in_vm(mut memory_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
+pub fn run_in_vm(mut memory_changeset: &mut Changeset, mut storage_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env) -> (u32, Value) {
     let block_index = BlockIndex::new(redis);
     let memory = Memory::new(redis, &block_index, transaction.namespace());
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
@@ -87,7 +87,7 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, transaction: &Transaction
     }
     let module = EllipticoinAPI::new_module(&code);
 
-    let mut vm = VM::new(&mut memory_changeset, &memory, &storage, &env, transaction, &module);
+    let mut vm = VM::new(&mut memory_changeset, &memory, &mut storage_changeset, &storage, &env, transaction, &module);
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()
@@ -109,18 +109,20 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, transaction: &Transaction
     (return_code, return_value)
 }
 
-pub fn run_system_contract(memory_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env) -> (u32, Value) {
+pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env) -> (u32, Value) {
     match transaction.function.as_str() {
         "create_contract" => {
             if let Value::Text(contract_name) = &transaction.arguments[0] {
                 if let serde_cbor::Value::Bytes(code) = &transaction.arguments[1] {
                     let namespace = namespace(&transaction.sender, &contract_name);
-                    let block_index = BlockIndex::new(redis);
-                    let storage = Storage::new(rocksdb, &block_index, namespace.clone());
-                    storage.set(env.block_number, "_code".as_bytes(), &code);
+                    storage_changeset.insert(
+                        [namespace, "_code".as_bytes().to_vec()].concat(),
+                        code.to_vec()
+                    );
                     if let serde_cbor::Value::Array(arguments) = &transaction.arguments[2] {
                         run_in_vm(
                             memory_changeset,
+                            storage_changeset,
                             &Transaction {
                                 function: "constructor".to_string(),
                                 arguments: arguments.to_vec(),
@@ -142,11 +144,11 @@ pub fn run_system_contract(memory_changeset: &mut Changeset, transaction: &Trans
         _ => (0, Value::Null)
     }
 }
-pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::DB, env: &Env, mut memory_changeset: &mut Changeset) -> (u32, Value) {
+pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env, mut memory_changeset: &mut Changeset, mut storage_changeset: &mut Changeset) -> (u32, Value) {
     if transaction.contract_address == [0; 32] &&
         transaction.contract_name == "system" {
-        run_system_contract(&mut memory_changeset, transaction, redis, rocksdb, env)
+        run_system_contract(&mut memory_changeset, storage_changeset, transaction, redis, rocksdb, env)
     } else {
-        run_in_vm(&mut memory_changeset, transaction, redis, rocksdb, env)
+        run_in_vm(&mut memory_changeset, storage_changeset, transaction, redis, rocksdb, env)
     }
 }

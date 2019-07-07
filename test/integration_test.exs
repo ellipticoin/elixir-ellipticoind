@@ -14,7 +14,6 @@ defmodule Integration.MiningTest do
 
     on_exit(fn ->
       Redis.reset()
-      File.rm_rf!(Config.rocksdb_path())
     end)
 
     :ok
@@ -38,7 +37,6 @@ defmodule Integration.MiningTest do
     )
 
     Miner.start_link()
-
     broadcasted_transaction =
       receive do
         {:p2p, nil, %Transaction{} = transaction} -> transaction
@@ -136,6 +134,7 @@ defmodule Integration.MiningTest do
     P2P.Transport.Test.receive(block)
 
     poll_for_block(0)
+    :timer.sleep(10)
     assert get_balance(@alice) == 50
     assert get_balance(@bob) == 150
   end

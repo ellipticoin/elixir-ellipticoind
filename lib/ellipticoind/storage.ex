@@ -4,6 +4,12 @@ defmodule Ellipticoind.Storage do
   import Binary
   @prefix "storage"
 
+  def write_changeset(changeset, block_number) do
+    for {key, value} <- changeset do
+      set(block_number, key, value)
+    end
+  end
+
   def get_value(address, contract_name, key) do
     memory = get(address, contract_name, key)
 
@@ -32,6 +38,6 @@ defmodule Ellipticoind.Storage do
 
   def set(block_number, key, value) do
     BlockIndex.add(@prefix, key, block_number)
-    TransactionProcessor.set_storage(block_number, key, value)
+    RocksDB.put(block_number, key, value)
   end
 end

@@ -16,6 +16,7 @@ pub struct VM<'a> {
     pub memory: &'a Memory<'a>,
     pub memory_changeset: &'a mut Changeset,
     pub storage: &'a Storage<'a>,
+    pub storage_changeset: &'a mut Changeset,
     pub transaction: &'a Transaction,
     pub env: &'a Env,
 }
@@ -24,6 +25,7 @@ impl<'a> VM<'a> {
     pub fn new(
         memory_changeset: &'a mut Changeset,
         memory: &'a Memory,
+        storage_changeset: &'a mut Changeset,
         storage: &'a Storage,
         env: &'a Env,
         transaction: &'a Transaction,
@@ -34,6 +36,7 @@ impl<'a> VM<'a> {
             memory: memory,
             memory_changeset: memory_changeset,
             storage: storage,
+            storage_changeset: storage_changeset,
             transaction: transaction,
             env: env,
         }

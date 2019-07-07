@@ -71,36 +71,38 @@ fn main() {
 
 fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
     let mut memory_changeset = HashMap::new();
+    let mut storage_changeset = HashMap::new();
     let redis = REDIS.get_connection().unwrap();
-    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+    let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
     for transaction in transactions {
-        let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order, &mut memory_changeset);
+        let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order, &mut memory_changeset, &mut storage_changeset);
         completed_transactions.push(completed_transaction);
         execution_order += 1;
     }
-    return_completed_transactions(completed_transactions, memory_changeset);
+    return_completed_transactions(completed_transactions, memory_changeset, storage_changeset);
 }
 
 fn process_new_block(env: &Env, transaction_processing_time: u64) {
     let mut memory_changeset = HashMap::new();
+    let mut storage_changeset = HashMap::new();
     let mut execution_order = 0;
     let redis = REDIS.get_connection().unwrap();
-    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+    let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
     run_for(transaction_processing_time, || {
         match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
-                let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order, &mut memory_changeset);
+                let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order, &mut memory_changeset, &mut storage_changeset);
                 completed_transactions.push(completed_transaction);
                 execution_order += 1;
             },
             None => sleep_1_milli(),
         };
     });
-    return_completed_transactions(completed_transactions, memory_changeset);
+    return_completed_transactions(completed_transactions, memory_changeset, storage_changeset);
 }
 
 fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
@@ -116,17 +118,24 @@ fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
     println!("{}", base64::encode(&to_vec(&serde_cbor::Value::Text("ok".to_string())).unwrap()));
 }
 
-fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>, memory_changeset: Changeset) {
-    let changeset_bytes: serde_cbor::Value  = 
+fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>, memory_changeset: Changeset, storage_changeset: Changeset) {
+    let memory_changeset_bytes: serde_cbor::Value  = 
         serde_cbor::Value::Map(memory_changeset.iter()
          .map(|(key, value)| (
                  serde_cbor::Value::Bytes(key.to_vec()),
                  serde_cbor::Value::Bytes(value.to_vec())
         )).collect());
+    let storage_changeset_bytes: serde_cbor::Value  = 
+        serde_cbor::Value::Map(storage_changeset.iter()
+         .map(|(key, value)| (
+                 serde_cbor::Value::Bytes(key.to_vec()),
+                 serde_cbor::Value::Bytes(value.to_vec())
+        )).collect());
     println!(
-        "{} {}",
+        "{} {} {}",
         base64::encode(&to_vec(&completed_transactions).unwrap()),
-        base64::encode(&to_vec(&changeset_bytes).unwrap()),
+        base64::encode(&to_vec(&memory_changeset_bytes).unwrap()),
+        base64::encode(&to_vec(&storage_changeset_bytes).unwrap()),
     );
 }
 
@@ -142,9 +151,9 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
     }
 }
 
-fn run_transaction(redis: &vm::Connection, rocksdb: &vm::DB, transaction: &vm::Transaction, env: &Env, execution_order: u64, memory_changeset: &mut Changeset) -> CompletedTransaction {
+fn run_transaction(redis: &vm::Connection, rocksdb: &vm::ReadOnlyDB, transaction: &vm::Transaction, env: &Env, execution_order: u64, memory_changeset: &mut Changeset, storage_changeset: &mut Changeset) -> CompletedTransaction {
 
-    let (return_code, return_value) = vm::run_transaction(transaction, redis, rocksdb, env, memory_changeset);
+    let (return_code, return_value) = vm::run_transaction(transaction, redis, rocksdb, env, memory_changeset, storage_changeset);
     remove_from_processing(&redis, transaction);
     CompletedTransaction {
         contract_address: transaction.contract_address.clone(),

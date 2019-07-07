@@ -19,7 +19,7 @@ defmodule Redis do
   end
 
   def reset() do
-    GenServer.cast(Redis, :reset)
+    GenServer.call(Redis, :reset)
   end
 
   def delete(key) do
@@ -107,13 +107,6 @@ defmodule Redis do
     GenServer.call(Redis, {:add_set, key, value})
   end
 
-  def handle_cast(:reset, redis) do
-    Redix.command(redis, [
-      "FLUSHALL"
-    ])
-
-    {:noreply, redis}
-  end
 
   def handle_cast({:set_map, key, value}, redis) do
     value =
@@ -168,6 +161,15 @@ defmodule Redis do
       key,
       score,
       value
+    ])
+
+    {:reply, nil, redis}
+  end
+
+  def handle_call(:reset, _from, redis) do
+
+    Redix.command(redis, [
+      "FLUSHALL"
     ])
 
     {:reply, nil, redis}
