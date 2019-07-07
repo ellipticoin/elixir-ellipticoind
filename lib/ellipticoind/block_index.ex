@@ -4,8 +4,8 @@ defmodule Ellipticoind.BlockIndex do
       index_of_key = Redis.get_hash_value("#{prefix}:#{key}_index", block_number)
       Redis.trim(
         "#{prefix}:#{key}",
-        0,
-        index_of_key
+        -1 - String.to_integer(index_of_key),
+        -1
       )
     end
   end
@@ -13,8 +13,8 @@ defmodule Ellipticoind.BlockIndex do
   def get_latest(prefix, key) do
     case Redis.list_range(
            "#{prefix}:#{key}",
-           -1,
-           -1
+           0,
+           0
          ) do
       [block_number] ->
              String.to_integer(block_number)

@@ -270,7 +270,7 @@ defmodule Redis do
     Redix.command(
       redis,
       List.flatten([
-        "RPUSH",
+        "LPUSH",
         key,
         value
       ])

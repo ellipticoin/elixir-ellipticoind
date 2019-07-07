@@ -63,8 +63,8 @@ impl<'a> BlockIndex<'a> {
             .redis
             .lrange::< _, Vec<u64>>(
                 block_index_key(state_type, key),
-                -1,
-                -1,
+                0,
+                0,
             )
             .expect("invalid block index")
             .get(0)
