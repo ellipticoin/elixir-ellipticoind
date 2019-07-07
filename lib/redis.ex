@@ -39,8 +39,8 @@ defmodule Redis do
     GenServer.cast(Redis, {:publish, channel, value})
   end
 
-  def set_binary(key, value) do
-    GenServer.call(Redis, {:set_binary, key, value})
+  def set(key, value) do
+    GenServer.call(Redis, {:set, key, value})
   end
 
   def add_to_sorted_set(key, score, value) do
@@ -51,12 +51,24 @@ defmodule Redis do
     GenServer.call(Redis, {:get_reverse_ordered_set_values, key, min, max, offset, count})
   end
 
+  def list_range(key, min, max) do
+    GenServer.call(Redis, {:list_range, key, min, max})
+  end
+
+  def length(key) do
+    GenServer.call(Redis, {:length, key})
+  end
+
   def set_hash_value(hash, key, value) do
     GenServer.call(Redis, {:set_hash_value, hash, key, value})
   end
 
   def remove_range_by_reverse_score(key, min, max) do
     GenServer.call(Redis, {:remove_range_by_reverse_score, key, min, max})
+  end
+
+  def trim(key, min, max) do
+    GenServer.call(Redis, {:trim, key, min, max})
   end
 
   def get_hash_value(hash, key) do
@@ -71,8 +83,8 @@ defmodule Redis do
     GenServer.call(Redis, {:get_map, key, struct})
   end
 
-  def get_binary(key) do
-    GenServer.call(Redis, {:get_binary, key})
+  def get(key) do
+    GenServer.call(Redis, {:get, key})
   end
 
   def push(key, value) do
@@ -161,6 +173,18 @@ defmodule Redis do
     {:reply, nil, redis}
   end
 
+  def handle_call({:trim, key, min, max}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "LTRIM",
+        key,
+        min,
+        max,
+      ])
+
+    {:reply, value, redis}
+  end
+
   def handle_call({:remove_range_by_reverse_score, key, min, max}, _from, redis) do
     {:ok, value} =
       Redix.command(redis, [
@@ -188,6 +212,28 @@ defmodule Redis do
     {:reply, value, redis}
   end
 
+  def handle_call({:list_range, key, min, max}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "LRANGE",
+        key,
+        "#{min}",
+        "#{max}",
+      ])
+
+    {:reply, value, redis}
+  end
+
+  def handle_call({:length, key}, _from, redis) do
+    {:ok, value} =
+      Redix.command(redis, [
+        "LLEN",
+        key,
+      ])
+
+    {:reply, value, redis}
+  end
+
   def handle_call({:get_hash_value, hash, key}, _from, redis) do
     {:ok, value} =
       Redix.command(redis, [
@@ -210,7 +256,7 @@ defmodule Redis do
     {:reply, nil, redis}
   end
 
-  def handle_call({:set_binary, key, value}, _from, redis) do
+  def handle_call({:set, key, value}, _from, redis) do
     Redix.command(redis, [
       "SET",
       key,
@@ -221,16 +267,14 @@ defmodule Redis do
   end
 
   def handle_call({:push, key, value}, _from, redis) do
-    if !Enum.empty?(value) do
-      Redix.command(
-        redis,
-        List.flatten([
-          "LPUSH",
-          key,
-          value
-        ])
-      )
-    end
+    Redix.command(
+      redis,
+      List.flatten([
+        "RPUSH",
+        key,
+        value
+      ])
+    )
 
     {:reply, nil, redis}
   end
@@ -254,7 +298,7 @@ defmodule Redis do
     {:reply, value, redis}
   end
 
-  def handle_call({:get_binary, key}, _from, redis) do
+  def handle_call({:get, key}, _from, redis) do
     value =
       Redix.command(redis, [
         "GET",
@@ -301,16 +345,6 @@ defmodule Redis do
     value =
       Redix.command(redis, [
         "LPOP",
-        key
-      ])
-
-    {:reply, value, redis}
-  end
-
-  def handle_call({:get, key}, _from, redis) do
-    value =
-      Redix.command(redis, [
-        "GET",
         key
       ])
 

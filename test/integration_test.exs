@@ -152,7 +152,6 @@ defmodule Integration.MiningTest do
     )
 
     Miner.start_link()
-
     poll_for_block(0)
     :timer.sleep(100)
 

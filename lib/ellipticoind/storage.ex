@@ -31,7 +31,7 @@ defmodule Ellipticoind.Storage do
   end
 
   def set(block_number, key, value) do
-    BlockIndex.set_at_block(@prefix, key, block_number)
+    BlockIndex.add(@prefix, key, block_number)
     TransactionProcessor.set_storage(block_number, key, value)
   end
 end

@@ -39,40 +39,35 @@ impl<'a> BlockIndex<'a> {
     }
 
     pub fn add(&self, state_type: StateType, block_number: u64, key: &[u8]) {
-        let () = redis::pipe()
-            .atomic()
-            .cmd("SADD")
-            .arg(block_set_key(state_type))
-            .arg(block_index_key(state_type, key))
-            .ignore()
-            .cmd("ZREM")
-            .arg(block_index_key(state_type, key))
-            .arg(block_number)
-            .ignore()
-            .cmd("ZADD")
-            .arg(block_index_key(state_type, key))
-            .arg(block_number)
-            .arg(block_number)
-            .ignore()
-            .query(self.redis)
-            .unwrap();
+        // let () = redis::pipe()
+        //     .atomic()
+        //     .cmd("LADD")
+        //     .arg(block_set_key(state_type))
+        //     .arg(block_index_key(state_type, key))
+        //     .ignore()
+        //     .cmd("ZREM")
+        //     .arg(block_index_key(state_type, key))
+        //     .arg(block_number)
+        //     .ignore()
+        //     .cmd("ZADD")
+        //     .arg(block_index_key(state_type, key))
+        //     .arg(block_number)
+        //     .arg(block_number)
+        //     .ignore()
+        //     .query(self.redis)
+        //     .unwrap();
     }
 
     pub fn get_latest(&self, state_type: StateType, key: &[u8]) -> u64 {
-        let latest_hash_keys = self
+        *self
             .redis
-            .zrevrangebyscore_limit::<_, _, _, Vec<u64>>(
+            .lrange::< _, Vec<u64>>(
                 block_index_key(state_type, key),
-                "+inf",
-                "-inf",
-                0,
-                1,
+                -1,
+                -1,
             )
-            .unwrap();
-
-        match latest_hash_keys.as_slice() {
-            [block_number] => *block_number,
-            _ => 0,
-        }
+            .expect("invalid block index")
+            .get(0)
+            .unwrap_or(&0)
     }
 }
