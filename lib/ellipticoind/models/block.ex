@@ -8,7 +8,6 @@ defmodule Ellipticoind.Models.Block do
   alias Ellipticoind.Models.Transaction
   alias Ellipticoind.Models.Block.Validations
   alias Ellipticoind.TransactionProcessor
-  alias Ellipticoind.Miner
 
   @primary_key false
   schema "blocks" do

@@ -101,7 +101,7 @@ func main() {
 
 	for _, addr := range flag.Args()[2:] {
 		if _, err := client.Dial(addr); err != nil {
-			fmt.Println(err)
+			log(err)
 		}
 	}
 
@@ -127,12 +127,18 @@ func main() {
 
 			switch parts[0] {
 			case "Block":
-				stream, _ := chat.PropagateBlock(context.Background())
+				stream, err := chat.PropagateBlock(context.Background())
+				if err != nil {
+					panic(err)
+				}
 				var block Block
 				block.Unmarshal(bytes)
 				stream.Send(&block)
 			case "Transaction":
-				stream, _ := chat.PropagateTransaction(context.Background())
+				stream, err := chat.PropagateTransaction(context.Background())
+				if err != nil {
+					panic(err)
+				}
 				var transaction Transaction
 				transaction.Unmarshal(bytes)
 				stream.Send(&transaction)

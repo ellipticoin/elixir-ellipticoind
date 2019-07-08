@@ -13,30 +13,17 @@ defmodule Ellipticoind.Miner do
 
   def init(_init_arg) do
     SystemContracts.deploy()
-    mining_loop()
+    mine()
 
     {:ok, nil}
   end
 
-  @doc """
-  Cancels mining of the current block. This is called when a new block
-  comes in.
-  """
-  def cancel() do
-    if Enum.member?(Process.registered(), __MODULE__) do
-      send(__MODULE__, :cancel)
-    end
+
+  def mine() do
+    GenServer.cast(__MODULE__, {:mine})
   end
 
-  def mining_loop() do
-    GenServer.cast(__MODULE__, {:mining_loop})
-  end
-
-  def handle_info(:cancel, state) do
-    {:noreply, state}
-  end
-
-  def handle_cast({:mining_loop}, state) do
+  def handle_cast({:mine}, state) do
     process_new_block()
     {:noreply, state}
   end
@@ -52,13 +39,9 @@ defmodule Ellipticoind.Miner do
     })
 
     case TransactionProcessor.process_new_block() do
-      :cancelled -> handle_cancel()
+      :cancel -> mine()
       new_block -> hashfactor(new_block)
     end
-  end
-
-  defp handle_cancel() do
-    mining_loop()
   end
 
   defp hashfactor(new_block) do
@@ -66,9 +49,7 @@ defmodule Ellipticoind.Miner do
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :cancelled ->
-        handle_cancel()
-
+      :cancelled -> mine()
       proof_of_work_value ->
         Map.put(new_block, :proof_of_work_value, proof_of_work_value)
         |> insert_block()
@@ -82,7 +63,8 @@ defmodule Ellipticoind.Miner do
 
     WebsocketHandler.broadcast(:blocks, block)
     P2P.broadcast(block)
+
     Logger.info("Mined block #{block.number}")
-    mining_loop()
+    mine()
   end
 end

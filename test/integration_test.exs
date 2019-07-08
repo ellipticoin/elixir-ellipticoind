@@ -131,10 +131,8 @@ defmodule Integration.MiningTest do
       winner: @bob
     }
 
-    P2P.Transport.Test.receive(block)
+    Block.apply(block)
 
-    poll_for_block(0)
-    :timer.sleep(10)
     assert get_balance(@alice) == 50
     assert get_balance(@bob) == 150
   end

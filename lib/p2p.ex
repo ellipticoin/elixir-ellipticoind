@@ -20,9 +20,15 @@ defmodule P2P do
 
   def receive(message) do
     case message.__struct__ do
-      Block -> Block.apply(message)
+      Block ->
+        send(self(), :cancel)
+        Block.apply(message)
       Transaction -> Transaction.post(message)
     end
+  end
+
+  def handle_info(:cancel, state) do
+    {:noreply, state}
   end
 
   def handle_info({:p2p, message}, state) do

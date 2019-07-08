@@ -69,8 +69,9 @@ defmodule P2P.Transport.Noise do
 
   def handle_cast({:broadcast, message}, state = %{port: port}) do
     encoded_message = Messages.encode(message)
+    base64_encoded_message = Base.encode64(encoded_message)
 
-    Port.command(port, "#{Messages.type(message)} #{Base.encode64(encoded_message)}\n")
+    Port.command(port, "#{Messages.type(message)} #{base64_encoded_message}\n")
 
     {:noreply, state}
   end

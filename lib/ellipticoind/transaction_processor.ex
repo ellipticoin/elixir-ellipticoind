@@ -15,7 +15,7 @@ defmodule Ellipticoind.TransactionProcessor do
         env
       )
 
-    call_native([
+    port = call_native([
       "process_existing_block",
       Config.redis_url(),
       Config.rocksdb_path(),
@@ -24,14 +24,16 @@ defmodule Ellipticoind.TransactionProcessor do
       Enum.map(block.transactions, &Transaction.as_map/1)
     )
 
+
     case receive_native() do
-      :cancelled ->
-        :cancelled
+      :cancel ->
+        Port.close(port)
+        :cancel
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
         Storage.write_changeset(storage_changeset, env.block_number)
         %{
-          changeset_hash: <<>>,
+          changeset_hash: Crypto.hash(<<>>),
           transactions: transactions
         }
     end
@@ -44,7 +46,7 @@ defmodule Ellipticoind.TransactionProcessor do
       block_hash: <<>>
     }
 
-    call_native([
+    port = call_native([
       "process_new_block",
       Config.redis_url(),
       Config.rocksdb_path(),
@@ -53,14 +55,15 @@ defmodule Ellipticoind.TransactionProcessor do
     ])
 
     case receive_native() do
-      :cancelled ->
-        :cancelled
+      :cancel ->
+        Port.close(port)
+        :cancel
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
         Storage.write_changeset(storage_changeset, env.block_number)
         Block.next_block_params()
           |> Map.merge(%{
-            changeset_hash: <<>>,
+            changeset_hash: Crypto.hash(<<>>),
             transactions: transactions
           })
 
@@ -70,9 +73,7 @@ defmodule Ellipticoind.TransactionProcessor do
 
   def receive_native() do
     case receive_cancel_or_message() do
-      :cancelled ->
-        :cancelled
-
+      :cancel -> :cancel
       message ->
         case List.to_string(message) do
           "debug: " <> message ->
@@ -92,9 +93,7 @@ defmodule Ellipticoind.TransactionProcessor do
 
   def receive_cancel_or_message(message \\ '') do
     receive do
-      :cancel ->
-        :cancelled
-
+      :cancel -> :cancel
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
           receive_cancel_or_message(Enum.concat(message, message_part))
@@ -113,6 +112,7 @@ defmodule Ellipticoind.TransactionProcessor do
     if payload do
       send(port, {self(), {:command, Base.encode64(Cbor.encode(payload)) <> "\n"}})
     end
+    port
   end
 
   def path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
