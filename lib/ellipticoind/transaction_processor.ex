@@ -25,7 +25,7 @@ defmodule Ellipticoind.TransactionProcessor do
     )
 
     case receive_native() do
-      :cancel ->
+      :cancelled ->
         :cancelled
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)

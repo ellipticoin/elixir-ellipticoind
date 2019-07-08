@@ -149,6 +149,6 @@ pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, roc
         transaction.contract_name == "system" {
         run_system_contract(&mut memory_changeset, storage_changeset, transaction, redis, rocksdb, env)
     } else {
-        run_in_vm(&mut memory_changeset, storage_changeset, transaction, redis, rocksdb, env)
+        run_in_vm(&mut memory_changeset, &mut storage_changeset, transaction, redis, rocksdb, env)
     }
 }

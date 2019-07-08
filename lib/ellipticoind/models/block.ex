@@ -119,8 +119,6 @@ defmodule Ellipticoind.Models.Block do
       )
 
   def apply(block) do
-    Miner.cancel()
-
     if Validations.valid_next_block?(block) do
       TransactionProcessor.process(block)
 

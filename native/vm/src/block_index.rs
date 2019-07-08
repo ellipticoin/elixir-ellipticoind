@@ -9,14 +9,6 @@ pub struct BlockIndex<'a> {
     pub redis: &'a redis::Connection,
 }
 
-fn block_set_key(state_type: StateType) -> Vec<u8> {
-    [
-        state_type_to_string(state_type).as_bytes().to_vec(),
-        "_keys".as_bytes().to_vec(),
-    ]
-    .concat()
-}
-
 fn block_index_key(state_type: StateType, key: &[u8]) -> Vec<u8> {
     [
         state_type_to_string(state_type).as_bytes().to_vec(),

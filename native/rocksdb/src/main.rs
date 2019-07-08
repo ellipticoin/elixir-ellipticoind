@@ -14,7 +14,6 @@ lazy_static! {
     };
 
     static ref READ_ONLY_ROCKSDB: rocksdb::ReadOnlyDB = {
-        // read_only_rocksdb()
         ReadOnlyDB::open_default(args().nth(1).unwrap().as_str()).unwrap()
     };
 }
@@ -22,16 +21,6 @@ lazy_static! {
 fn rocksdb() -> rocksdb::DB {
     loop {
         match DB::open_default(args().nth(1).unwrap().as_str()) {
-            Err(_e) => (),
-            Ok(db) => { return db }
-        }
-        thread::sleep(std::time::Duration::from_millis(500))
-    };
-}
-
-fn read_only_rocksdb() -> rocksdb::ReadOnlyDB {
-    loop {
-        match ReadOnlyDB::open_default(args().nth(1).unwrap().as_str()) {
             Err(_e) => (),
             Ok(db) => { return db }
         }
