@@ -1,7 +1,7 @@
 defmodule Integration.MiningTest do
   import Test.Utils
   use NamedAccounts
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   alias Ellipticoind.Storage
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.Miner
@@ -36,7 +36,7 @@ defmodule Integration.MiningTest do
       @alices_private_key
     )
 
-    Miner.start_link()
+    Miner.process_new_block()
     broadcasted_transaction =
       receive do
         {:p2p, nil, %Transaction{} = transaction} -> transaction
@@ -150,7 +150,7 @@ defmodule Integration.MiningTest do
       @alices_private_key
     )
 
-    Miner.start_link()
+    Miner.process_new_block()
     poll_for_block(0)
     :timer.sleep(100)
 

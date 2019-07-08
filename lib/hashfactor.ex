@@ -19,9 +19,6 @@ defmodule Hashfactor do
       :cancel ->
         Port.close(port)
         :cancelled
-
-      message ->
-        IO.puts(message)
     end
   end
 

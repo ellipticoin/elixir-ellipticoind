@@ -9,25 +9,26 @@ extern crate serde_cbor;
 extern crate vm;
 extern crate libc;
 
-use serialize::hex::FromHex;
 use serde_cbor::{from_slice, to_vec};
 use std::env::args;
 use std::{io, thread, time};
 use vm::{Commands, Changeset, Transaction, CompletedTransaction, Env};
 use vm::{Open};
 use std::io::BufRead;
-use rocksdb::ops::Put;
 use std::collections::HashMap;
 
 lazy_static! {
+    static ref COMMAND: String ={
+        args().nth(1).unwrap()
+    };
     static ref REDIS: redis::Client ={
-        redis::Client::open(args().nth(1).unwrap().as_str()).unwrap()
+        redis::Client::open(args().nth(2).unwrap().as_str()).unwrap()
     };
     static ref ROCKSDB_PATH: String = {
-        args().nth(2).expect("rocksdb").to_string()
+        args().nth(3).expect("rocksdb").to_string()
     };
     static ref ENV: Vec<u8> = {
-        args().nth(4).unwrap().from_hex().unwrap()
+        base64::decode(&args().nth(4).unwrap()).unwrap()
     };
     static ref TRANSACTION_PROCESSING_TIME: u64 = {
         args().nth(5).unwrap().parse().unwrap()
@@ -40,40 +41,23 @@ fn main() {
         libc::signal(libc::SIGPIPE, libc::SIG_DFL);
     }
 
-    let stdin = io::stdin();
-    for line in stdin.lock().lines() {
-        match line
-            .unwrap()
-            .split(" ")
-            .collect::<Vec<&str>>()
-            .as_slice() {
-        ["process_new_block", env_encoded, transaction_processing_time] => {
-            let env = from_slice::<Env>(&base64::decode(env_encoded).unwrap()).unwrap();
-            process_new_block(&env, transaction_processing_time.parse().unwrap());
-        }
-        ["process_existing_block", env_encoded, transactions_encoded] => {
-            let env = from_slice::<Env>(&base64::decode(env_encoded).unwrap()).unwrap();
-            let transactions = from_slice::<Vec<Transaction>>(&base64::decode(transactions_encoded).unwrap()).unwrap();
-            process_existing_block(&env, &transactions);
-        }
-        ["set_storage", block_number, key_encoded, value_encoded] => {
-            set_storage(
-                block_number.parse().unwrap(),
-                &base64::decode(key_encoded).unwrap(),
-                &base64::decode(value_encoded).unwrap(),
-
-                );
-        },
+    match (*COMMAND).as_str() {
+        "process_new_block" => process_new_block(),
+        "process_existing_block" => process_existing_block(),
         _ => (),
-            }
     }
 }
 
-fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
+fn process_existing_block() {
+    let mut transactions_encoded = String::new();
+    let stdin = io::stdin();
+    stdin.lock().read_line(&mut transactions_encoded).expect("Could not read line");
+    let transactions = from_slice::<Vec<Transaction>>(&base64::decode(&transactions_encoded.trim_end_matches("\n")).unwrap()).unwrap();
     let mut memory_changeset = HashMap::new();
     let mut storage_changeset = HashMap::new();
     let redis = REDIS.get_connection().unwrap();
     let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+    let env = from_slice::<Env>(&ENV).unwrap();
     let mut execution_order = 0;
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
 
@@ -85,14 +69,15 @@ fn process_existing_block(env: &Env, transactions: &Vec<Transaction>) {
     return_completed_transactions(completed_transactions, memory_changeset, storage_changeset);
 }
 
-fn process_new_block(env: &Env, transaction_processing_time: u64) {
+fn process_new_block() {
     let mut memory_changeset = HashMap::new();
     let mut storage_changeset = HashMap::new();
     let mut execution_order = 0;
     let redis = REDIS.get_connection().unwrap();
     let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+    let env = from_slice::<Env>(&ENV).unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
-    run_for(transaction_processing_time, || {
+    run_for(*TRANSACTION_PROCESSING_TIME, || {
         match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
                 let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, execution_order, &mut memory_changeset, &mut storage_changeset);
@@ -103,19 +88,6 @@ fn process_new_block(env: &Env, transaction_processing_time: u64) {
         };
     });
     return_completed_transactions(completed_transactions, memory_changeset, storage_changeset);
-}
-
-fn hash_key(block_number: u64, key: &[u8]) -> Vec<u8> {
-    [u64_to_vec(block_number), key.to_vec()].concat()
-}
-fn u64_to_vec(n: u64) -> Vec<u8> {
-    return unsafe { std::intrinsics::transmute::<u64, [u8; 8]>(n) }.to_vec();
-}
-
-fn set_storage(block_number: u64, key: &[u8], value: &[u8]) {
-    let rocksdb = vm::DB::open_default(ROCKSDB_PATH.as_str()).unwrap();
-    rocksdb.put(hash_key(block_number, key), value).unwrap();
-    println!("{}", base64::encode(&to_vec(&serde_cbor::Value::Text("ok".to_string())).unwrap()));
 }
 
 fn return_completed_transactions(completed_transactions: Vec<CompletedTransaction>, memory_changeset: Changeset, storage_changeset: Changeset) {

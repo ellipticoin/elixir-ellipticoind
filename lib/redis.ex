@@ -20,6 +20,7 @@ defmodule Redis do
 
   def reset() do
     GenServer.call(Redis, :reset)
+    :timer.sleep(1000)
   end
 
   def delete(key) do
@@ -167,7 +168,6 @@ defmodule Redis do
   end
 
   def handle_call(:reset, _from, redis) do
-
     Redix.command(redis, [
       "FLUSHALL"
     ])

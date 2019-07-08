@@ -23,8 +23,6 @@ defmodule Ellipticoind.Miner do
   comes in.
   """
   def cancel() do
-    TransactionProcessor.cancel()
-
     if Enum.member?(Process.registered(), __MODULE__) do
       send(__MODULE__, :cancel)
     end
@@ -43,7 +41,7 @@ defmodule Ellipticoind.Miner do
     {:noreply, state}
   end
 
-  defp process_new_block() do
+  def process_new_block() do
     Transaction.post(%{
       contract_address: <<0::256>>,
       contract_name: :BaseToken,
@@ -55,7 +53,6 @@ defmodule Ellipticoind.Miner do
 
     case TransactionProcessor.process_new_block() do
       :cancelled -> handle_cancel()
-      :ok -> handle_cancel()
       new_block -> hashfactor(new_block)
     end
   end

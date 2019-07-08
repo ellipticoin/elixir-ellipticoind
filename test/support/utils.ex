@@ -22,6 +22,7 @@ defmodule Test.Utils do
 
   def get_balance(address) do
     balance_bytes = Memory.get(<<0::256>>, :BaseToken, <<0>> <> address)
+    :timer.sleep(100)
     if balance_bytes == [] do
       0
     else

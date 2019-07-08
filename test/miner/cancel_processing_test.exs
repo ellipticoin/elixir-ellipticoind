@@ -22,9 +22,10 @@ defmodule Miner.CancelProcessingTest do
         arguments: [:A]
       })
 
-      Miner.start_link()
-      :timer.sleep(1500)
-      Miner.cancel()
+      pid = spawn(fn()->
+        Miner.process_new_block()
+      end)
+      send(pid, :cancel)
       :timer.sleep(500)
     end
 

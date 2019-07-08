@@ -1,74 +1,10 @@
 defmodule Ellipticoind.TransactionProcessor do
-  use NativeModule
+  @crate "transaction_processor"
+  import NativeModule
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.{Memory, Storage}
 
-  def args() do
-    [Config.redis_url(), Config.rocksdb_path()]
-  end
-
-  def cancel() do
-    send(__MODULE__, :cancel)
-  end
-
-  def set_storage(block_number, key, value) do
-    GenServer.call(__MODULE__, {:set_storage, block_number, key, value})
-  end
-
   def process(block, env \\ %{}) do
-    cancel()
-    GenServer.call(__MODULE__, {:process, block, env})
-  end
-
-  def process_new_block() do
-    cancel()
-    GenServer.call(__MODULE__, {:process_new_block})
-  end
-
-  def handle_info({_port, {:data, _message}}, port) do
-    {:noreply, port}
-  end
-
-  def handle_info(:cancel, state) do
-    {:noreply, state}
-  end
-
-  def handle_call({:set_storage, block_number, key, value}, _from, port) do
-    call_native(port, :set_storage, [block_number, key, value])
-    {:reply, receive_native(port), port}
-  end
-
-  def handle_call({:process_new_block}, _from, port) do
-    env = %{
-      block_number: Block.next_block_number(),
-      block_winner: Config.public_key(),
-      block_hash: <<>>
-    }
-
-    call_native(port, :process_new_block, [env, Config.transaction_processing_time()])
-
-    case receive_native(port) do
-      :cancel ->
-        {:reply, :cancelled, port}
-
-      :ok ->
-        {:reply, :cancelled, port}
-
-      [transactions, memory_changeset, storage_changeset] ->
-        Memory.write_changeset(memory_changeset, env.block_number)
-        Storage.write_changeset(storage_changeset, env.block_number)
-        block =
-          Block.next_block_params()
-          |> Map.merge(%{
-            changeset_hash: changeset_hash(),
-            transactions: transactions
-          })
-
-        {:reply, block, port}
-    end
-  end
-
-  def handle_call({:process, block, env}, _from, port) do
     env =
       Map.merge(
         %{
@@ -79,38 +15,69 @@ defmodule Ellipticoind.TransactionProcessor do
         env
       )
 
-    call_native(port, :process_existing_block, [
-      env,
+    call_native([
+      "process_existing_block",
+      Config.redis_url(),
+      Config.rocksdb_path(),
+      env |> Cbor.encode() |> Base.encode64(),
+    ],
       Enum.map(block.transactions, &Transaction.as_map/1)
-    ])
+    )
 
-    case receive_native(port) do
+    case receive_native() do
       :cancel ->
-        {:reply, :cancelled, port}
-
-      :ok ->
-        {:reply, :cancelled, port}
-
+        :cancelled
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
         Storage.write_changeset(storage_changeset, env.block_number)
-        return_value = %{
-          changeset_hash: changeset_hash(),
+        %{
+          changeset_hash: <<>>,
           transactions: transactions
         }
-
-        {:reply, return_value, port}
     end
   end
 
-  def receive_native(port) do
-    case receive_cancel_or_message(port) do
-      :cancel ->
-        :cancel
+  def process_new_block() do
+    env = %{
+      block_number: Block.next_block_number(),
+      block_winner: Config.public_key(),
+      block_hash: <<>>
+    }
+
+    call_native([
+      "process_new_block",
+      Config.redis_url(),
+      Config.rocksdb_path(),
+      env |> Cbor.encode() |> Base.encode64(),
+      Config.transaction_processing_time() |> Integer.to_string(),
+    ])
+
+    case receive_native() do
+      :cancelled ->
+        :cancelled
+      [transactions, memory_changeset, storage_changeset] ->
+        Memory.write_changeset(memory_changeset, env.block_number)
+        Storage.write_changeset(storage_changeset, env.block_number)
+        Block.next_block_params()
+          |> Map.merge(%{
+            changeset_hash: <<>>,
+            transactions: transactions
+          })
+
+    end
+  end
+
+
+  def receive_native() do
+    case receive_cancel_or_message() do
+      :cancelled ->
+        :cancelled
 
       message ->
         case List.to_string(message) do
-          "debug:" <> message -> IO.puts message
+          "debug: " <> message ->
+            IO.write message
+            receive_native()
           message -> message
             |> String.trim("\n")
             |> String.split(" ")
@@ -123,23 +90,30 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_cancel_or_message(port, message \\ '') do
+  def receive_cancel_or_message(message \\ '') do
     receive do
       :cancel ->
-        :cancel
+        :cancelled
 
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
-          receive_cancel_or_message(port, Enum.concat(message, message_part))
+          receive_cancel_or_message(Enum.concat(message, message_part))
         else
           Enum.concat(message, message_part)
         end
     end
   end
 
-  def changeset_hash() do
-    {:ok, changeset} = Redis.fetch("changeset", <<>>)
-    Redis.delete("changeset")
-    Crypto.hash(changeset)
+
+  def call_native(args \\ [], payload \\ nil) do
+    port =
+      Port.open({:spawn_executable, path_to_executable()},
+        args: args
+      )
+    if payload do
+      send(port, {self(), {:command, Base.encode64(Cbor.encode(payload)) <> "\n"}})
+    end
   end
+
+  def path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
 end
