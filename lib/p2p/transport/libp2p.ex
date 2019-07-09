@@ -19,7 +19,7 @@ defmodule P2P.Transport.LibP2P do
       |> Enum.join(",")
 
     private_key =
-      (Map.get(options, :private_key) || Config.private_key())
+      (Map.get(options, :private_key) || Configuration.private_key())
       |> Base.encode64()
 
     port =

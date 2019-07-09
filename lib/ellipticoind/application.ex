@@ -8,9 +8,9 @@ defmodule Ellipticoind.Application do
       Supervisor.child_spec({Task, &WebsocketHandler.start/0}, id: WebsocketHandler),
       {Redis, name: Redis},
       {RocksDB, name: RocksDB},
-      Config.p2p_transport(),
+      Configuration.p2p_transport(),
       P2P,
-      Config.cowboy()
+      Configuration.cowboy()
     ]
 
     children =

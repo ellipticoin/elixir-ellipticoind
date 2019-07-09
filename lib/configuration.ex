@@ -1,4 +1,4 @@
-defmodule Config do
+defmodule Configuration do
   def hashfactor_target(),
     do: Application.fetch_env!(:ellipticoind, :hashfactor_target)
 

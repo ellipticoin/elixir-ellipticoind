@@ -35,7 +35,7 @@ defmodule Ellipticoind.Miner do
       nonce: 0,
       function: :mint,
       arguments: [],
-      sender: Config.public_key()
+      sender: Configuration.public_key()
     })
 
     case TransactionProcessor.process_new_block() do

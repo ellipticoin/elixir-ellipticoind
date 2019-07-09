@@ -5,7 +5,7 @@ defmodule Hashfactor do
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: [
-          Integer.to_string(Config.hashfactor_target())
+          Integer.to_string(Configuration.hashfactor_target())
         ]
       )
     send(port, {self(), {:command, Base.encode64(data) <> "\n"}})
@@ -28,7 +28,7 @@ defmodule Hashfactor do
          :binary.encode_unsigned(nonce, :little))
       |> Crypto.hash()
 
-    target = Config.hashfactor_target()
+    target = Configuration.hashfactor_target()
     rem(:binary.decode_unsigned(numerator, :little), target + 1) == 0
   end
 

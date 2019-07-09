@@ -17,8 +17,8 @@ defmodule Ellipticoind.TransactionProcessor do
 
     port = call_native([
       "process_existing_block",
-      Config.redis_url(),
-      Config.rocksdb_path(),
+      Configuration.redis_url(),
+      Configuration.rocksdb_path(),
       env |> Cbor.encode() |> Base.encode64(),
     ],
       Enum.map(block.transactions, &Transaction.as_map/1)
@@ -42,16 +42,16 @@ defmodule Ellipticoind.TransactionProcessor do
   def process_new_block() do
     env = %{
       block_number: Block.next_block_number(),
-      block_winner: Config.public_key(),
+      block_winner: Configuration.public_key(),
       block_hash: <<>>
     }
 
     port = call_native([
       "process_new_block",
-      Config.redis_url(),
-      Config.rocksdb_path(),
+      Configuration.redis_url(),
+      Configuration.rocksdb_path(),
       env |> Cbor.encode() |> Base.encode64(),
-      Config.transaction_processing_time() |> Integer.to_string(),
+      Configuration.transaction_processing_time() |> Integer.to_string(),
     ])
 
     case receive_native() do
@@ -79,7 +79,8 @@ defmodule Ellipticoind.TransactionProcessor do
           "debug: " <> message ->
             IO.write message
             receive_native()
-          message -> message
+          message ->
+            value = message
             |> String.trim("\n")
             |> String.split(" ")
             |> Enum.map(fn(item) ->
@@ -87,6 +88,8 @@ defmodule Ellipticoind.TransactionProcessor do
                 |> Base.decode64!()
                 |> Cbor.decode!()
             end)
+            IO.inspect length(value)
+            value
         end
     end
   end

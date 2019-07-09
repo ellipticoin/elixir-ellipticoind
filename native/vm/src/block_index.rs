@@ -30,26 +30,6 @@ impl<'a> BlockIndex<'a> {
         BlockIndex { redis: redis }
     }
 
-    pub fn add(&self, state_type: StateType, block_number: u64, key: &[u8]) {
-        // let () = redis::pipe()
-        //     .atomic()
-        //     .cmd("LADD")
-        //     .arg(block_set_key(state_type))
-        //     .arg(block_index_key(state_type, key))
-        //     .ignore()
-        //     .cmd("ZREM")
-        //     .arg(block_index_key(state_type, key))
-        //     .arg(block_number)
-        //     .ignore()
-        //     .cmd("ZADD")
-        //     .arg(block_index_key(state_type, key))
-        //     .arg(block_number)
-        //     .arg(block_number)
-        //     .ignore()
-        //     .query(self.redis)
-        //     .unwrap();
-    }
-
     pub fn get_latest(&self, state_type: StateType, key: &[u8]) -> u64 {
         *self
             .redis

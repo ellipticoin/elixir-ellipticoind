@@ -10,7 +10,7 @@ defmodule RocksDB do
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: [
-          Config.rocksdb_path()
+          Configuration.rocksdb_path()
         ]
       )
 

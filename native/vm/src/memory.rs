@@ -34,14 +34,6 @@ impl<'a> Memory<'a> {
         [self.namespace.clone(), key.to_vec()].concat()
     }
 
-    pub fn set(&self, block_number: u64, key: &[u8], value: &[u8]) {
-        self.block_index.add(StateType::Memory, block_number, &self.namespaced_key(key));
-        let _: () = self
-            .redis
-            .hset(REDIS_KEY, hash_key(block_number, &self.namespaced_key(key)), value)
-            .unwrap();
-    }
-
     pub fn get(&self, key: &[u8]) -> Vec<u8> {
         let latest_block = self.block_index.get_latest(StateType::Memory, &self.namespaced_key(key));
         self.redis

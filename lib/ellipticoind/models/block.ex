@@ -42,7 +42,7 @@ defmodule Ellipticoind.Models.Block do
       }
     end
     |> Map.merge(%{
-      winner: Config.public_key()
+      winner: Configuration.public_key()
     })
   end
 
