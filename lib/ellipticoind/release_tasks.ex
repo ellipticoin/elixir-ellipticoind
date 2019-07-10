@@ -1,12 +1,4 @@
 defmodule Ellipticoind.ReleaseTasks do
-  @start_apps [
-    :crypto,
-    :ssl,
-    :postgrex,
-    :ecto,
-    :ecto_sql
-  ]
-
   @repos Application.get_env(:ellipticoind, :ecto_repos, [])
 
   def generate_private_key() do
@@ -20,30 +12,7 @@ defmodule Ellipticoind.ReleaseTasks do
   end
 
   def migrate(_argv) do
-    start_services()
-
-    run_migrations()
-
-    stop_services()
-  end
-
-  defp start_services do
-    IO.puts("Starting dependencies..")
-    # Start apps necessary for executing migrations
-    Enum.each(@start_apps, &Application.ensure_all_started/1)
-
-    # Start the Repo(s) for app
-    IO.puts("Starting repos..")
-
-    Enum.each(@repos, & &1.start_link(pool_size: 2))
-  end
-
-  defp stop_services do
-    IO.puts("Success!")
-    :init.stop()
-  end
-
-  defp run_migrations do
+    Application.ensure_all_started(:ellipticoind)
     Enum.each(@repos, &run_migrations_for/1)
   end
 

@@ -2,7 +2,9 @@ defmodule Configuration do
   def hashfactor_target(),
     do: Application.fetch_env!(:ellipticoind, :hashfactor_target)
 
-  def private_key(), do: Application.fetch_env!(:ellipticoind, :private_key)
+  def private_key(), do:
+    Application.fetch_env!(:ellipticoind, :private_key)
+    |> Base.decode64!()
 
   def transaction_processing_time(),
     do: Application.fetch_env!(:ellipticoind, :transaction_processing_time)

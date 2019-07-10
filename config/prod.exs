@@ -19,6 +19,6 @@ config :ellipticoind, P2P.Transport.Noise,
 config :ellipticoind, Ellipticoind.Repo,
   username: System.get_env("DATABASE_USER"),
   password: System.get_env("DATABASE_PASS"),
-  database: System.get_env("DATABASE_NAME"),
+  database: System.get_env("DATABASE_NAME") || "ellipticoin",
   hostname: System.get_env("DATABASE_HOST"),
   pool_size: 15

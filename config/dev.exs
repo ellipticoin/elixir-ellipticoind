@@ -38,7 +38,7 @@ config :ellipticoind, :redis_url, System.get_env("REDIS_URL") || "redis://127.0.
 config :ellipticoind, :rocksdb_path, System.get_env("ROCKSDB_PATH") || "./var/storage"
 
 config :ellipticoind, Ellipticoind.Repo,
-  username: "masonf",
+  username: "masonf3",
   password: "",
   database: System.get_env("DATABASE") || "ellipticoin",
   hostname: "localhost",

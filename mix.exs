@@ -5,15 +5,25 @@ defmodule Ellipticoind.Mixfile do
     [
       app: :ellipticoind,
       version: "0.1.0",
-      elixir: "~> 1.8",
+      elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       compilers: [:rustler, :golang] ++ Mix.compilers(),
       rustler_crates: rustler_crates(),
       golang_modules: golang_modules(),
       deps: deps(),
+      releases: releases(),
       elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
+
+  def releases do
+    [
+      ellipticoind: [
+        config_providers: [{JSONConfigProvider, "/usr/local/etc/ellipticoind.json"}]
+      ]
+    ]
+  end
+
 
   defp golang_modules do
     [
@@ -60,6 +70,7 @@ defmodule Ellipticoind.Mixfile do
 
   defp deps do
     [
+      {:jason, "~> 1.1"},
       {:benchee, "~> 0.11", only: [:dev, :test]},
       {:binary, "~> 0.0.5"},
       {:bypass, "~> 1.0", only: :test},
@@ -68,7 +79,6 @@ defmodule Ellipticoind.Mixfile do
       {:cowboy, "~> 2.6"},
       {:decimal, "~> 1.7", override: true},
       {:dialyxir, "~> 1.0.0-rc.3", only: [:dev, :test], runtime: false},
-      {:distillery, "~> 2.0", runtime: false},
       {:ecto, "~> 3.1.4", override: true},
       {:ecto_sql, "~> 3.1.3", override: true},
       {:ex_machina, "~> 2.2"},
