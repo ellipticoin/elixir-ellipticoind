@@ -20,8 +20,7 @@ config :ellipticoind, p2p_transport: P2P.Transport.Noise
 
 config :ellipticoind, P2P.Transport.Noise,
   private_key:
-    "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA=="
-    |> Base.decode64!(),
+    "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==",
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
   # File.read!("./priv/bootnodes.txt")
   bootnodes:
@@ -38,7 +37,7 @@ config :ellipticoind, :redis_url, System.get_env("REDIS_URL") || "redis://127.0.
 config :ellipticoind, :rocksdb_path, System.get_env("ROCKSDB_PATH") || "./var/storage"
 
 config :ellipticoind, Ellipticoind.Repo,
-  username: "masonf3",
+  username: "masonf",
   password: "",
   database: System.get_env("DATABASE") || "ellipticoin",
   hostname: "localhost",

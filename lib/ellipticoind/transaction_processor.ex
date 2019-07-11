@@ -79,8 +79,7 @@ defmodule Ellipticoind.TransactionProcessor do
           "debug: " <> message ->
             IO.write message
             receive_native()
-          message ->
-            value = message
+          message -> message
             |> String.trim("\n")
             |> String.split(" ")
             |> Enum.map(fn(item) ->
@@ -88,8 +87,6 @@ defmodule Ellipticoind.TransactionProcessor do
                 |> Base.decode64!()
                 |> Cbor.decode!()
             end)
-            IO.inspect length(value)
-            value
         end
     end
   end
