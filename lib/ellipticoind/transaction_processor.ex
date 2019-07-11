@@ -26,7 +26,7 @@ defmodule Ellipticoind.TransactionProcessor do
         Enum.map(block.transactions, &Transaction.as_map/1)
       )
 
-    case receive_native() do
+    case receive_native(port) do
       :cancel ->
         Port.close(port)
         :cancel
@@ -58,7 +58,7 @@ defmodule Ellipticoind.TransactionProcessor do
         Configuration.transaction_processing_time() |> Integer.to_string()
       ])
 
-    case receive_native() do
+    case receive_native(port) do
       :cancel ->
         Port.close(port)
         :cancel
@@ -75,8 +75,8 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_native() do
-    case receive_cancel_or_message() do
+  def receive_native(port) do
+    case receive_cancel_or_message(port) do
       :cancel ->
         :cancel
 
@@ -84,7 +84,7 @@ defmodule Ellipticoind.TransactionProcessor do
         case List.to_string(message) do
           "debug: " <> message ->
             IO.write(message)
-            receive_native()
+            receive_native(port)
 
           message ->
             message
@@ -99,16 +99,16 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_cancel_or_message(message \\ '') do
+  def receive_cancel_or_message(port, message \\ '') do
     receive do
       :cancel ->
         :cancel
 
-      {_port, {:data, message_part}} ->
-        if length(message_part) > 65535 do
-          receive_cancel_or_message(Enum.concat(message, message_part))
-        else
+      {port, {:data, message_part}} ->
+        if <<List.last(message_part)>> == "\n" do
           Enum.concat(message, message_part)
+        else
+          receive_cancel_or_message(port, Enum.concat(message, message_part))
         end
     end
   end

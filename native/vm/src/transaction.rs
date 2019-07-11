@@ -81,7 +81,10 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, mut storage_changeset: &m
     let block_index = BlockIndex::new(redis);
     let memory = Memory::new(redis, &block_index, transaction.namespace());
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
-    let code = storage.get("_code".as_bytes());
+    let code = storage_changeset.get(
+        &[transaction.namespace(), "_code".as_bytes().to_vec()].concat(),
+        )
+        .unwrap_or(&storage.get("_code".as_bytes())).to_vec();
     if code.len() == 0 {
         return (1, format!("{} not found", transaction.contract_name.to_string()).into())
     }
