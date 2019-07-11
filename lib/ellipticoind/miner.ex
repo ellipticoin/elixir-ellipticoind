@@ -18,7 +18,6 @@ defmodule Ellipticoind.Miner do
     {:ok, nil}
   end
 
-
   def mine() do
     GenServer.cast(__MODULE__, {:mine})
   end
@@ -49,7 +48,9 @@ defmodule Ellipticoind.Miner do
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :cancelled -> mine()
+      :cancelled ->
+        mine()
+
       proof_of_work_value ->
         Map.put(new_block, :proof_of_work_value, proof_of_work_value)
         |> insert_block()

@@ -2,6 +2,7 @@ defmodule Ellipticoind.BlockIndex do
   def revert_to(prefix, block_number) do
     for key <- Redis.get_set("memory_keys") do
       index_of_key = Redis.get_hash_value("#{prefix}:#{key}_index", block_number)
+
       Redis.trim(
         "#{prefix}:#{key}",
         -1 - String.to_integer(index_of_key),
@@ -17,8 +18,10 @@ defmodule Ellipticoind.BlockIndex do
            0
          ) do
       [block_number] ->
-             String.to_integer(block_number)
-      _ -> nil
+        String.to_integer(block_number)
+
+      _ ->
+        nil
     end
   end
 
@@ -27,7 +30,9 @@ defmodule Ellipticoind.BlockIndex do
       "#{prefix}:#{key}",
       block_number
     )
+
     length = Redis.length("#{prefix}:#{key}")
+
     Redis.set_hash_value(
       "#{prefix}:#{key}_index",
       block_number,

@@ -24,7 +24,6 @@ defmodule Ellipticoind.Mixfile do
     ]
   end
 
-
   defp golang_modules do
     [
       noise: [

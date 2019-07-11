@@ -81,7 +81,6 @@ defmodule P2P.Transport.Noise do
     System.halt(1)
   end
 
-
   def handle_info({_port, {:data, message}}, state) do
     message = keep_receiving("", message)
 

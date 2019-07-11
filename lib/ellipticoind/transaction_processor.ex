@@ -15,23 +15,26 @@ defmodule Ellipticoind.TransactionProcessor do
         env
       )
 
-    port = call_native([
-      "process_existing_block",
-      Configuration.redis_url(),
-      Configuration.rocksdb_path(),
-      env |> Cbor.encode() |> Base.encode64(),
-    ],
-      Enum.map(block.transactions, &Transaction.as_map/1)
-    )
-
+    port =
+      call_native(
+        [
+          "process_existing_block",
+          Configuration.redis_url(),
+          Configuration.rocksdb_path(),
+          env |> Cbor.encode() |> Base.encode64()
+        ],
+        Enum.map(block.transactions, &Transaction.as_map/1)
+      )
 
     case receive_native() do
       :cancel ->
         Port.close(port)
         :cancel
+
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
         Storage.write_changeset(storage_changeset, env.block_number)
+
         %{
           changeset_hash: Crypto.hash(<<>>),
           transactions: transactions
@@ -46,46 +49,51 @@ defmodule Ellipticoind.TransactionProcessor do
       block_hash: <<>>
     }
 
-    port = call_native([
-      "process_new_block",
-      Configuration.redis_url(),
-      Configuration.rocksdb_path(),
-      env |> Cbor.encode() |> Base.encode64(),
-      Configuration.transaction_processing_time() |> Integer.to_string(),
-    ])
+    port =
+      call_native([
+        "process_new_block",
+        Configuration.redis_url(),
+        Configuration.rocksdb_path(),
+        env |> Cbor.encode() |> Base.encode64(),
+        Configuration.transaction_processing_time() |> Integer.to_string()
+      ])
 
     case receive_native() do
       :cancel ->
         Port.close(port)
         :cancel
+
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
         Storage.write_changeset(storage_changeset, env.block_number)
-        Block.next_block_params()
-          |> Map.merge(%{
-            changeset_hash: Crypto.hash(<<>>),
-            transactions: transactions
-          })
 
+        Block.next_block_params()
+        |> Map.merge(%{
+          changeset_hash: Crypto.hash(<<>>),
+          transactions: transactions
+        })
     end
   end
 
-
   def receive_native() do
     case receive_cancel_or_message() do
-      :cancel -> :cancel
+      :cancel ->
+        :cancel
+
       message ->
         case List.to_string(message) do
           "debug: " <> message ->
-            IO.write message
+            IO.write(message)
             receive_native()
-          message -> message
+
+          message ->
+            message
             |> String.trim("\n")
             |> String.split(" ")
-            |> Enum.map(fn(item) ->
+            |> Enum.map(fn item ->
               item
-                |> Base.decode64!()
-                |> Cbor.decode!()
+              |> Base.decode64!()
+              |> Cbor.decode!()
             end)
         end
     end
@@ -93,7 +101,9 @@ defmodule Ellipticoind.TransactionProcessor do
 
   def receive_cancel_or_message(message \\ '') do
     receive do
-      :cancel -> :cancel
+      :cancel ->
+        :cancel
+
       {_port, {:data, message_part}} ->
         if length(message_part) > 65535 do
           receive_cancel_or_message(Enum.concat(message, message_part))
@@ -103,15 +113,16 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-
   def call_native(args \\ [], payload \\ nil) do
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: args
       )
+
     if payload do
       send(port, {self(), {:command, Base.encode64(Cbor.encode(payload)) <> "\n"}})
     end
+
     port
   end
 

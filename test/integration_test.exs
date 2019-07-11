@@ -37,6 +37,7 @@ defmodule Integration.MiningTest do
     )
 
     Miner.process_new_block()
+
     broadcasted_transaction =
       receive do
         {:p2p, nil, %Transaction{} = transaction} -> transaction

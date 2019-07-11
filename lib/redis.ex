@@ -108,7 +108,6 @@ defmodule Redis do
     GenServer.call(Redis, {:add_set, key, value})
   end
 
-
   def handle_cast({:set_map, key, value}, redis) do
     value =
       if Map.has_key?(value, :__struct__) do
@@ -181,7 +180,7 @@ defmodule Redis do
         "LTRIM",
         key,
         min,
-        max,
+        max
       ])
 
     {:reply, value, redis}
@@ -220,7 +219,7 @@ defmodule Redis do
         "LRANGE",
         key,
         "#{min}",
-        "#{max}",
+        "#{max}"
       ])
 
     {:reply, value, redis}
@@ -230,7 +229,7 @@ defmodule Redis do
     {:ok, value} =
       Redix.command(redis, [
         "LLEN",
-        key,
+        key
       ])
 
     {:reply, value, redis}

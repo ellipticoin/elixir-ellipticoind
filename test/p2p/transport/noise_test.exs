@@ -42,11 +42,16 @@ defmodule P2P.NoiseTest do
 
     Noise.ensure_started(client1)
     Noise.ensure_started(client2)
-    spawn(fn -> Noise.broadcast(client2, %Transaction{arguments: [test_contract_code(:constructor)]}) end)
+
+    spawn(fn ->
+      Noise.broadcast(client2, %Transaction{arguments: [test_contract_code(:constructor)]})
+    end)
+
     Noise.subscribe(client1, self())
 
     receive do
-      {:p2p, message} -> assert message == %Transaction{arguments: [test_contract_code(:constructor)]}
+      {:p2p, message} ->
+        assert message == %Transaction{arguments: [test_contract_code(:constructor)]}
     end
   end
 end

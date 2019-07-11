@@ -12,10 +12,10 @@ defmodule JSONConfigProvider do
 
     Config.Reader.merge(
       config,
-      ellipticoind: Enum.reduce(json, [], fn {key, value}, acc ->
-        [{String.to_atom(key), value} | acc]
-      end)
-
+      ellipticoind:
+        Enum.reduce(json, [], fn {key, value}, acc ->
+          [{String.to_atom(key), value} | acc]
+        end)
     )
   end
 end

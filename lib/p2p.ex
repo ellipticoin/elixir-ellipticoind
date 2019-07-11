@@ -23,7 +23,9 @@ defmodule P2P do
       Block ->
         send(self(), :cancel)
         Block.apply(message)
-      Transaction -> Transaction.post(message)
+
+      Transaction ->
+        Transaction.post(message)
     end
   end
 

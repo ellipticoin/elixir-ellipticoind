@@ -2,6 +2,7 @@ import Config
 config :logger, level: :info
 config :ellipticoind, ecto_repos: [Ellipticoind.Repo]
 config :ellipticoind, p2p_transport: P2P.Transport.Noise
+
 config :ellipticoind, P2P.Transport.Noise,
   hostname: System.get_env("HOSTNAME") || "localhost",
   private_key:
