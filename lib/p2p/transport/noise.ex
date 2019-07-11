@@ -11,11 +11,11 @@ defmodule P2P.Transport.Noise do
   def init(options) do
     defaults = %{
       port: 4045,
-      host: "0.0.0.0"
+      hostname: "0.0.0.0"
     }
 
     %{
-      host: host,
+      hostname: hostname,
       port: port,
       bootnodes: bootnodes
     } = Map.merge(defaults, options)
@@ -25,7 +25,7 @@ defmodule P2P.Transport.Noise do
         {:spawn_executable, path_to_executable()},
         [
           :stderr_to_stdout,
-          args: [host, Integer.to_string(port)] ++ bootnodes
+          args: [hostname, Integer.to_string(port)] ++ bootnodes
         ]
       )
 
