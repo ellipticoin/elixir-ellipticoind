@@ -102,14 +102,24 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, mut storage_changeset: &m
         .collect();
     let pointer = vm.call(&transaction.function, &arguments);
     let result = vm.read_pointer(pointer);
-    let result_clone = result.clone();
-    let (return_code_bytes, return_value_bytes) = result_clone.split_at(4);
-    let mut return_code_bytes_fixed: [u8; 4] = Default::default();
-    return_code_bytes_fixed.copy_from_slice(&return_code_bytes[0..4]);
-    let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
-    let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
+    if result.len() == 0 {
+        println!("debug: result length was 0");
+        (1, "vm error".to_string().into())
+    } else {
+        let result_clone = result.clone();
+        let (return_code_bytes, return_value_bytes) = result_clone.split_at(4);
+        let mut return_code_bytes_fixed: [u8; 4] = Default::default();
+        if result.len() == 0 {
+            println!("debug: return_code_bytes length was 0");
+            (1, "vm error".to_string().into())
+        } else {
+            return_code_bytes_fixed.copy_from_slice(&return_code_bytes[0..4]);
+            let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
+            let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
 
-    (return_code, return_value)
+            (return_code, return_value)
+        }
+    }
 }
 
 pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env) -> (u32, Value) {

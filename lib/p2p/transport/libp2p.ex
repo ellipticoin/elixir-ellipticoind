@@ -15,7 +15,7 @@ defmodule P2P.Transport.LibP2P do
     libp2p_address = "/ip4/0.0.0.0/tcp/#{port}"
 
     bootnodes =
-      bootnodes
+      Configuration.bootnodes()
       |> Enum.join(",")
 
     private_key =
