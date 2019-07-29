@@ -21,7 +21,11 @@ defmodule API.TransactionsApiTest do
 
     signed_transaction = Transaction.sign(unsigned_transaction, private_key)
     assert {:ok, response} = http_post("/transactions", Cbor.encode(signed_transaction))
-    assert response.body == ""
+    assert response.body == Transaction.from_signed_transaction(signed_transaction)
+    |> elem(1)
+    |> Transaction.as_binary()
+    |> Crypto.hash()
+    |> Cbor.encode()
     assert response.status_code == 200
   end
 

@@ -81,7 +81,12 @@ defmodule Router do
       {:ok, transaction} ->
         P2P.broadcast(transaction)
         Transaction.post(transaction)
-        send_resp(conn, 200, "")
+        response = transaction
+          |> Transaction.as_binary()
+          |> Crypto.hash()
+          |> Cbor.encode()
+
+        send_resp(conn, 200, response)
 
       {:error, :invalid_signature} ->
         send_resp(conn, 401, "invalid_signature")
