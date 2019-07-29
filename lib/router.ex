@@ -24,6 +24,23 @@ defmodule Router do
   plug(:match)
   plug(:dispatch)
 
+  get "/transactions/:transaction_hash" do
+    transaction =
+      Transaction
+      |> Repo.get_by(
+        hash: Base.url_decode64!(conn.path_params["transaction_hash"])
+      )
+
+    if transaction do
+      resp =
+        transaction
+        |> Transaction.as_binary()
+
+      send_resp(conn, 200, resp)
+    else
+      send_resp(conn, 404, "not found")
+    end
+  end
   get "/transactions/:block_hash/:execution_order" do
     transaction =
       Transaction

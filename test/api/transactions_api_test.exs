@@ -1,11 +1,40 @@
 defmodule API.TransactionsApiTest do
   alias Ellipticoind.Models.Transaction
+  alias Ellipticoind.Repo
   import Test.Utils
   use ExUnit.Case
 
   setup do
     Redis.reset()
     checkout_repo()
+  end
+
+  test "GET /transactions/:transaction_hash:" do
+    {public_key, _private_key} = Crypto.keypair()
+
+    transaction = %{
+      contract_name: :test,
+      contract_address: <<0::256>>,
+      nonce: 0,
+      sender: public_key,
+      function: :function,
+      arguments: []
+    }
+
+    Transaction.changeset(%Transaction{}, transaction)
+    |> Repo.insert()
+
+    transaction_hash = Crypto.hash(transaction)
+
+
+    assert {:ok, response} = http_get("/transactions/" <> Base.url_encode64(transaction_hash))
+    assert Cbor.decode!(response.body) == Map.merge(transaction, %{
+      block_hash: nil,
+      execution_order: nil,
+      return_code: nil,
+      return_value: nil,
+    })
+
   end
 
   test "POST /transactions with a valid  signature" do

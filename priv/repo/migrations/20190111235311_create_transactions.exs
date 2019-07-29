@@ -4,6 +4,7 @@ defmodule Ellipticoind.Repo.Migrations.CreateTransactions do
   def change do
     create table(:transactions) do
       add :block_hash, references(:blocks, column: :hash, type: :binary)
+      add :hash, :binary
       add :contract_address, :binary
       add :contract_name, :varchar
       add :sender, :binary
