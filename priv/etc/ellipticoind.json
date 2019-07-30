@@ -1,0 +1,17 @@
+{
+  "transaction_processing_time": 1000,
+  "hashfactor_target": 15000000,
+  "enable_miner": true,
+  "base_contracts_path": "./priv/base_contracts",
+  "rocksdb_path": "/usr/local/var/storage",
+  "port": 4460,
+  "private_key":"EG9/mTocAPfmHziaXaXInyhQsavEZ2/s4krtP2qQ9nCgWyJ/LfvzQDwphHRRK5Ln7w+THDMpqnNvNKmq2HN7iw==",
+  "bootnode": true,
+  "enable_miner": true,
+  "redis_url": "redis://127.0.0.1:6379/",
+  "bootnodes": [
+	  "davenport.ellipticoin.org:4461",
+	  "joyce.ellipticoin.org:4461",
+	  "fritz.ellipticoin.org:4461"
+  ]
+}
