@@ -1,5 +1,4 @@
 defmodule Ellipticoind.Models.Transaction do
-  use CborEncodable
   use Ecto.Schema
   alias Ecto.Changeset
   alias Ellipticoind.Ecto.Types
@@ -17,7 +16,6 @@ defmodule Ellipticoind.Models.Transaction do
     field(:return_code, :integer)
     field(:return_value, Types.Cbor)
     field(:signature, :binary)
-    field(:execution_order, :integer)
   end
 
   def changeset(transaction, attrs) do
@@ -32,7 +30,6 @@ defmodule Ellipticoind.Models.Transaction do
       :return_value,
       :function,
       :arguments,
-      :execution_order
     ])
     |> validate_required([
       :contract_address,
@@ -44,14 +41,28 @@ defmodule Ellipticoind.Models.Transaction do
   end
 
   def maybe_set_hash(transaction) do
-    hash = as_map(transaction.changes)
-           |> Cbor.encode()
-           |> Crypto.hash()
     if Map.get(transaction, :hash) == nil do
-      Changeset.put_change(transaction, :hash, hash)
+      Changeset.put_change(transaction, :hash, hash(transaction.changes))
     end
   end
 
+  def hash(params) do
+    params
+    |> Map.drop(
+      [
+        :block_hash,
+        :return_value,
+        :return_code,
+      ]
+    )
+
+           |> Crypto.hash()
+  end
+
+  def as_binary(block),
+  do:
+  as_map(block)
+  |> Cbor.encode()
   def as_map(attributes) do
     attributes
     |> Map.take([
@@ -64,7 +75,6 @@ defmodule Ellipticoind.Models.Transaction do
       :arguments,
       :return_value,
       :return_code,
-      :execution_order
     ])
   end
 

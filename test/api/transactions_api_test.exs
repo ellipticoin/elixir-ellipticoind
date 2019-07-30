@@ -29,8 +29,8 @@ defmodule API.TransactionsApiTest do
 
     assert {:ok, response} = http_get("/transactions/" <> Base.url_encode64(transaction_hash))
     assert Cbor.decode!(response.body) == Map.merge(transaction, %{
+      hash: transaction_hash,
       block_hash: nil,
-      execution_order: nil,
       return_code: nil,
       return_value: nil,
     })
@@ -38,10 +38,10 @@ defmodule API.TransactionsApiTest do
   end
 
   test "POST /transactions with a valid  signature" do
-    {_public_key, private_key} = Crypto.keypair()
+    {public_key, private_key} = Crypto.keypair()
 
     unsigned_transaction = %{
-      contract_name: "test",
+      contract_name: :test,
       contract_address: <<0::256>>,
       nonce: 0,
       function: :function,
@@ -50,9 +50,8 @@ defmodule API.TransactionsApiTest do
 
     signed_transaction = Transaction.sign(unsigned_transaction, private_key)
     assert {:ok, response} = http_post("/transactions", Cbor.encode(signed_transaction))
-    assert response.body == Transaction.from_signed_transaction(signed_transaction)
-    |> elem(1)
-    |> Transaction.as_binary()
+    assert response.body == unsigned_transaction
+    |> Map.put(:sender, public_key)
     |> Crypto.hash()
     |> Cbor.encode()
     assert response.status_code == 200

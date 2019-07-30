@@ -62,7 +62,6 @@ pub struct CompletedTransaction {
     pub arguments: Vec<Value>,
     pub return_value: Value,
     pub return_code: u32,
-    pub execution_order: u64,
 }
 impl Transaction {
     pub fn namespace(&self) -> Vec<u8>{

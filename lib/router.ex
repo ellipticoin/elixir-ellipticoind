@@ -1,4 +1,5 @@
 defmodule Router do
+  import Ecto.Query
   require Logger
   use Plug.Router
   alias Ellipticoind.Memory
@@ -25,34 +26,19 @@ defmodule Router do
   plug(:dispatch)
 
   get "/transactions/:transaction_hash" do
-    transaction =
-      Transaction
-      |> Repo.get_by(
-        hash: Base.url_decode64!(conn.path_params["transaction_hash"])
+    transaction_hash = Base.url_decode64!(conn.path_params["transaction_hash"])
+    transaction = Repo.one(
+        from t in Transaction,
+        where: t.hash == ^transaction_hash,
+        order_by: [asc: t.id],
+        limit: 1
       )
 
     if transaction do
       resp =
-        transaction
-        |> Transaction.as_binary()
-
-      send_resp(conn, 200, resp)
-    else
-      send_resp(conn, 404, "not found")
-    end
-  end
-  get "/transactions/:block_hash/:execution_order" do
-    transaction =
-      Transaction
-      |> Repo.get_by(
-        block_hash: Base.url_decode64!(conn.path_params["block_hash"]),
-        execution_order: String.to_integer(conn.path_params["execution_order"])
-      )
-
-    if transaction do
-      resp =
-        transaction
-        |> Transaction.as_binary()
+        Transaction.as_map(transaction)
+        |> Map.put(:hash, transaction.hash)
+        |> Cbor.encode()
 
       send_resp(conn, 200, resp)
     else
@@ -98,8 +84,13 @@ defmodule Router do
       {:ok, transaction} ->
         P2P.broadcast(transaction)
         Transaction.post(transaction)
-        response = transaction
-          |> Transaction.as_binary()
+
+        response = Transaction.as_map(transaction)
+          |> Map.drop([
+            :return_code,
+            :return_value,
+            :block_hash,
+          ])
           |> Crypto.hash()
           |> Cbor.encode()
 

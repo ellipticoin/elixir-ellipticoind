@@ -14,7 +14,6 @@ defmodule Ellipticoind.Repo.Migrations.CreateTransactions do
       add :return_code, :integer
       add :return_value, :binary
       add :signature, :binary
-      add :execution_order, :integer
     end
 
     create index(:transactions, [:block_hash])
