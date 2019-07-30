@@ -99,7 +99,7 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_cancel_or_message(port, message \\ '') do
+  def receive_cancel_or_message(_port, message \\ '') do
     receive do
       :cancel ->
         :cancel
