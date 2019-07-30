@@ -117,7 +117,7 @@ defmodule Integration.MiningTest do
         function: :transfer,
         return_code: 0,
         return_value: nil,
-        arguments: [@bob, 50],
+        arguments: [@bob, 50]
       }
       |> Transaction.sign(@alices_private_key)
 

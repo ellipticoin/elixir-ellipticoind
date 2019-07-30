@@ -27,17 +27,19 @@ defmodule Router do
 
   get "/transactions/:transaction_hash" do
     transaction_hash = Base.url_decode64!(conn.path_params["transaction_hash"])
-    transaction = Repo.one(
-        from t in Transaction,
-        where: t.hash == ^transaction_hash,
-        order_by: [asc: t.id],
-        limit: 1
+
+    transaction =
+      Repo.one(
+        from(t in Transaction,
+          where: t.hash == ^transaction_hash,
+          order_by: [desc: t.id],
+          limit: 1
+        )
       )
 
     if transaction do
       resp =
         Transaction.as_map(transaction)
-        |> Map.put(:hash, transaction.hash)
         |> Cbor.encode()
 
       send_resp(conn, 200, resp)
@@ -85,23 +87,26 @@ defmodule Router do
         P2P.broadcast(transaction)
         Transaction.post(transaction)
 
-        response = Transaction.as_map(transaction)
-          |> Map.drop([
-            :return_code,
-            :return_value,
-            :block_hash,
-          ])
-          |> Crypto.hash()
-          |> Cbor.encode()
+        transaction_hash =
+          Transaction.as_map(transaction)
+          |> Transaction.hash()
 
-        send_resp(conn, 200, response)
+        render_success(conn, transaction_hash)
 
       {:error, :invalid_signature} ->
-        send_resp(conn, 401, "invalid_signature")
+        render_error(conn, 401, "invalid_signature")
 
       {:error, reason} ->
-        send_resp(conn, 500, Atom.to_string(reason))
+        render_error(conn, 500, Atom.to_string(reason))
     end
+  end
+
+  def render_success(conn, response) do
+    send_resp(conn, 200, Cbor.encode(response))
+  end
+
+  def render_error(conn, error_code, error_text) do
+    send_resp(conn, error_code, error_text)
   end
 
   match _ do

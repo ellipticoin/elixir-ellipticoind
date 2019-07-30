@@ -98,22 +98,7 @@ defmodule Ellipticoind.Models.Block do
   defp transactions_as_map(transactions),
     do:
       if(Ecto.assoc_loaded?(transactions),
-        do:
-          transactions
-          |> Enum.map(fn transaction ->
-            case Map.get(transaction, :hash) do 
-              nil -> Transaction.as_map(transaction)
-              |> Map.drop([
-                :block_hash
-              ])
-              hash -> 
-              Transaction.as_map(transaction)
-              |> Map.put(:hash, hash)
-              |> Map.drop([
-                :block_hash
-              ])
-            end
-          end),
+        do: transactions |> Enum.map(&Transaction.as_map/1),
         else: []
       )
 

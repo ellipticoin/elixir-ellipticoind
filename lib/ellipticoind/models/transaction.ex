@@ -29,13 +29,13 @@ defmodule Ellipticoind.Models.Transaction do
       :return_code,
       :return_value,
       :function,
-      :arguments,
+      :arguments
     ])
     |> validate_required([
       :contract_address,
       :contract_name,
       :function,
-      :arguments,
+      :arguments
     ])
     |> maybe_set_hash()
   end
@@ -46,48 +46,54 @@ defmodule Ellipticoind.Models.Transaction do
     end
   end
 
+  def as_map_with_hash(transaction) do
+    if Map.has_key?(transaction, :hash) do
+      as_map(transaction)
+    else
+      as_map(transaction)
+      |> Map.put(:hash, Map.get(transaction, :hash))
+    end
+  end
+
   def hash(params) do
     params
-    |> Map.drop(
-      [
-        :block_hash,
-        :return_value,
-        :return_code,
-      ]
-    )
-
-           |> Crypto.hash()
+    |> Map.drop([
+      :block_hash,
+      :return_value,
+      :return_code
+    ])
+    |> Crypto.hash()
   end
 
   def as_binary(block),
-  do:
-  as_map(block)
-  |> Cbor.encode()
+    do:
+      as_map(block)
+      |> Cbor.encode()
+
   def as_map(attributes) do
     attributes
     |> Map.take([
       :nonce,
-      :block_hash,
       :sender,
       :function,
       :contract_name,
       :contract_address,
       :arguments,
       :return_value,
-      :return_code,
+      :return_code
     ])
   end
 
   def sign(transaction, private_key) do
     sender = Crypto.private_key_to_public_key(private_key)
-
-    transaction =
-      transaction
+    signature = transaction
       |> Map.put(:sender, sender)
-
-    signature = Crypto.sign(as_map(transaction), private_key)
-
-    Map.put(transaction, :signature, signature)
+      |> as_map()
+      |> Crypto.sign(private_key)
+    Map.merge(transaction, %{
+      sender: sender,
+      signature: signature
+    })
   end
 
   def from_signed_transaction(signed_transaction) do
