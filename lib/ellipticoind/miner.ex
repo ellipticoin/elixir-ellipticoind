@@ -38,7 +38,7 @@ defmodule Ellipticoind.Miner do
     })
 
     case TransactionProcessor.process_new_block() do
-      :cancel -> mine()
+      :cancelled -> mine()
       new_block -> hashfactor(new_block)
     end
   end
@@ -58,14 +58,13 @@ defmodule Ellipticoind.Miner do
   end
 
   defp insert_block(attributes) do
-    block =
-      Block.changeset(%Block{}, attributes)
-      |> Repo.insert!()
+    changeset = Block.changeset(%Block{}, attributes)
+    with {:ok, block} <- Repo.insert(changeset) do
+      WebsocketHandler.broadcast(:blocks, block)
+      P2P.broadcast(block)
 
-    WebsocketHandler.broadcast(:blocks, block)
-    P2P.broadcast(block)
-
-    Logger.info("Mined block #{block.number}")
+      Logger.info("Mined block #{block.number}")
+    end
     mine()
   end
 end

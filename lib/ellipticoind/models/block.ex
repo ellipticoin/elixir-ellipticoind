@@ -77,6 +77,7 @@ defmodule Ellipticoind.Models.Block do
       :proof_of_work_value,
       :winner
     ])
+    |> unique_constraint(:hash)
     |> cast_assoc(:transactions)
     |> validate_required([
       :hash,
