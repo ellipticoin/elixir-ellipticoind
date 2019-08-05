@@ -18,9 +18,9 @@ defmodule Hashfactor do
         |> String.trim("\n")
         |> String.to_integer()
 
-      :cancel ->
+      :stop ->
         Port.close(port)
-        :cancelled
+        :stopped
     end
   end
 

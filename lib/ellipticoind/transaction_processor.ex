@@ -27,9 +27,9 @@ defmodule Ellipticoind.TransactionProcessor do
       )
 
     case receive_native(port) do
-      :cancel ->
+      :stop ->
         Port.close(port)
-        :cancel
+        :stop
 
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
@@ -59,9 +59,9 @@ defmodule Ellipticoind.TransactionProcessor do
       ])
 
     case receive_native(port) do
-      :cancel ->
+      :stop ->
         Port.close(port)
-        :cancelled
+        :stopped
 
       [transactions, memory_changeset, storage_changeset] ->
         Memory.write_changeset(memory_changeset, env.block_number)
@@ -76,9 +76,9 @@ defmodule Ellipticoind.TransactionProcessor do
   end
 
   def receive_native(port) do
-    case receive_cancel_or_message(port) do
-      :cancel ->
-        :cancel
+    case receive_stop_or_message(port) do
+      :stop ->
+        :stop
 
       message ->
         case List.to_string(message) do
@@ -99,16 +99,16 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_cancel_or_message(_port, message \\ '') do
+  def receive_stop_or_message(_port, message \\ '') do
     receive do
-      :cancel ->
-        :cancel
+      :stop ->
+        :stop
 
       {port, {:data, message_part}} ->
         if <<List.last(message_part)>> == "\n" do
           Enum.concat(message, message_part)
         else
-          receive_cancel_or_message(port, Enum.concat(message, message_part))
+          receive_stop_or_message(port, Enum.concat(message, message_part))
         end
     end
   end

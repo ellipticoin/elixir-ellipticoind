@@ -22,7 +22,7 @@ defmodule P2P do
   def receive(message) do
     case message.__struct__ do
       Block ->
-        send(Process.whereis(Ellipticoind.Miner), :cancel)
+        send(Process.whereis(Ellipticoind.Miner), :stop)
         Block.apply(message)
         Miner.mine_next_block()
 
@@ -31,7 +31,7 @@ defmodule P2P do
     end
   end
 
-  def handle_info(:cancel, state) do
+  def handle_info(:stop, state) do
     {:noreply, state}
   end
 

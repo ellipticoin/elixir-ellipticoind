@@ -22,7 +22,7 @@ defmodule Ellipticoind.Miner do
     GenServer.cast(__MODULE__, {:mine_next_block})
   end
 
-  def handle_info(:cancel, state) do
+  def handle_info(:stop, state) do
     {:noreply, state}
   end
 
@@ -42,7 +42,7 @@ defmodule Ellipticoind.Miner do
     })
 
     case TransactionProcessor.process_new_block() do
-      :cancelled -> nil
+      :stopped -> nil
       new_block -> hashfactor(new_block)
     end
   end
@@ -52,7 +52,7 @@ defmodule Ellipticoind.Miner do
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :cancelled ->
+      :stopped ->
         nil
 
       proof_of_work_value ->
