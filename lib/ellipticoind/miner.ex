@@ -38,7 +38,7 @@ defmodule Ellipticoind.Miner do
     })
 
     case TransactionProcessor.process_new_block() do
-      :cancelled -> mine()
+      :cancelled -> nil
       new_block -> hashfactor(new_block)
     end
   end
@@ -49,7 +49,7 @@ defmodule Ellipticoind.Miner do
     |> Hashfactor.run()
     |> case do
       :cancelled ->
-        mine()
+        nil
 
       proof_of_work_value ->
         Map.put(new_block, :proof_of_work_value, proof_of_work_value)

@@ -1,6 +1,7 @@
 defmodule P2P do
   require Logger
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Miner
   use GenServer
 
   def start_link(opts) do
@@ -23,6 +24,7 @@ defmodule P2P do
       Block ->
         send(Process.whereis(Ellipticoind.Miner), :cancel)
         Block.apply(message)
+        Miner.mine()
 
       Transaction ->
         Transaction.post(message)
