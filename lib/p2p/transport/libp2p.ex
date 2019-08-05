@@ -8,7 +8,7 @@ defmodule P2P.Transport.LibP2P do
 
   def init(
         options = %{
-          port: port,
+          port: port
         }
       ) do
     libp2p_address = "/ip4/0.0.0.0/tcp/#{port}"

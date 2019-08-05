@@ -21,10 +21,8 @@ defmodule P2P do
 
   def receive(message) do
     case message.__struct__ do
-      Block ->
-        Block.apply(message)
-      Transaction ->
-        Transaction.post(message)
+      Block -> Block.apply(message)
+      Transaction -> Transaction.post(message)
     end
   end
 

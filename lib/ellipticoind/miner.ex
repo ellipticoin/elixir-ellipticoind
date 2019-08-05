@@ -69,12 +69,14 @@ defmodule Ellipticoind.Miner do
 
   defp insert_block(attributes) do
     changeset = Block.changeset(%Block{}, attributes)
+
     with {:ok, block} <- Repo.insert(changeset) do
       WebsocketHandler.broadcast(:blocks, block)
       P2P.broadcast(block)
 
       Logger.info("Mined block #{block.number}")
     end
+
     mine_next_block()
   end
 end

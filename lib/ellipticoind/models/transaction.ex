@@ -86,10 +86,13 @@ defmodule Ellipticoind.Models.Transaction do
 
   def sign(transaction, private_key) do
     sender = Crypto.private_key_to_public_key(private_key)
-    signature = transaction
+
+    signature =
+      transaction
       |> Map.put(:sender, sender)
       |> as_map()
       |> Crypto.sign(private_key)
+
     Map.merge(transaction, %{
       sender: sender,
       signature: signature
