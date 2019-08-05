@@ -24,7 +24,7 @@ defmodule Miner.CancelProcessingTest do
 
       pid =
         spawn(fn ->
-          Miner.process_new_block()
+          Miner.do_mine_next_block()
         end)
 
       send(pid, :cancel)

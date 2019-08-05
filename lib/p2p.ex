@@ -24,7 +24,7 @@ defmodule P2P do
       Block ->
         send(Process.whereis(Ellipticoind.Miner), :cancel)
         Block.apply(message)
-        Miner.mine()
+        Miner.mine_next_block()
 
       Transaction ->
         Transaction.post(message)

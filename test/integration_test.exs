@@ -36,7 +36,7 @@ defmodule Integration.MiningTest do
       @alices_private_key
     )
 
-    Miner.process_new_block()
+    Miner.do_mine_next_block()
 
     broadcasted_transaction =
       receive do
@@ -148,7 +148,7 @@ defmodule Integration.MiningTest do
       @alices_private_key
     )
 
-    Miner.process_new_block()
+    Miner.do_mine_next_block()
     poll_for_block(0)
     :timer.sleep(100)
 
