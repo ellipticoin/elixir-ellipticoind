@@ -18,6 +18,12 @@ defmodule Ellipticoind.Miner do
     {:ok, nil}
   end
 
+  def stop() do
+    if miner_pid = Process.whereis(__MODULE__) do
+      send(miner_pid, :stop)
+    end
+  end
+
   def mine_next_block() do
     GenServer.cast(__MODULE__, {:mine_next_block})
   end

@@ -22,10 +22,7 @@ defmodule P2P do
   def receive(message) do
     case message.__struct__ do
       Block ->
-        send(Process.whereis(Ellipticoind.Miner), :stop)
         Block.apply(message)
-        Miner.mine_next_block()
-
       Transaction ->
         Transaction.post(message)
     end

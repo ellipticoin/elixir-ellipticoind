@@ -4,7 +4,7 @@ defmodule Ellipticoind.Models.Block do
   require Logger
   import Ecto.Changeset
   import Ecto.Query, only: [from: 2]
-  alias Ellipticoind.Repo
+  alias Ellipticoind.{Repo, Miner}
   alias Ellipticoind.Models.Transaction
   alias Ellipticoind.Models.Block.Validations
   alias Ellipticoind.TransactionProcessor
@@ -111,9 +111,11 @@ defmodule Ellipticoind.Models.Block do
 
   def apply(block) do
     if Validations.valid_next_block?(block) do
+      Miner.stop()
       TransactionProcessor.process(block)
 
       Repo.insert!(block)
+      Miner.mine_next_block()
       WebsocketHandler.broadcast(:blocks, block)
       Logger.info("Applied block #{block.number}")
     else
