@@ -13,7 +13,7 @@ defmodule Ellipticoind.Miner do
 
   def init(_init_arg) do
     SystemContracts.deploy()
-    mine_next_block()
+    cast_mine_next_block()
 
     {:ok, nil}
   end
@@ -24,7 +24,7 @@ defmodule Ellipticoind.Miner do
     end
   end
 
-  def mine_next_block() do
+  def cast_mine_next_block() do
     GenServer.cast(__MODULE__, {:mine_next_block})
   end
 
@@ -33,11 +33,11 @@ defmodule Ellipticoind.Miner do
   end
 
   def handle_cast({:mine_next_block}, state) do
-    do_mine_next_block()
+    mine_next_block()
     {:noreply, state}
   end
 
-  def do_mine_next_block() do
+  def mine_next_block() do
     Transaction.post(%{
       contract_address: <<0::256>>,
       contract_name: :BaseToken,
@@ -77,6 +77,6 @@ defmodule Ellipticoind.Miner do
       Logger.info("Mined block #{block.number}")
     end
 
-    mine_next_block()
+    cast_mine_next_block()
   end
 end

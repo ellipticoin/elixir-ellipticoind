@@ -115,7 +115,7 @@ defmodule Ellipticoind.Models.Block do
       TransactionProcessor.process(block)
 
       Repo.insert!(block)
-      Miner.mine_next_block()
+      Miner.cast_mine_next_block()
       WebsocketHandler.broadcast(:blocks, block)
       Logger.info("Applied block #{block.number}")
     else
