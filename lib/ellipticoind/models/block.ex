@@ -113,7 +113,6 @@ defmodule Ellipticoind.Models.Block do
     if Validations.valid_next_block?(block) do
       Miner.stop()
       TransactionProcessor.process(block)
-
       Repo.insert!(block)
       Miner.cast_mine_next_block()
       WebsocketHandler.broadcast(:blocks, block)
@@ -134,5 +133,15 @@ defmodule Ellipticoind.Models.Block do
         :hash,
         :total_burned
       ])
+      |> Map.update!(:transactions, (fn transactions ->
+        Enum.map(transactions, (fn transaction ->
+          Map.drop(transaction, [
+            :block_hash,
+            :hash,
+            :signature,
+            :id,
+          ])
+        end))
+      end))
       |> Cbor.encode()
 end

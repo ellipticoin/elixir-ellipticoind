@@ -5,7 +5,8 @@ defmodule Hashfactor do
     port =
       Port.open({:spawn_executable, path_to_executable()},
         args: [
-          Integer.to_string(Configuration.hashfactor_target())
+          Integer.to_string(Configuration.hashfactor_target()),
+          System.get_env("HASHFACTOR_TIME")
         ]
       )
 

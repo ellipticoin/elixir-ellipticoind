@@ -89,6 +89,7 @@ defmodule Router do
 
         transaction_hash =
           Transaction.as_map(transaction)
+          |> Map.delete(:hash)
           |> Transaction.hash()
 
         render_success(conn, transaction_hash)

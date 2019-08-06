@@ -17,11 +17,14 @@ const NUMERATOR_BYTE_LENGTH: usize = 8;
 
 fn main() {
     let target_number_of_hashes = args().nth(1).unwrap().parse().unwrap();
+    // let hashfactor_time = args().nth(2).unwrap().parse().unwrap();
     let mut line = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut line).expect("Could not read line");
     let data = base64::decode(&line.trim_end_matches("\n")).unwrap();
-    // thread::sleep(std::time::Duration::from_millis(2000));
+    // let mut rng = rand::thread_rng();
+    // let random = rng.gen_range(0, 10000);
+    // std::thread::sleep(std::time::Duration::from_millis(random));
     let nonce = hashfactor(data, target_number_of_hashes);
     println!("{}", nonce);
 }

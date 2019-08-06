@@ -60,9 +60,7 @@ defmodule Ellipticoind.Miner do
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
     |> case do
-      :stopped ->
-        nil
-
+      :stopped -> nil
       proof_of_work_value ->
         new_block
         |> Map.put(:proof_of_work_value, proof_of_work_value)

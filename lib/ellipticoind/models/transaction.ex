@@ -71,16 +71,13 @@ defmodule Ellipticoind.Models.Transaction do
       |> Cbor.encode()
 
   def as_map(attributes) do
-    attributes
-    |> Map.take([
-      :nonce,
-      :sender,
-      :function,
-      :contract_name,
-      :contract_address,
-      :arguments,
-      :return_value,
-      :return_code
+    fields = __schema__(:fields)
+
+    Map.take(attributes, fields)
+    |> Map.drop([
+      :block_hash,
+      :signature,
+      :id,
     ])
   end
 

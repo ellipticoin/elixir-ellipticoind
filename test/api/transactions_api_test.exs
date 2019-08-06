@@ -30,6 +30,7 @@ defmodule API.TransactionsApiTest do
 
     assert Cbor.decode!(response.body) ==
              Map.merge(transaction, %{
+               hash: Transaction.hash(transaction),
                return_code: nil,
                return_value: nil
              })
