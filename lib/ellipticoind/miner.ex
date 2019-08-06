@@ -5,10 +5,8 @@ defmodule Ellipticoind.Miner do
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.TransactionProcessor
 
-  def start_link([]), do: start_link()
-
-  def start_link() do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   def init(_init_arg) do
@@ -38,6 +36,15 @@ defmodule Ellipticoind.Miner do
   end
 
   def mine_next_block() do
+    mint()
+
+    case TransactionProcessor.process_new_block() do
+      :stopped -> nil
+      new_block -> hashfactor(new_block)
+    end
+  end
+
+  defp mint() do
     Transaction.post(%{
       contract_address: <<0::256>>,
       contract_name: :BaseToken,
@@ -46,11 +53,6 @@ defmodule Ellipticoind.Miner do
       arguments: [],
       sender: Configuration.public_key()
     })
-
-    case TransactionProcessor.process_new_block() do
-      :stopped -> nil
-      new_block -> hashfactor(new_block)
-    end
   end
 
   defp hashfactor(new_block) do
@@ -62,7 +64,8 @@ defmodule Ellipticoind.Miner do
         nil
 
       proof_of_work_value ->
-        Map.put(new_block, :proof_of_work_value, proof_of_work_value)
+        new_block
+        |> Map.put(:proof_of_work_value, proof_of_work_value)
         |> insert_block()
     end
   end
@@ -73,7 +76,6 @@ defmodule Ellipticoind.Miner do
     with {:ok, block} <- Repo.insert(changeset) do
       WebsocketHandler.broadcast(:blocks, block)
       P2P.broadcast(block)
-
       Logger.info("Mined block #{block.number}")
     end
 

@@ -15,7 +15,7 @@ defmodule Ellipticoind.Application do
 
     children =
       if Application.fetch_env!(:ellipticoind, :enable_miner) do
-        children ++ [Miner]
+        children ++ [{Miner, name: Miner}]
       else
         children
       end
