@@ -64,6 +64,7 @@ defmodule Test.Utils do
       }
       |> Map.merge(block_params)
       |> TransactionProcessor.process()
+      |> Map.get(:block)
       |> Map.get(:transactions)
       |> List.first()
       |> Map.take([

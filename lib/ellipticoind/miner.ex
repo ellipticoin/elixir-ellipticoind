@@ -3,7 +3,7 @@ defmodule Ellipticoind.Miner do
   use GenServer
   alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
-  alias Ellipticoind.TransactionProcessor
+  alias Ellipticoind.{TransactionProcessor, Storage, Memory}
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -40,9 +40,20 @@ defmodule Ellipticoind.Miner do
 
     case TransactionProcessor.process_new_block() do
       :stopped -> nil
-      new_block -> hashfactor(new_block)
+      %{
+        block: new_block,
+        memory_changeset: memory_changeset,
+        storage_changeset: storage_changeset,
+      } -> hashfactor(new_block)
+          |> case do
+            :stopped -> nil
+            proof_of_work_value ->
+              new_block
+              |> Map.put(:proof_of_work_value, proof_of_work_value)
+              |> insert_block(memory_changeset, storage_changeset)
+          end
+      end
     end
-  end
 
   defp mint() do
     Transaction.post(%{
@@ -59,19 +70,14 @@ defmodule Ellipticoind.Miner do
     new_block
     |> Block.as_binary_pre_pow()
     |> Hashfactor.run()
-    |> case do
-      :stopped -> nil
-      proof_of_work_value ->
-        new_block
-        |> Map.put(:proof_of_work_value, proof_of_work_value)
-        |> insert_block()
-    end
   end
 
-  defp insert_block(attributes) do
+  defp insert_block(attributes, memory_changeset, storage_changeset) do
     changeset = Block.changeset(%Block{}, attributes)
 
     with {:ok, block} <- Repo.insert(changeset) do
+      Memory.write_changeset(memory_changeset, block.number)
+      Storage.write_changeset(storage_changeset, block.number)
       WebsocketHandler.broadcast(:blocks, block)
       P2P.broadcast(block)
       Logger.info("Mined block #{block.number}")

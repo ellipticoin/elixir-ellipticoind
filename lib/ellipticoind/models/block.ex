@@ -7,7 +7,7 @@ defmodule Ellipticoind.Models.Block do
   alias Ellipticoind.{Repo, Miner}
   alias Ellipticoind.Models.Transaction
   alias Ellipticoind.Models.Block.Validations
-  alias Ellipticoind.TransactionProcessor
+  alias Ellipticoind.{TransactionProcessor, Storage, Memory}
 
   @primary_key false
   schema "blocks" do
@@ -29,31 +29,27 @@ defmodule Ellipticoind.Models.Block do
     field(:proof_of_work_value, :integer)
   end
 
-  def next_block_params() do
+  def build_next(attributes) do
     best_block = best()
 
     if best_block do
       %{
-        number: next_block_number(),
+        number: best_block.number + 1,
         parent: best_block
       }
     else
-      %{
-        number: 0
-      }
+      %{}
     end
     |> Map.merge(%{
       winner: Configuration.public_key()
     })
+    |> Map.merge(attributes)
   end
 
   def next_block_number() do
-    best_block = best()
-
-    if best_block do
-      best_block.number + 1
-    else
-      0
+    case best() do
+      nil -> 0
+      best -> best.number + 1
     end
   end
 
@@ -108,14 +104,19 @@ defmodule Ellipticoind.Models.Block do
 
   defp parent_hash(block),
     do:
-      if(Map.has_key?(block, :parent) && Ecto.assoc_loaded?(block.parent),
+      if(!is_nil(Map.get(block, :parent)) && Ecto.assoc_loaded?(block.parent),
         do: block.parent.hash
       )
 
   def apply(block) do
     if Validations.valid_next_block?(block) do
       Miner.stop()
-      TransactionProcessor.process(block)
+      %{
+        memory_changeset: memory_changeset,
+        storage_changeset: storage_changeset,
+      } = TransactionProcessor.process(block)
+      Memory.write_changeset(memory_changeset, block.number)
+      Storage.write_changeset(storage_changeset, block.number)
       Repo.insert!(block)
       Miner.cast_mine_next_block()
       WebsocketHandler.broadcast(:blocks, block)
