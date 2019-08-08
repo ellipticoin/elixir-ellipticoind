@@ -24,7 +24,8 @@ defmodule Ellipticoind.Models.Block do
     field(:number, :integer, default: 0)
     field(:total_burned, :integer, default: 0)
     field(:winner, :binary, default: <<0::256>>)
-    field(:changeset_hash, :binary, default: Crypto.hash(<<>>))
+    field(:memory_changeset_hash, :binary, default: Crypto.hash(<<>>))
+    field(:storage_changeset_hash, :binary, default: Crypto.hash(<<>>))
     field(:proof_of_work_value, :integer)
   end
 
@@ -73,7 +74,8 @@ defmodule Ellipticoind.Models.Block do
     |> cast(params, [
       :hash,
       :number,
-      :changeset_hash,
+      :memory_changeset_hash,
+      :storage_changeset_hash,
       :proof_of_work_value,
       :winner
     ])
@@ -81,7 +83,8 @@ defmodule Ellipticoind.Models.Block do
     |> cast_assoc(:transactions)
     |> validate_required([
       :hash,
-      :changeset_hash,
+      :memory_changeset_hash,
+      :storage_changeset_hash,
       :number,
       :proof_of_work_value,
       :winner

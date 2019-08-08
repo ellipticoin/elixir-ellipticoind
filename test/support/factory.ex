@@ -7,7 +7,6 @@ defmodule Ellipticoind.Factory do
     %Block{
       number: 0,
       winner: <<0::size(256)>>,
-      changeset_hash: Crypto.hash(<<>>)
     }
   end
 end

@@ -36,7 +36,8 @@ defmodule Ellipticoind.TransactionProcessor do
         Storage.write_changeset(storage_changeset, env.block_number)
 
         %{
-          changeset_hash: Crypto.hash(<<>>),
+          memory_changeset_hash: Crypto.hash(<<>>),
+          storage_changeset_hash: Crypto.hash(<<>>),
           transactions: transactions
         }
     end
@@ -69,7 +70,8 @@ defmodule Ellipticoind.TransactionProcessor do
 
         Block.next_block_params()
         |> Map.merge(%{
-          changeset_hash: Crypto.hash(<<>>),
+          memory_changeset_hash: Crypto.hash(<<>>),
+          storage_changeset_hash: Crypto.hash(<<>>),
           transactions: transactions
         })
     end

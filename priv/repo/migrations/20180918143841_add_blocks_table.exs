@@ -7,7 +7,8 @@ defmodule Ellipticoind.Repo.Migrations.AddBlocksTable do
       add :number, :integer
       add :total_burned, :integer
       add :winner, :binary
-      add :changeset_hash, :binary
+      add :memory_changeset_hash, :binary
+      add :storage_changeset_hash, :binary
       add :proof_of_work_value, :integer
     end
 
