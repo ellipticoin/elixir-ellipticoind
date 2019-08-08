@@ -77,7 +77,7 @@ defmodule Ellipticoind.Models.Transaction do
     |> Map.drop([
       :block_hash,
       :signature,
-      :id,
+      :id
     ])
   end
 

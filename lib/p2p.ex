@@ -1,7 +1,6 @@
 defmodule P2P do
   require Logger
   alias Ellipticoind.Models.{Block, Transaction}
-  alias Ellipticoind.Miner
   use GenServer
 
   def start_link(opts) do

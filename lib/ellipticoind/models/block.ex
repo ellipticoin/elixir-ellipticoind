@@ -30,15 +30,13 @@ defmodule Ellipticoind.Models.Block do
   end
 
   def build_next(attributes) do
-    best_block = best()
-
-    if best_block do
-      %{
-        number: best_block.number + 1,
-        parent: best_block
-      }
-    else
-      %{}
+    case best() do
+      nil -> %{}
+      best_block ->
+        %{
+          number: best_block.number + 1,
+          parent: best_block
+        }
     end
     |> Map.merge(%{
       winner: Configuration.public_key()
@@ -46,12 +44,12 @@ defmodule Ellipticoind.Models.Block do
     |> Map.merge(attributes)
   end
 
-  def next_block_number() do
-    case best() do
-      nil -> 0
-      best -> best.number + 1
-    end
-  end
+  def next_block_number(),
+    do:
+      (case(best()) do
+         nil -> 0
+         best -> best.number + 1
+       end)
 
   def best(query \\ __MODULE__),
     do:
@@ -111,10 +109,12 @@ defmodule Ellipticoind.Models.Block do
   def apply(block) do
     if Validations.valid_next_block?(block) do
       Miner.stop()
+
       %{
         memory_changeset: memory_changeset,
-        storage_changeset: storage_changeset,
+        storage_changeset: storage_changeset
       } = TransactionProcessor.process(block)
+
       Memory.write_changeset(memory_changeset, block.number)
       Storage.write_changeset(storage_changeset, block.number)
       Repo.insert!(block)
@@ -137,15 +137,15 @@ defmodule Ellipticoind.Models.Block do
         :hash,
         :total_burned
       ])
-      |> Map.update!(:transactions, (fn transactions ->
-        Enum.map(transactions, (fn transaction ->
+      |> Map.update!(:transactions, fn transactions ->
+        Enum.map(transactions, fn transaction ->
           Map.drop(transaction, [
             :block_hash,
             :hash,
             :signature,
-            :id,
+            :id
           ])
-        end))
-      end))
+        end)
+      end)
       |> Cbor.encode()
 end

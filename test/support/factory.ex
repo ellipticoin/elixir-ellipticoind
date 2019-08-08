@@ -6,7 +6,7 @@ defmodule Ellipticoind.Factory do
   def block_factory do
     %Block{
       number: 0,
-      winner: <<0::size(256)>>,
+      winner: <<0::size(256)>>
     }
   end
 end

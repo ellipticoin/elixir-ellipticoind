@@ -39,21 +39,26 @@ defmodule Ellipticoind.Miner do
     mint()
 
     case TransactionProcessor.process_new_block() do
-      :stopped -> nil
+      :stopped ->
+        nil
+
       %{
         block: new_block,
         memory_changeset: memory_changeset,
-        storage_changeset: storage_changeset,
-      } -> hashfactor(new_block)
-          |> case do
-            :stopped -> nil
-            proof_of_work_value ->
-              new_block
-              |> Map.put(:proof_of_work_value, proof_of_work_value)
-              |> insert_block(memory_changeset, storage_changeset)
-          end
-      end
+        storage_changeset: storage_changeset
+      } ->
+        hashfactor(new_block)
+        |> case do
+          :stopped ->
+            nil
+
+          proof_of_work_value ->
+            new_block
+            |> Map.put(:proof_of_work_value, proof_of_work_value)
+            |> insert_block(memory_changeset, storage_changeset)
+        end
     end
+  end
 
   defp mint() do
     Transaction.post(%{

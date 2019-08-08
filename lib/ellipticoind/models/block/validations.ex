@@ -8,13 +8,17 @@ defmodule Ellipticoind.Models.Block.Validations do
 
   def valid_proof_of_work_value?(proposed_block) do
     if !Hashfactor.valid_nonce?(
-      Block.as_binary_pre_pow(proposed_block),
-      proposed_block.proof_of_work_value
-    ) do
-    IO.inspect proposed_block
-    |> Block.as_binary_pre_pow()
-    |> Cbor.decode(), label: :invalid
+         Block.as_binary_pre_pow(proposed_block),
+         proposed_block.proof_of_work_value
+       ) do
+      IO.inspect(
+        proposed_block
+        |> Block.as_binary_pre_pow()
+        |> Cbor.decode(),
+        label: :invalid
+      )
     end
+
     Hashfactor.valid_nonce?(
       Block.as_binary_pre_pow(proposed_block),
       proposed_block.proof_of_work_value

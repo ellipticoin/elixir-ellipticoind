@@ -42,7 +42,7 @@ defmodule Ellipticoind.TransactionProcessor do
             transactions: transactions
           },
           memory_changeset: memory_changeset,
-          storage_changeset: storage_changeset,
+          storage_changeset: storage_changeset
         }
     end
   end
@@ -70,20 +70,23 @@ defmodule Ellipticoind.TransactionProcessor do
 
       [transactions, memory_changeset, storage_changeset] ->
         %{
-          block: Block.build_next(%{
-            memory_changeset_hash: Crypto.hash(<<>>),
-            storage_changeset_hash: Crypto.hash(<<>>),
-            transactions: transactions
-          }),
+          block:
+            Block.build_next(%{
+              memory_changeset_hash: Crypto.hash(<<>>),
+              storage_changeset_hash: Crypto.hash(<<>>),
+              transactions: transactions
+            }),
           memory_changeset: memory_changeset,
-          storage_changeset: storage_changeset,
+          storage_changeset: storage_changeset
         }
     end
   end
 
   def receive_native(port) do
     case receive_stop_or_message(port) do
-      :stop -> :stop
+      :stop ->
+        :stop
+
       message ->
         case List.to_string(message) do
           "debug: " <> message ->
@@ -105,7 +108,9 @@ defmodule Ellipticoind.TransactionProcessor do
 
   def receive_stop_or_message(_port, message \\ '') do
     receive do
-      :stop -> :stop
+      :stop ->
+        :stop
+
       {port, {:data, message_part}} ->
         if <<List.last(message_part)>> == "\n" do
           Enum.concat(message, message_part)
