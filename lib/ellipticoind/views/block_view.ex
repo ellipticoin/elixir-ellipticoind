@@ -5,11 +5,14 @@ defmodule Ellipticoind.Views.BlockView do
 
   def as_map(block) do
     block
-    |> Repo.preload(:transactions)
     |> Repo.preload(:parent)
-    |> Map.take(Block.__schema__(:fields))
+    |> Map.take(Block.__schema__(:fields) ++ [:transactions])
     |> Map.update(:transactions, [], fn transactions ->
-      Enum.map(transactions, &TransactionView.as_map/1)
+      if Ecto.assoc_loaded?(transactions) do
+        Enum.map(transactions, &TransactionView.as_map/1)
+      else
+        []
+      end
     end)
     |> Map.put(:parent_hash, if(Ecto.assoc_loaded?(block.parent), do: block.parent.hash))
   end

@@ -22,9 +22,9 @@ fn main() {
     let stdin = io::stdin();
     stdin.lock().read_line(&mut line).expect("Could not read line");
     let data = base64::decode(&line.trim_end_matches("\n")).unwrap();
-    let mut rng = rand::thread_rng();
-    let random = rng.gen_range(0, 10000);
-    std::thread::sleep(std::time::Duration::from_millis(random));
+    // let mut rng = rand::thread_rng();
+    // let random = rng.gen_range(0, 10000);
+    // std::thread::sleep(std::time::Duration::from_millis(random));
     let nonce = hashfactor(data, target_number_of_hashes);
     println!("{}", nonce);
 }
