@@ -64,6 +64,7 @@ fn process_existing_block() {
         let completed_transaction = run_transaction(&redis, &rocksdb, &transaction, &env, &mut memory_changeset, &mut storage_changeset);
         completed_transactions.push(completed_transaction);
     }
+    completed_transactions.reverse();
     return_completed_transactions(completed_transactions, memory_changeset, storage_changeset);
 }
 

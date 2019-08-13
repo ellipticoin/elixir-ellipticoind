@@ -3,6 +3,7 @@ defmodule Ellipticoind.Miner do
   use GenServer
   alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Views.BlockView
   alias Ellipticoind.{TransactionProcessor, Storage, Memory}
 
   def start_link(opts) do
@@ -72,8 +73,9 @@ defmodule Ellipticoind.Miner do
   end
 
   defp hashfactor(new_block) do
-    new_block
-    |> Block.as_binary_pre_pow()
+    struct(%Block{}, new_block)
+    |> BlockView.as_map_pre_pow()
+    |> Cbor.encode()
     |> Hashfactor.run()
   end
 

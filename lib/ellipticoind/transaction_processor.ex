@@ -1,7 +1,8 @@
 defmodule Ellipticoind.TransactionProcessor do
   @crate "transaction_processor"
   import NativeModule
-  alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Models.Block
+  alias Ellipticoind.Views.TransactionView
   alias Ellipticoind.{Memory, Storage}
 
   def process(block, env \\ %{}) do
@@ -23,7 +24,7 @@ defmodule Ellipticoind.TransactionProcessor do
           Configuration.rocksdb_path(),
           env |> Cbor.encode() |> Base.encode64()
         ],
-        Enum.map(block.transactions, &Transaction.as_map/1)
+        Enum.map(block.transactions, &TransactionView.as_map/1)
       )
 
     case receive_native(port) do

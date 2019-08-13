@@ -2,6 +2,7 @@ defmodule Ellipticoind.Models.Transaction do
   use Ecto.Schema
   alias Ecto.Changeset
   alias Ellipticoind.Ecto.Types
+  alias Ellipticoind.Views.TransactionView
   import Ecto.Changeset
 
   schema "transactions" do
@@ -46,13 +47,8 @@ defmodule Ellipticoind.Models.Transaction do
     end
   end
 
-  def as_map_with_hash(transaction) do
-    if Map.has_key?(transaction, :hash) do
-      as_map(transaction)
-    else
-      as_map(transaction)
-      |> Map.put(:hash, Map.get(transaction, :hash))
-    end
+  def as_binary(block) do
+    Cbor.encode(TransactionView.as_map(block))
   end
 
   def hash(params) do
@@ -65,29 +61,13 @@ defmodule Ellipticoind.Models.Transaction do
     |> Crypto.hash()
   end
 
-  def as_binary(block),
-    do:
-      as_map(block)
-      |> Cbor.encode()
-
-  def as_map(attributes) do
-    fields = __schema__(:fields)
-
-    Map.take(attributes, fields)
-    |> Map.drop([
-      :block_hash,
-      :signature,
-      :id
-    ])
-  end
-
   def sign(transaction, private_key) do
     sender = Crypto.private_key_to_public_key(private_key)
 
     signature =
       transaction
       |> Map.put(:sender, sender)
-      |> as_map()
+      |> TransactionView.as_map()
       |> Crypto.sign(private_key)
 
     Map.merge(transaction, %{
@@ -99,7 +79,11 @@ defmodule Ellipticoind.Models.Transaction do
   def from_signed_transaction(signed_transaction) do
     {signature, transaction} = Map.pop(signed_transaction, :signature)
 
-    if Crypto.valid_signature?(signature, as_binary(transaction), signed_transaction.sender) do
+    if Crypto.valid_signature?(
+         signature,
+         Cbor.encode(TransactionView.as_map(transaction)),
+         signed_transaction.sender
+       ) do
       {:ok, struct(__MODULE__, transaction)}
     else
       {:error, :invalid_signature}
@@ -107,6 +91,6 @@ defmodule Ellipticoind.Models.Transaction do
   end
 
   def post(transaction) do
-    Redis.push("transactions::queued", [as_binary(transaction)])
+    Redis.push("transactions::queued", [Cbor.encode(TransactionView.as_map(transaction))])
   end
 end

@@ -1,5 +1,6 @@
 defmodule Ellipticoind.Models.Block.Validations do
   alias Ellipticoind.Models.Block
+  alias Ellipticoind.Views.BlockView
 
   def valid_next_block?(proposed_block) do
     valid_proof_of_work_value?(proposed_block) &&
@@ -7,20 +8,8 @@ defmodule Ellipticoind.Models.Block.Validations do
   end
 
   def valid_proof_of_work_value?(proposed_block) do
-    if !Hashfactor.valid_nonce?(
-         Block.as_binary_pre_pow(proposed_block),
-         proposed_block.proof_of_work_value
-       ) do
-      IO.inspect(
-        proposed_block
-        |> Block.as_binary_pre_pow()
-        |> Cbor.decode(),
-        label: :invalid
-      )
-    end
-
     Hashfactor.valid_nonce?(
-      Block.as_binary_pre_pow(proposed_block),
+      Cbor.encode(BlockView.as_map_pre_pow(proposed_block)),
       proposed_block.proof_of_work_value
     )
   end

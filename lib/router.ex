@@ -11,6 +11,7 @@ defmodule Router do
   alias Ellipticoind.Plug.CBOR
   alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Views.{BlockView, TransactionView}
 
   plug(CORSPlug)
 
@@ -39,7 +40,7 @@ defmodule Router do
 
     if transaction do
       resp =
-        Transaction.as_map(transaction)
+        TransactionView.as_map(transaction)
         |> Cbor.encode()
 
       send_resp(conn, 200, resp)
@@ -49,13 +50,11 @@ defmodule Router do
   end
 
   get "/blocks/:hash" do
-    resp =
-      Block
-      |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
-      |> Repo.preload(:transactions)
-      |> Block.as_binary()
-
-    send_resp(conn, 200, resp)
+    Block
+    |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
+    |> Repo.preload(:transactions)
+    |> BlockView.as_map()
+    |> render_success(conn)
   end
 
   get "/memory/:key" do
@@ -76,7 +75,7 @@ defmodule Router do
       Block.latest(limit)
       |> Repo.all()
       |> Repo.preload(:transactions)
-      |> Enum.map(&Block.as_map/1)
+      |> Enum.map(&BlockView.as_map/1)
 
     send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))
   end
@@ -88,7 +87,7 @@ defmodule Router do
         Transaction.post(transaction)
 
         transaction_hash =
-          Transaction.as_map(transaction)
+          TransactionView.as_map(transaction)
           |> Map.delete(:hash)
           |> Transaction.hash()
 
