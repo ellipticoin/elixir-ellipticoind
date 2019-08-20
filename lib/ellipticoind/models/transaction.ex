@@ -14,6 +14,7 @@ defmodule Ellipticoind.Models.Transaction do
     field(:arguments, Types.Cbor)
     field(:sender, :binary)
     field(:nonce, :integer)
+    field(:gas_limit, :integer)
     field(:return_code, :integer)
     field(:return_value, Types.Cbor)
     field(:signature, :binary)
@@ -24,6 +25,7 @@ defmodule Ellipticoind.Models.Transaction do
     |> cast(attrs, [
       :sender,
       :nonce,
+      :gas_limit,
       :block_hash,
       :contract_address,
       :contract_name,

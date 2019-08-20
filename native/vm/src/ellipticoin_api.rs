@@ -1,8 +1,13 @@
-use serde_cbor::{from_slice, to_vec, Value};
+use metered_wasmi::Error as InterpreterError;
+use metered_wasmi::*;
+use serde_cbor::to_vec;
 use std::str;
 use vm::*;
-use wasmi::Error as InterpreterError;
-use wasmi::*;
+use env::Env;
+use transaction::Transaction;
+use memory::Memory;
+use storage::Storage;
+use gas_costs;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
@@ -16,116 +21,82 @@ const THROW_FUNC_INDEX: usize = 8;
 const CALL_FUNC_INDEX: usize = 9;
 const LOG_WRITE: usize = 10;
 
-pub struct EllipticoinAPI;
 
-impl EllipticoinAPI {
-    pub fn new_module(code: &[u8]) -> ModuleRef {
-        let module = Module::from_buffer(code).unwrap();
+pub struct EllipticoinImportResolver;
+pub struct EllipticoinExternals<'a> {
+    pub memory: &'a mut Memory<'a>,
+    pub storage: &'a mut Storage<'a>,
+    pub transaction: &'a Transaction,
+    pub gas: Option<u32>,
+    pub env: &'a Env,
+}
 
-        let mut imports = ImportsBuilder::new();
-        imports.push_resolver("env", &EllipticoinAPI);
-        ModuleInstance::new(&module, &imports)
-            .expect("Failed to instantiate module")
-            .run_start(&mut NopExternals)
-            .expect("Failed to run start function in module")
+impl<'a> EllipticoinExternals<'a> {
+    pub fn new(
+        memory: &'a mut Memory<'a>,
+        storage: &'a mut Storage<'a>,
+        transaction: &'a Transaction,
+        gas: Option<u32>,
+        env: &'a Env,
+    ) -> EllipticoinExternals<'a> {
+        EllipticoinExternals {
+            memory,
+            storage,
+            transaction,
+            env,
+            gas,
+        }
     }
 
     pub fn invoke_index(
         vm: &mut VM,
         index: usize,
         args: RuntimeArgs,
-    ) -> Result<Option<RuntimeValue>, Trap> {
+    ) -> Result<Option<RuntimeValue>, metered_wasmi::Trap> {
         match index {
-            SENDER_FUNC_INDEX => Ok(Some(
-                vm.write_pointer(vm.transaction.sender.to_vec()).into(),
-            )),
+            SENDER_FUNC_INDEX => {
+                vm.write_pointer(vm.externals.transaction.sender.to_vec())
+            },
             BLOCK_HASH_FUNC_INDEX => {
-                let block_hash: serde_cbor::Value = vm.env.block_hash.clone().into();
+                let block_hash: serde_cbor::Value = vm.externals.env.block_hash.clone().into();
 
-                Ok(Some(vm.write_pointer(to_vec(&block_hash).unwrap()).into()))
+                vm.write_pointer(to_vec(&block_hash).unwrap())
             }
             BLOCK_NUMBER_FUNC_INDEX => {
-                let block_number: serde_cbor::Value = vm.env.block_number.into();
-
-                Ok(Some(
-                    vm.write_pointer(to_vec(&block_number).unwrap()).into(),
-                ))
+                let block_number: serde_cbor::Value = vm.externals.env.block_number.into();
+                vm.write_pointer(to_vec(&block_number).unwrap())
             }
             BLOCK_WINNER_FUNC_INDEX => {
-                Ok(Some(vm.write_pointer(vm.env.block_winner.clone()).into()))
+                vm.write_pointer(vm.externals.env.block_winner.clone())
             }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm
-                    .memory_changeset
-                    .get(&[vm.transaction.namespace(), key.clone()].concat())
-                    .unwrap_or(&vm.memory.get(key.as_slice()))
-                    .to_vec();
-
-                Ok(Some(vm.write_pointer(value).into()))
+                let value: Vec<u8> = vm.externals.memory.get(&key);
+                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::GET_BYTE_MEMORY)?;
+                vm.write_pointer(value)
             }
             SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.memory_changeset
-                    .insert([vm.transaction.namespace(), key].concat(), value);
-
+                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::SET_BYTE_MEMORY)?;
+                vm.externals.memory.set(key, value);
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm
-                    .storage_changeset
-                    .get(&[vm.transaction.namespace(), key.clone()].concat())
-                    .unwrap_or(&vm.storage.get(key.as_slice()))
-                    .to_vec();
-
-                Ok(Some(vm.write_pointer(value).into()))
+                let value: Vec<u8> = vm.externals.storage.get(&key);
+                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::GET_BYTE_STORAGE)?;
+                vm.write_pointer(value)
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.storage_changeset
-                    .insert([vm.transaction.namespace(), key].concat(), value);
-
+                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::SET_BYTE_STORAGE)?;
+                vm.externals.storage.set(key, value);
                 Ok(None)
             }
             THROW_FUNC_INDEX => Ok(None),
-            CALL_FUNC_INDEX => {
-                let code = vm.read_pointer(args.nth(0));
-                let method = vm.read_pointer(args.nth(1));
-                let args_value = from_slice::<Value>(&vm.read_pointer(args.nth(2))).unwrap();
-                if let Value::Array(args_iter) = args_value {
-                    let _storage = vm.read_pointer(args.nth(3));
-
-                    let module = EllipticoinAPI::new_module(&code);
-                    let mut inner_vm = VM::new(
-                        vm.memory_changeset,
-                        vm.memory,
-                        vm.storage_changeset,
-                        vm.storage,
-                        vm.env,
-                        vm.transaction,
-                        &module,
-                    );
-                    let mut args = Vec::new();
-                    for arg in args_iter {
-                        if let Value::Integer(integer_arg) = arg {
-                            args.push(RuntimeValue::I32(integer_arg as i32));
-                        } else {
-                            let arg_pointer = inner_vm.write_pointer(to_vec(&arg).unwrap());
-                            args.push(RuntimeValue::I32(arg_pointer as i32));
-                        }
-                    }
-
-                    let result_ptr = inner_vm.call(str::from_utf8(&method).unwrap(), &args);
-
-                    let result = inner_vm.read_pointer(result_ptr).clone();
-                    Ok(Some(vm.write_pointer(result.to_vec()).into()))
-                } else {
-                    Ok(None)
-                }
-            }
+            CALL_FUNC_INDEX => Ok(None),
             LOG_WRITE => {
                 let _log_level = vm.read_pointer(args.nth(0));
                 let message = vm.read_pointer(args.nth(1));
@@ -135,9 +106,22 @@ impl EllipticoinAPI {
             _ => panic!("unknown function index"),
         }
     }
+
 }
 
-impl<'a> ModuleImportResolver for EllipticoinAPI {
+fn use_gas_for_external(externals: &mut EllipticoinExternals, amount: u32) -> Result<(), metered_wasmi::TrapKind>{
+    if let Some(gas) = externals.gas {
+        if gas < amount {
+            Err(TrapKind::OutOfGas)
+        } else {
+            Ok(externals.gas = Some(gas - amount))
+        }
+    } else {
+        Ok(())
+    }
+}
+
+impl<'a> ModuleImportResolver for EllipticoinImportResolver {
     fn resolve_func(
         &self,
         field_name: &str,
@@ -199,7 +183,7 @@ impl<'a> ModuleImportResolver for EllipticoinAPI {
             _ => {
                 return Err(InterpreterError::Function(format!(
                     "host module doesn't export function with name {}",
-                    field_name
+                    field_name.to_string()
                 )));
             }
         };

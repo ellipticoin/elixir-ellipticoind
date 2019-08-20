@@ -128,6 +128,7 @@ defmodule Test.Utils do
       contract_name: :BaseToken,
       arguments: [],
       nonce: 0,
+      gas_limit: 100000000,
       sender: <<0>>
     }
 

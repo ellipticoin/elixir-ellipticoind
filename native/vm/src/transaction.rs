@@ -1,41 +1,15 @@
 extern crate base64;
-use block_index::BlockIndex;
-use ellipticoin_api::EllipticoinAPI;
-use env::Env;
-use heck::SnakeCase;
-use memory::Memory;
+pub use metered_wasmi::{isa, FunctionContext, RuntimeValue, NopExternals, Module, ModuleInstance, ImportsBuilder};
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
-use std::mem::transmute;
+use changeset::Changeset;
+use env::Env;
+use memory::Memory;
+use block_index::BlockIndex;
 use storage::Storage;
-
-use vm::VM;
-const BASE_CONTRACTS_PATH: &str = "base_contracts";
-const USER_CONTRACTS_NAME: &str = "UserContracts";
-
-lazy_static! {
-    static ref SYSTEM_ADDRESS: Vec<u8> = vec![0; 32];
-}
-lazy_static! {
-    static ref SYSTEM_CONTRACTS: HashMap<&'static str, Vec<u8>> = {
-        let system_contracts = vec!["BaseApi", "BaseToken", USER_CONTRACTS_NAME];
-        system_contracts
-            .iter()
-            .map(|&system_contract| {
-                let filename = format!("{}.wasm", system_contract.clone().to_snake_case());
-                let mut file = File::open(format!("{}/{}", BASE_CONTRACTS_PATH, filename)).unwrap();
-                let mut buffer = Vec::new();
-                file.read_to_end(&mut buffer).unwrap();
-                (system_contract, buffer)
-            })
-            .collect()
-    };
-}
-use serde_cbor::to_vec;
-pub use wasmi::RuntimeValue;
+use vm::{VM, new_module_instance};
+use result::{Result, self};
+use ellipticoin_api::EllipticoinExternals;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Transaction {
@@ -45,11 +19,11 @@ pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
     pub nonce: u64,
+    pub gas_limit: u64,
     pub function: String,
     pub arguments: Vec<Value>,
 }
 
-pub type Changeset = HashMap<Vec<u8>, Vec<u8>>;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CompletedTransaction {
     #[serde(with = "serde_bytes")]
@@ -58,157 +32,58 @@ pub struct CompletedTransaction {
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
     pub nonce: u64,
+    pub gas_limit: u64,
     pub function: String,
     pub arguments: Vec<Value>,
     pub return_value: Value,
     pub return_code: u32,
 }
+
 impl Transaction {
     pub fn namespace(&self) -> Vec<u8> {
-        namespace(&self.contract_address, &self.contract_name)
+        let mut contract_name_bytes = self.contract_name.as_bytes().to_vec();
+        let contract_name_len = contract_name_bytes.clone().len();
+        contract_name_bytes.extend_from_slice(&vec![0; 32 - contract_name_len]);
+        [self.contract_address.clone(), contract_name_bytes.to_vec()].concat()
     }
-}
-fn namespace(contract_address: &[u8], contract_name_string: &str) -> Vec<u8> {
-    let mut contract_name = contract_name_string.as_bytes().to_vec();
-    let contract_name_len = contract_name.clone().len();
-    contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
-    [contract_address.clone(), &contract_name.to_vec()].concat()
-}
 
-pub fn run_in_vm(
-    mut memory_changeset: &mut Changeset,
-    mut storage_changeset: &mut Changeset,
-    transaction: &Transaction,
-    redis: &redis::Connection,
-    rocksdb: &rocksdb::ReadOnlyDB,
-    env: &Env,
-) -> (u32, Value) {
-    let block_index = BlockIndex::new(redis);
-    let memory = Memory::new(redis, &block_index, transaction.namespace());
-    let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
-    let code = storage_changeset
-        .get(&[transaction.namespace(), "_code".as_bytes().to_vec()].concat())
-        .unwrap_or(&storage.get("_code".as_bytes()))
-        .to_vec();
-    if code.len() == 0 {
-        return (
-            1,
-            format!("{} not found", transaction.contract_name.to_string()).into(),
+    pub fn run(
+        &self,
+        redis: &redis::Connection,
+        rocksdb: &rocksdb::ReadOnlyDB,
+        env: &Env,
+        memory_changeset: &mut Changeset,
+        storage_changeset: &mut Changeset,
+    ) -> (Result, Option<u32>) {
+        let block_index = BlockIndex::new(redis);
+        let mut memory = Memory::new(
+            redis,
+            &block_index,
+            memory_changeset,
+            self.namespace()
         );
-    }
-    let module = EllipticoinAPI::new_module(&code);
-
-    let mut vm = VM::new(
-        &mut memory_changeset,
-        &memory,
-        &mut storage_changeset,
-        &storage,
-        &env,
-        transaction,
-        &module,
-    );
-    let arguments: Vec<RuntimeValue> = transaction
-        .arguments
-        .iter()
-        .map(|arg| {
-            let arg_vec = to_vec(arg).unwrap();
-            let arg_pointer = vm.write_pointer(arg_vec);
-            RuntimeValue::I32(arg_pointer as i32)
-        })
-        .collect();
-    let pointer = vm.call(&transaction.function, &arguments);
-    let result = vm.read_pointer(pointer);
-    if result.len() == 0 {
-        println!("debug: result length was 0");
-        (1, "vm error".to_string().into())
-    } else {
-        let result_clone = result.clone();
-        let (return_code_bytes, return_value_bytes) = result_clone.split_at(4);
-        let mut return_code_bytes_fixed: [u8; 4] = Default::default();
-        if result.len() == 0 {
-            println!("debug: return_code_bytes length was 0");
-            (1, "vm error".to_string().into())
-        } else {
-            return_code_bytes_fixed.copy_from_slice(&return_code_bytes[0..4]);
-            let return_code: u32 = unsafe { transmute(return_code_bytes_fixed) };
-            let return_value: Value = serde_cbor::from_slice(return_value_bytes).unwrap();
-
-            (return_code, return_value)
-        }
-    }
-}
-
-pub fn run_system_contract(
-    memory_changeset: &mut Changeset,
-    storage_changeset: &mut Changeset,
-    transaction: &Transaction,
-    redis: &redis::Connection,
-    rocksdb: &rocksdb::ReadOnlyDB,
-    env: &Env,
-) -> (u32, Value) {
-    match transaction.function.as_str() {
-        "create_contract" => {
-            if let Value::Text(contract_name) = &transaction.arguments[0] {
-                if let serde_cbor::Value::Bytes(code) = &transaction.arguments[1] {
-                    let namespace = namespace(&transaction.sender, &contract_name);
-                    storage_changeset.insert(
-                        [namespace, "_code".as_bytes().to_vec()].concat(),
-                        code.to_vec(),
-                    );
-                    if let serde_cbor::Value::Array(arguments) = &transaction.arguments[2] {
-                        run_in_vm(
-                            memory_changeset,
-                            storage_changeset,
-                            &Transaction {
-                                function: "constructor".to_string(),
-                                arguments: arguments.to_vec(),
-                                sender: transaction.sender.clone(),
-                                nonce: transaction.nonce,
-                                contract_name: contract_name.to_string(),
-                                contract_address: transaction.sender.clone(),
-                            },
-                            redis,
-                            rocksdb,
-                            env,
-                        )
-                    } else {
-                        (0, Value::Null)
-                    }
-                } else {
-                    (0, Value::Null)
-                }
-            } else {
-                (0, Value::Null)
-            }
-        }
-        _ => (0, Value::Null),
-    }
-}
-pub fn run_transaction(
-    transaction: &Transaction,
-    redis: &redis::Connection,
-    rocksdb: &rocksdb::ReadOnlyDB,
-    env: &Env,
-    mut memory_changeset: &mut Changeset,
-    mut storage_changeset: &mut Changeset,
-) -> (u32, Value) {
-    if transaction.contract_address == [0; 32] && transaction.contract_name == "system" {
-        run_system_contract(
-            &mut memory_changeset,
+        let mut storage = Storage::new(
+            rocksdb,
+            &block_index,
             storage_changeset,
-            transaction,
-            redis,
-            rocksdb,
-            env,
-        )
-    } else {
-        run_in_vm(
-            &mut memory_changeset,
-            &mut storage_changeset,
-            transaction,
-            redis,
-            rocksdb,
-            env,
-        )
+            self.namespace(),
+        );
+        let code = storage.get(&"_code".as_bytes().to_vec());
+        if code.len() == 0 {
+            return (result::contract_not_found(self), None);
+        }
+        let module_instance = new_module_instance(code);
+        let mut externals = EllipticoinExternals {
+            memory: &mut memory,
+            storage: &mut storage,
+            env: &env,
+            transaction: self,
+            gas: Some(self.gas_limit as u32)
+        };
+        let mut vm = VM::new(
+            &module_instance,
+            &mut externals,
+        );
+        vm.call(&self.function, self.arguments.clone())
     }
 }

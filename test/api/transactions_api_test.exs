@@ -16,6 +16,7 @@ defmodule API.TransactionsApiTest do
       contract_name: :test,
       contract_address: <<0::256>>,
       nonce: 0,
+      gas_limit: 100000000,
       sender: public_key,
       function: :function,
       arguments: []
@@ -43,6 +44,7 @@ defmodule API.TransactionsApiTest do
       contract_name: :test,
       contract_address: <<0::256>>,
       nonce: 0,
+      gas_limit: 100000000,
       function: :function,
       arguments: []
     }

@@ -66,6 +66,7 @@ defmodule Ellipticoind.Miner do
       contract_address: <<0::256>>,
       contract_name: :BaseToken,
       nonce: 0,
+      gas_limit: 100000000,
       function: :mint,
       arguments: [],
       sender: Configuration.public_key()

@@ -21,17 +21,23 @@ defmodule Integration.MiningTest do
 
   test "mining a block" do
     P2P.Transport.Test.subscribe_to_test_broadcasts(self())
+    base_reward = 640000
+    mint_gas_cost = 80163
+    transfer_gas_cost = 129378
+    alices_initial_balance = 1000000
+    bobs_initial_balance = 1000000
 
     set_balances(%{
-      @alice => 100,
-      @bob => 100
+      @alice => alices_initial_balance,
+      @bob => bobs_initial_balance,
     })
 
     post(
       %{
-        nonce: 1,
+        nonce: 2,
+        gas_limit: 100000000,
         function: :transfer,
-        arguments: [@bob, 50]
+        arguments: [@bob, 50000],
       },
       @alices_private_key
     )
@@ -82,7 +88,7 @@ defmodule Integration.MiningTest do
                  sender: Configuration.public_key()
                },
                %{
-                 arguments: [@bob, 50],
+                 arguments: [@bob, 50000],
                  contract_address: <<0::256>>,
                  contract_name: :BaseToken,
                  function: :transfer,
@@ -99,8 +105,8 @@ defmodule Integration.MiningTest do
     refute new_block.hash == <<0::256>>
     refute Map.has_key?(new_block, :parent_hash)
 
-    assert get_balance(@alice) == 50
-    assert get_balance(Configuration.public_key()) == 640_000
+    assert get_balance(@alice) == alices_initial_balance - transfer_gas_cost - 50000
+    assert get_balance(Configuration.public_key()) == base_reward + transfer_gas_cost + mint_gas_cost
   end
 
   test "a new block is mined on the parent chain and another ellipticoind is the winner" do
@@ -113,6 +119,7 @@ defmodule Integration.MiningTest do
       %Transaction{
         block_hash: nil,
         nonce: 1,
+        gas_limit: 100000000,
         contract_name: :BaseToken,
         contract_address: <<0::256>>,
         function: :transfer,
@@ -124,8 +131,8 @@ defmodule Integration.MiningTest do
 
     block = %Block{
       number: 0,
-      proof_of_work_value: 0,
       hash: <<0::256>>,
+      proof_of_work_value: 7,
       memory_changeset_hash:
         Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
       storage_changeset_hash:
@@ -145,6 +152,7 @@ defmodule Integration.MiningTest do
       %{
         contract_name: :system,
         nonce: 0,
+        gas_limit: 100000000,
         function: :create_contract,
         arguments: [:test_contract, test_contract_code(:constructor), [<<1, 2, 3>>]]
       },
@@ -158,5 +166,32 @@ defmodule Integration.MiningTest do
     key = Storage.to_key(@alice, :test_contract, "value")
     {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
     assert body == <<1, 2, 3>>
+  end
+
+  test "transaction runs out of gas" do
+    P2P.Transport.Test.subscribe_to_test_broadcasts(self())
+    alices_initial_balance = 100000
+    bobs_initial_balance = 100000
+    gas_cost = 31490
+
+    set_balances(%{
+      @alice => alices_initial_balance,
+      @bob => bobs_initial_balance,
+    })
+
+    post(
+      %{
+        nonce: 2,
+        gas_limit: gas_cost - 1,
+        function: :transfer,
+        arguments: [@bob, 50000],
+      },
+      @alices_private_key
+    )
+
+    Miner.mine_next_block()
+
+    assert get_balance(@alice) == alices_initial_balance - (gas_cost - 1)
+    assert get_balance(@bob) == bobs_initial_balance
   end
 end

@@ -8,6 +8,7 @@ defmodule Ellipticoind.Repo.Migrations.CreateTransactions do
       add :contract_address, :binary
       add :contract_name, :varchar
       add :sender, :binary
+      add :gas_limit, :integer
       add :nonce, :integer
       add :function, :varchar
       add :arguments, :binary
