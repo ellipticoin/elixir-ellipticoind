@@ -4,13 +4,13 @@ use ellipticoin_api::EllipticoinAPI;
 use env::Env;
 use heck::SnakeCase;
 use memory::Memory;
-use storage::Storage;
 use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::mem::transmute;
+use storage::Storage;
 
 use vm::VM;
 const BASE_CONTRACTS_PATH: &str = "base_contracts";
@@ -64,32 +64,49 @@ pub struct CompletedTransaction {
     pub return_code: u32,
 }
 impl Transaction {
-    pub fn namespace(&self) -> Vec<u8>{
+    pub fn namespace(&self) -> Vec<u8> {
         namespace(&self.contract_address, &self.contract_name)
     }
 }
-fn namespace(contract_address: &[u8], contract_name_string: &str)
--> Vec<u8> {
+fn namespace(contract_address: &[u8], contract_name_string: &str) -> Vec<u8> {
     let mut contract_name = contract_name_string.as_bytes().to_vec();
     let contract_name_len = contract_name.clone().len();
     contract_name.extend_from_slice(&vec![0; 32 - contract_name_len]);
     [contract_address.clone(), &contract_name.to_vec()].concat()
 }
 
-pub fn run_in_vm(mut memory_changeset: &mut Changeset, mut storage_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env) -> (u32, Value) {
+pub fn run_in_vm(
+    mut memory_changeset: &mut Changeset,
+    mut storage_changeset: &mut Changeset,
+    transaction: &Transaction,
+    redis: &redis::Connection,
+    rocksdb: &rocksdb::ReadOnlyDB,
+    env: &Env,
+) -> (u32, Value) {
     let block_index = BlockIndex::new(redis);
     let memory = Memory::new(redis, &block_index, transaction.namespace());
     let storage = Storage::new(rocksdb, &block_index, transaction.namespace());
-    let code = storage_changeset.get(
-        &[transaction.namespace(), "_code".as_bytes().to_vec()].concat(),
-        )
-        .unwrap_or(&storage.get("_code".as_bytes())).to_vec();
+    let code = storage_changeset
+        .get(&[transaction.namespace(), "_code".as_bytes().to_vec()].concat())
+        .unwrap_or(&storage.get("_code".as_bytes()))
+        .to_vec();
     if code.len() == 0 {
-        return (1, format!("{} not found", transaction.contract_name.to_string()).into())
+        return (
+            1,
+            format!("{} not found", transaction.contract_name.to_string()).into(),
+        );
     }
     let module = EllipticoinAPI::new_module(&code);
 
-    let mut vm = VM::new(&mut memory_changeset, &memory, &mut storage_changeset, &storage, &env, transaction, &module);
+    let mut vm = VM::new(
+        &mut memory_changeset,
+        &memory,
+        &mut storage_changeset,
+        &storage,
+        &env,
+        transaction,
+        &module,
+    );
     let arguments: Vec<RuntimeValue> = transaction
         .arguments
         .iter()
@@ -121,7 +138,14 @@ pub fn run_in_vm(mut memory_changeset: &mut Changeset, mut storage_changeset: &m
     }
 }
 
-pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: &mut Changeset, transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env) -> (u32, Value) {
+pub fn run_system_contract(
+    memory_changeset: &mut Changeset,
+    storage_changeset: &mut Changeset,
+    transaction: &Transaction,
+    redis: &redis::Connection,
+    rocksdb: &rocksdb::ReadOnlyDB,
+    env: &Env,
+) -> (u32, Value) {
     match transaction.function.as_str() {
         "create_contract" => {
             if let Value::Text(contract_name) = &transaction.arguments[0] {
@@ -129,7 +153,7 @@ pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: 
                     let namespace = namespace(&transaction.sender, &contract_name);
                     storage_changeset.insert(
                         [namespace, "_code".as_bytes().to_vec()].concat(),
-                        code.to_vec()
+                        code.to_vec(),
                     );
                     if let serde_cbor::Value::Array(arguments) = &transaction.arguments[2] {
                         run_in_vm(
@@ -142,7 +166,11 @@ pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: 
                                 nonce: transaction.nonce,
                                 contract_name: contract_name.to_string(),
                                 contract_address: transaction.sender.clone(),
-                            }, redis, rocksdb, env)
+                            },
+                            redis,
+                            rocksdb,
+                            env,
+                        )
                     } else {
                         (0, Value::Null)
                     }
@@ -153,14 +181,34 @@ pub fn run_system_contract(memory_changeset: &mut Changeset, storage_changeset: 
                 (0, Value::Null)
             }
         }
-        _ => (0, Value::Null)
+        _ => (0, Value::Null),
     }
 }
-pub fn run_transaction(transaction: &Transaction, redis: &redis::Connection, rocksdb: &rocksdb::ReadOnlyDB, env: &Env, mut memory_changeset: &mut Changeset, mut storage_changeset: &mut Changeset) -> (u32, Value) {
-    if transaction.contract_address == [0; 32] &&
-        transaction.contract_name == "system" {
-        run_system_contract(&mut memory_changeset, storage_changeset, transaction, redis, rocksdb, env)
+pub fn run_transaction(
+    transaction: &Transaction,
+    redis: &redis::Connection,
+    rocksdb: &rocksdb::ReadOnlyDB,
+    env: &Env,
+    mut memory_changeset: &mut Changeset,
+    mut storage_changeset: &mut Changeset,
+) -> (u32, Value) {
+    if transaction.contract_address == [0; 32] && transaction.contract_name == "system" {
+        run_system_contract(
+            &mut memory_changeset,
+            storage_changeset,
+            transaction,
+            redis,
+            rocksdb,
+            env,
+        )
     } else {
-        run_in_vm(&mut memory_changeset, &mut storage_changeset, transaction, redis, rocksdb, env)
+        run_in_vm(
+            &mut memory_changeset,
+            &mut storage_changeset,
+            transaction,
+            redis,
+            rocksdb,
+            env,
+        )
     }
 }

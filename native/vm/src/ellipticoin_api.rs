@@ -56,39 +56,37 @@ impl EllipticoinAPI {
             }
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.memory_changeset.get(
-                    &[vm.transaction.namespace(), key.clone()].concat(),
-                )
-                    .unwrap_or(&vm.memory.get(key.as_slice())).to_vec();
+                let value: Vec<u8> = vm
+                    .memory_changeset
+                    .get(&[vm.transaction.namespace(), key.clone()].concat())
+                    .unwrap_or(&vm.memory.get(key.as_slice()))
+                    .to_vec();
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.memory_changeset.insert(
-                    [vm.transaction.namespace(), key].concat(),
-                    value
-                );
+                vm.memory_changeset
+                    .insert([vm.transaction.namespace(), key].concat(), value);
 
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.storage_changeset.get(
-                    &[vm.transaction.namespace(), key.clone()].concat(),
-                )
-                    .unwrap_or(&vm.storage.get(key.as_slice())).to_vec();
+                let value: Vec<u8> = vm
+                    .storage_changeset
+                    .get(&[vm.transaction.namespace(), key.clone()].concat())
+                    .unwrap_or(&vm.storage.get(key.as_slice()))
+                    .to_vec();
 
                 Ok(Some(vm.write_pointer(value).into()))
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                vm.storage_changeset.insert(
-                    [vm.transaction.namespace(), key].concat(),
-                    value
-                );
+                vm.storage_changeset
+                    .insert([vm.transaction.namespace(), key].concat(), value);
 
                 Ok(None)
             }
@@ -101,7 +99,15 @@ impl EllipticoinAPI {
                     let _storage = vm.read_pointer(args.nth(3));
 
                     let module = EllipticoinAPI::new_module(&code);
-                    let mut inner_vm = VM::new(vm.memory_changeset, vm.memory, vm.storage_changeset, vm.storage, vm.env, vm.transaction, &module);
+                    let mut inner_vm = VM::new(
+                        vm.memory_changeset,
+                        vm.memory,
+                        vm.storage_changeset,
+                        vm.storage,
+                        vm.env,
+                        vm.transaction,
+                        &module,
+                    );
                     let mut args = Vec::new();
                     for arg in args_iter {
                         if let Value::Integer(integer_arg) = arg {

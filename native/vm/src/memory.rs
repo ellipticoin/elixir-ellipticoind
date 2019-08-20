@@ -21,8 +21,8 @@ impl<'a> Memory<'a> {
     pub fn new(
         redis: &'a redis::Connection,
         block_index: &'a BlockIndex<'a>,
-        namespace: Vec<u8>
-        ) -> Memory<'a> {
+        namespace: Vec<u8>,
+    ) -> Memory<'a> {
         Memory {
             redis: redis,
             block_index: block_index,
@@ -30,12 +30,14 @@ impl<'a> Memory<'a> {
         }
     }
 
-    pub fn namespaced_key(&self, key: &[u8]) -> Vec<u8>{
+    pub fn namespaced_key(&self, key: &[u8]) -> Vec<u8> {
         [self.namespace.clone(), key.to_vec()].concat()
     }
 
     pub fn get(&self, key: &[u8]) -> Vec<u8> {
-        let latest_block = self.block_index.get_latest(StateType::Memory, &self.namespaced_key(key));
+        let latest_block = self
+            .block_index
+            .get_latest(StateType::Memory, &self.namespaced_key(key));
         self.redis
             .hget(REDIS_KEY, hash_key(latest_block, &self.namespaced_key(key)))
             .unwrap()

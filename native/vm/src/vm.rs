@@ -7,7 +7,7 @@ use helpers::*;
 use memory::Memory;
 use std::mem::transmute;
 use storage::Storage;
-use transaction::{Transaction, Changeset};
+use transaction::{Changeset, Transaction};
 use wasmi::RuntimeValue;
 use wasmi::*;
 

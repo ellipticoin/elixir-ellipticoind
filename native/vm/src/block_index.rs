@@ -33,11 +33,7 @@ impl<'a> BlockIndex<'a> {
     pub fn get_latest(&self, state_type: StateType, key: &[u8]) -> u64 {
         *self
             .redis
-            .lrange::< _, Vec<u64>>(
-                block_index_key(state_type, key),
-                0,
-                0,
-            )
+            .lrange::<_, Vec<u64>>(block_index_key(state_type, key), 0, 0)
             .expect("invalid block index")
             .get(0)
             .unwrap_or(&0)
