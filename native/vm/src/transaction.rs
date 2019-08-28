@@ -1,15 +1,17 @@
 extern crate base64;
-pub use metered_wasmi::{isa, FunctionContext, RuntimeValue, NopExternals, Module, ModuleInstance, ImportsBuilder};
-use serde::{Deserialize, Serialize};
-use serde_cbor::Value;
+use block_index::BlockIndex;
 use changeset::Changeset;
+use ellipticoin_api::EllipticoinExternals;
 use env::Env;
 use memory::Memory;
-use block_index::BlockIndex;
+pub use metered_wasmi::{
+    isa, FunctionContext, ImportsBuilder, Module, ModuleInstance, NopExternals, RuntimeValue,
+};
+use result::{self, Result};
+use serde::{Deserialize, Serialize};
+use serde_cbor::Value;
 use storage::Storage;
-use vm::{VM, new_module_instance};
-use result::{Result, self};
-use ellipticoin_api::EllipticoinExternals;
+use vm::{new_module_instance, VM};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Transaction {
@@ -56,18 +58,8 @@ impl Transaction {
         storage_changeset: &mut Changeset,
     ) -> (Result, Option<u32>) {
         let block_index = BlockIndex::new(redis);
-        let mut memory = Memory::new(
-            redis,
-            &block_index,
-            memory_changeset,
-            self.namespace()
-        );
-        let mut storage = Storage::new(
-            rocksdb,
-            &block_index,
-            storage_changeset,
-            self.namespace(),
-        );
+        let mut memory = Memory::new(redis, &block_index, memory_changeset, self.namespace());
+        let mut storage = Storage::new(rocksdb, &block_index, storage_changeset, self.namespace());
         let code = storage.get(&"_code".as_bytes().to_vec());
         if code.len() == 0 {
             return (result::contract_not_found(self), None);
@@ -78,12 +70,9 @@ impl Transaction {
             storage: &mut storage,
             env: &env,
             transaction: self,
-            gas: Some(self.gas_limit as u32)
+            gas: Some(self.gas_limit as u32),
         };
-        let mut vm = VM::new(
-            &module_instance,
-            &mut externals,
-        );
+        let mut vm = VM::new(&module_instance, &mut externals);
         vm.call(&self.function, self.arguments.clone())
     }
 }

@@ -1,6 +1,6 @@
+use serde_cbor::Value;
 use std::intrinsics::transmute;
 use transaction::Transaction;
-use serde_cbor::Value;
 pub type Result = (u32, Value);
 pub fn vm_panic() -> Result {
     (1, "vm panic".to_string().into())
@@ -10,9 +10,8 @@ pub fn contract_not_found(transaction: &Transaction) -> Result {
     (
         2,
         format!("{} not found", transaction.contract_name.to_string()).into(),
-        )
+    )
 }
-
 
 pub fn from_bytes(bytes: Vec<u8>) -> Result {
     if bytes.len() == 0 {
@@ -32,4 +31,3 @@ pub fn from_bytes(bytes: Vec<u8>) -> Result {
         }
     }
 }
-

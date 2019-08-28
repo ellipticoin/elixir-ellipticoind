@@ -1,13 +1,13 @@
+use env::Env;
+use gas_costs;
+use memory::Memory;
 use metered_wasmi::Error as InterpreterError;
 use metered_wasmi::*;
 use serde_cbor::to_vec;
 use std::str;
-use vm::*;
-use env::Env;
-use transaction::Transaction;
-use memory::Memory;
 use storage::Storage;
-use gas_costs;
+use transaction::Transaction;
+use vm::*;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
@@ -20,7 +20,6 @@ const SET_STORAGE_FUNC_INDEX: usize = 7;
 const THROW_FUNC_INDEX: usize = 8;
 const CALL_FUNC_INDEX: usize = 9;
 const LOG_WRITE: usize = 10;
-
 
 pub struct EllipticoinImportResolver;
 pub struct EllipticoinExternals<'a> {
@@ -54,9 +53,7 @@ impl<'a> EllipticoinExternals<'a> {
         args: RuntimeArgs,
     ) -> Result<Option<RuntimeValue>, metered_wasmi::Trap> {
         match index {
-            SENDER_FUNC_INDEX => {
-                vm.write_pointer(vm.externals.transaction.sender.to_vec())
-            },
+            SENDER_FUNC_INDEX => vm.write_pointer(vm.externals.transaction.sender.to_vec()),
             BLOCK_HASH_FUNC_INDEX => {
                 let block_hash: serde_cbor::Value = vm.externals.env.block_hash.clone().into();
 
@@ -66,32 +63,42 @@ impl<'a> EllipticoinExternals<'a> {
                 let block_number: serde_cbor::Value = vm.externals.env.block_number.into();
                 vm.write_pointer(to_vec(&block_number).unwrap())
             }
-            BLOCK_WINNER_FUNC_INDEX => {
-                vm.write_pointer(vm.externals.env.block_winner.clone())
-            }
+            BLOCK_WINNER_FUNC_INDEX => vm.write_pointer(vm.externals.env.block_winner.clone()),
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.externals.memory.get(&key);
-                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::GET_BYTE_MEMORY)?;
+                use_gas_for_external(
+                    vm.externals,
+                    value.len() as u32 * gas_costs::GET_BYTE_MEMORY,
+                )?;
                 vm.write_pointer(value)
             }
             SET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::SET_BYTE_MEMORY)?;
+                use_gas_for_external(
+                    vm.externals,
+                    value.len() as u32 * gas_costs::SET_BYTE_MEMORY,
+                )?;
                 vm.externals.memory.set(key, value);
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value: Vec<u8> = vm.externals.storage.get(&key);
-                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::GET_BYTE_STORAGE)?;
+                use_gas_for_external(
+                    vm.externals,
+                    value.len() as u32 * gas_costs::GET_BYTE_STORAGE,
+                )?;
                 vm.write_pointer(value)
             }
             SET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
                 let value = vm.read_pointer(args.nth(1));
-                use_gas_for_external(vm.externals, value.len() as u32 * gas_costs::SET_BYTE_STORAGE)?;
+                use_gas_for_external(
+                    vm.externals,
+                    value.len() as u32 * gas_costs::SET_BYTE_STORAGE,
+                )?;
                 vm.externals.storage.set(key, value);
                 Ok(None)
             }
@@ -106,10 +113,12 @@ impl<'a> EllipticoinExternals<'a> {
             _ => panic!("unknown function index"),
         }
     }
-
 }
 
-fn use_gas_for_external(externals: &mut EllipticoinExternals, amount: u32) -> Result<(), metered_wasmi::TrapKind>{
+fn use_gas_for_external(
+    externals: &mut EllipticoinExternals,
+    amount: u32,
+) -> Result<(), metered_wasmi::TrapKind> {
     if let Some(gas) = externals.gas {
         if gas < amount {
             Err(TrapKind::OutOfGas)

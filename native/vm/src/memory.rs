@@ -1,7 +1,7 @@
 use block_index::{BlockIndex, StateType};
-use redis::Commands;
 use changeset::Changeset;
 use helpers::u64_to_vec;
+use redis::Commands;
 
 const NAMESPACE: &str = "memory";
 pub struct Memory<'a> {
@@ -33,7 +33,9 @@ impl<'a> Memory<'a> {
     }
 
     pub fn get(&self, key: &[u8]) -> Vec<u8> {
-        self.get_cached(key).unwrap_or(&self.get_from_memory(key)).to_vec()
+        self.get_cached(key)
+            .unwrap_or(&self.get_from_memory(key))
+            .to_vec()
     }
 
     pub fn get_from_memory(&self, key: &[u8]) -> Vec<u8> {
@@ -45,11 +47,13 @@ impl<'a> Memory<'a> {
     }
 
     pub fn get_cached(&self, key: &[u8]) -> Option<&Vec<u8>> {
-        self.changeset.get(&[self.namespace.clone(), key.clone().to_vec()].concat())
+        self.changeset
+            .get(&[self.namespace.clone(), key.clone().to_vec()].concat())
     }
 
     pub fn set(&mut self, key: Vec<u8>, value: Vec<u8>) {
-        self.working_changeset.insert([self.namespace.clone(), key].concat(), value);
+        self.working_changeset
+            .insert([self.namespace.clone(), key].concat(), value);
     }
 
     pub fn commit(&mut self) {
