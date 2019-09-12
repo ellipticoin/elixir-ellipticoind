@@ -1,4 +1,5 @@
 use serde_cbor::Value;
+use vm::namespace;
 use vm::EllipticoinExternals;
 use vm::State;
 use vm::Transaction;
@@ -25,9 +26,10 @@ pub fn create_contract(transaction: &Transaction, state: State) -> (u32, Value) 
             state.rocksdb,
             &block_index,
             state.storage_changeset,
-            transaction.namespace(),
+            namespace(transaction.sender.clone(), &contract_name),
         );
         storage.set("_code".as_bytes().to_vec(), code.to_vec());
+        storage.commit();
         run_constuctor(transaction, state, contract_name, arguments)
     } else {
         (0, Value::Null)

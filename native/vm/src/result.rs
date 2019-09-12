@@ -9,7 +9,7 @@ pub fn vm_panic() -> Result {
 pub fn contract_not_found(transaction: &Transaction) -> Result {
     (
         2,
-        format!("{} not found", transaction.contract_name.to_string()).into(),
+        format!("Contract {} not found", transaction.contract_name.to_string()).into(),
     )
 }
 

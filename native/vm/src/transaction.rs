@@ -41,12 +41,16 @@ pub struct CompletedTransaction {
     pub return_code: u32,
 }
 
+pub fn namespace(contract_address: Vec<u8>, contract_name: &str) -> Vec<u8> {
+    let mut contract_name_bytes = contract_name.as_bytes().to_vec();
+    let contract_name_len = contract_name_bytes.clone().len();
+    contract_name_bytes.extend_from_slice(&vec![0; 32 - contract_name_len]);
+    [contract_address.clone(), contract_name_bytes.to_vec()].concat()
+}
+
 impl Transaction {
     pub fn namespace(&self) -> Vec<u8> {
-        let mut contract_name_bytes = self.contract_name.as_bytes().to_vec();
-        let contract_name_len = contract_name_bytes.clone().len();
-        contract_name_bytes.extend_from_slice(&vec![0; 32 - contract_name_len]);
-        [self.contract_address.clone(), contract_name_bytes.to_vec()].concat()
+        namespace(self.contract_address.clone(), &self.contract_name)
     }
 
     pub fn run(
@@ -62,7 +66,7 @@ impl Transaction {
         let mut storage = Storage::new(rocksdb, &block_index, storage_changeset, self.namespace());
         let code = storage.get(&"_code".as_bytes().to_vec());
         if code.len() == 0 {
-            return (result::contract_not_found(self), None);
+            return (result::contract_not_found(self), Some(self.gas_limit as u32));
         }
         let module_instance = new_module_instance(code);
         let mut externals = EllipticoinExternals {
