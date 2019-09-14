@@ -15,14 +15,13 @@ use std::env::args;
 use std::io::BufRead;
 use std::{io, thread, time};
 use vm::Open;
-use vm::State;
-use vm::{Changeset, Commands, CompletedTransaction, Env, Transaction};
+use vm::{Changeset, Commands, CompletedTransaction, Env, Transaction, Memory, Storage};
 mod system_contracts;
 
 lazy_static! {
     static ref COMMAND: String = { args().nth(1).unwrap() };
-    static ref REDIS: redis::Client =
-        { redis::Client::open(args().nth(2).unwrap().as_str()).unwrap() };
+    static ref REDIS_URL: String =
+        { args().nth(2).unwrap() };
     static ref ROCKSDB_PATH: String = { args().nth(3).expect("rocksdb").to_string() };
     static ref ENV: Vec<u8> = { base64::decode(&args().nth(4).unwrap()).unwrap() };
     static ref TRANSACTION_PROCESSING_TIME: u64 = { args().nth(5).unwrap().parse().unwrap() };
@@ -52,21 +51,20 @@ fn process_existing_block() {
         &base64::decode(&transactions_encoded.trim_end_matches("\n")).unwrap(),
     )
     .unwrap();
-    let redis = REDIS.get_connection().unwrap();
-    let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
-    let env = from_slice::<Env>(&ENV).unwrap();
-    let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
-
     let mut memory_changeset = HashMap::new();
     let mut storage_changeset = HashMap::new();
+    let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
+
     for transaction in transactions {
+        let redis_client = redis::Client::open((*REDIS_URL).as_str()).unwrap();
+        let env = from_slice::<Env>(&ENV).unwrap();
         let completed_transaction = run_transaction(
-            &redis,
-            &rocksdb,
+            redis_client,
+            vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap(),
             &transaction,
-            &env,
+            env,
             &mut memory_changeset,
-            &mut storage_changeset,
+            &mut storage_changeset
         );
         completed_transactions.push(completed_transaction);
     }
@@ -74,20 +72,22 @@ fn process_existing_block() {
 }
 
 fn process_new_block() {
+    let redis_client = redis::Client::open((*REDIS_URL).as_str()).unwrap();
+    let redis = redis_client.get_connection().unwrap();
     let mut memory_changeset = HashMap::new();
     let mut storage_changeset = HashMap::new();
-    let redis = REDIS.get_connection().unwrap();
-    let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
-    let env = from_slice::<Env>(&ENV).unwrap();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
     run_for(*TRANSACTION_PROCESSING_TIME, || {
         match get_next_transaction(&redis, "transactions::queued") {
             Some(transaction) => {
+                let env = from_slice::<Env>(&ENV).unwrap();
+                let rocksdb = vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str()).unwrap();
+                let redis_client = redis::Client::open((*REDIS_URL).as_str()).unwrap();
                 let completed_transaction = run_transaction(
-                    &redis,
-                    &rocksdb,
+                    redis_client,
+                    rocksdb,
                     &transaction,
-                    &env,
+                    env,
                     &mut memory_changeset,
                     &mut storage_changeset,
                 );
@@ -147,58 +147,50 @@ fn run_for<F: FnMut()>(duration_u64: u64, mut function: F) {
 }
 
 fn run_transaction(
-    redis: &vm::Connection,
-    rocksdb: &vm::ReadOnlyDB,
+    redis: vm::Client,
+    rocksdb: vm::ReadOnlyDB,
     transaction: &vm::Transaction,
-    env: &Env,
+    env: Env,
     memory_changeset: &mut Changeset,
     storage_changeset: &mut Changeset,
 ) -> CompletedTransaction {
-    let (return_code, return_value) = if system_contracts::is_system_contract(&transaction) {
+    let (transaction_memory_changeset, transaction_storage_changeset, result) = if system_contracts::is_system_contract(&transaction) {
+        let memory = Memory::new(redis.get_connection().unwrap(), memory_changeset.clone());
+        let storage = Storage::new(redis.get_connection().unwrap(), rocksdb, storage_changeset.clone());
         system_contracts::run(
             transaction,
-            State {
-                redis,
-                rocksdb,
-                env,
-                memory_changeset,
-                storage_changeset,
-            },
+            memory,
+            storage,
+            env,
         )
     } else {
-        let gas_limit = Some(transaction.gas_limit as u32);
-        let (result, gas_left) =
-            transaction.run(redis, rocksdb, env, memory_changeset, storage_changeset);
-        let gas_used = gas_limit.unwrap() - gas_left.expect("no gas left");
-        system_contracts::charge_gas_fee(
+        let memory = Memory::new(redis.get_connection().unwrap(), memory_changeset.clone());
+        let storage = Storage::new(redis.get_connection().unwrap(), rocksdb, storage_changeset.clone());
+        let (memory_changeset, storage_changeset, (result, gas_left)) =
+            transaction.run(memory, storage, env);
+        let gas_used = transaction.gas_limit - gas_left.expect("no gas left") as u64;
+
+        let env = from_slice::<Env>(&ENV).unwrap();
+        let (gas_memory_changeset, _, _) = system_contracts::transfer(
             transaction,
-            State {
-                redis,
-                rocksdb,
-                env,
-                memory_changeset,
-                storage_changeset,
-            },
-            gas_used.into(),
+            &redis,
+            vm::ReadOnlyDB::open_default(ROCKSDB_PATH.as_str())     .unwrap(),
+            memory_changeset,
+            Changeset::new(),
+            &env,
+            gas_used as u32,
             transaction.sender.clone(),
+            env.block_winner.clone()
         );
-        result
+        (gas_memory_changeset, storage_changeset, result)
     };
-    remove_from_processing(&redis, transaction);
-    CompletedTransaction {
-        contract_address: transaction.contract_address.clone(),
-        contract_name: transaction.contract_name.clone(),
-        sender: transaction.sender.clone(),
-        nonce: transaction.nonce.clone(),
-        gas_limit: transaction.gas_limit.clone(),
-        function: transaction.function.clone(),
-        arguments: transaction.arguments.clone(),
-        return_value: return_value,
-        return_code: return_code,
-    }
+    remove_from_processing(redis.get_connection().unwrap(), transaction);
+    memory_changeset.extend(transaction_memory_changeset);
+    storage_changeset.extend(transaction_storage_changeset);
+    transaction.complete(result)
 }
 
-fn remove_from_processing(redis: &vm::Connection, transaction: &Transaction) {
+fn remove_from_processing(redis: vm::Connection, transaction: &Transaction) {
     let transaction_bytes = to_vec(&transaction).unwrap();
     redis
         .lrem::<_, _, ()>("transactions::processing", 0, transaction_bytes.as_slice())

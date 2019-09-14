@@ -22,6 +22,29 @@ defmodule Ellipticoind.TransactionProcessorTest do
            }) == {:ok, 3}
   end
 
+  test "caller.wasm - calls return values" do
+    insert_test_contract(:caller)
+    insert_test_contract(:adder)
+
+    assert run_transaction(%{
+             contract_name: :caller,
+             function: :call,
+             arguments: [:adder, :add, [1, 2]]
+           }) == {:ok, 3}
+  end
+
+  test "caller.wasm - sets state" do
+    insert_test_contract(:caller)
+    insert_test_contract(:state)
+
+    assert run_transaction(%{
+             contract_name: :caller,
+             function: :call,
+             arguments: [:state, :set_memory, [:test]]
+           }) == {:ok, nil}
+    assert Memory.get_value(<<0::256>>, :state, "value") == :test
+  end
+
   test "env.wasm" do
     insert_test_contract(:env)
 

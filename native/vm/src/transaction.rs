@@ -1,7 +1,5 @@
 extern crate base64;
-use block_index::BlockIndex;
 use changeset::Changeset;
-use ellipticoin_api::EllipticoinExternals;
 use env::Env;
 use memory::Memory;
 pub use metered_wasmi::{
@@ -13,7 +11,7 @@ use serde_cbor::Value;
 use storage::Storage;
 use vm::{new_module_instance, VM};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,
@@ -55,36 +53,48 @@ impl Transaction {
 
     pub fn run(
         &self,
-        redis: &redis::Connection,
-        rocksdb: &rocksdb::ReadOnlyDB,
-        env: &Env,
-        memory_changeset: &mut Changeset,
-        storage_changeset: &mut Changeset,
-    ) -> (Result, Option<u32>) {
-        let block_index = BlockIndex::new(redis);
-        let mut memory = Memory::new(redis, &block_index, memory_changeset);
-        let mut storage = Storage::new(rocksdb, &block_index, storage_changeset);
-        let code = storage.get(
-            &[
-                namespace(
-                    self.contract_address.clone(),
-                    &self.contract_name.clone()
-                ),
-                "_code".as_bytes().to_vec()
-            ].concat()
-        );
+        mut memory: Memory,
+        mut storage: Storage,
+        env: Env,
+    ) -> (Changeset, Changeset, (Result, Option<u32>)) {
+        let code = storage.get(&namespace(
+            self.contract_address.clone(),
+            &self.contract_name.clone(),
+        ));
         if code.len() == 0 {
-            return (result::contract_not_found(self), Some(self.gas_limit as u32));
+            return (
+                memory.changeset,
+                storage.changeset,
+                (
+                    result::contract_not_found(self),
+                    Some(self.gas_limit as u32),
+                ),
+            );
         }
-        let module_instance = new_module_instance(code);
-        let mut externals = EllipticoinExternals {
+        let instance = new_module_instance(code);
+        let mut vm = VM {
+            instance: &instance,
             memory: &mut memory,
             storage: &mut storage,
             env: &env,
             transaction: self,
             gas: Some(self.gas_limit as u32),
         };
-        let mut vm = VM::new(&module_instance, &mut externals);
-        vm.call(&self.function, self.arguments.clone())
+        let result = vm.call(&self.function, self.arguments.clone());
+        (memory.changeset, storage.changeset, result)
+    }
+
+    pub fn complete(&self, result: Result) -> CompletedTransaction {
+        CompletedTransaction {
+            contract_address: self.contract_address.clone(),
+            contract_name: self.contract_name.clone(),
+            sender: self.sender.clone(),
+            nonce: self.nonce.clone(),
+            gas_limit: self.gas_limit.clone(),
+            function: self.function.clone(),
+            arguments: self.arguments.clone(),
+            return_value: result.1,
+            return_code: result.0,
+        }
     }
 }

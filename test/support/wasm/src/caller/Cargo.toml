@@ -1,0 +1,16 @@
+[package]
+name = "caller"
+version = "0.1.0"
+authors = ["Mason Fischer <mason@kissr.co>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+ellipticoin = { path = "../../../../../../rust-ellipticoin" }
+wasm-rpc = { path = "../../../../../../rust-wasm-rpc/wasm-rpc" }
+wasm-rpc-macros = { path = "../../../../../../rust-wasm-rpc/wasm-rpc-macros" }
+wee_alloc = "0.4.2"

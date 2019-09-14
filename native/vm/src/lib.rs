@@ -10,9 +10,7 @@ extern crate serialize;
 extern crate sha3;
 extern crate time;
 
-mod block_index;
 mod changeset;
-mod ellipticoin_api;
 pub mod env;
 mod gas_costs;
 mod helpers;
@@ -21,16 +19,14 @@ mod result;
 mod storage;
 mod transaction;
 mod vm;
-pub use ellipticoin_api::{EllipticoinExternals, EllipticoinImportResolver};
 
-pub use block_index::BlockIndex;
 pub use changeset::Changeset;
 pub use env::Env;
 pub use memory::Memory;
 pub use metered_wasmi::RuntimeValue;
 pub use storage::Storage;
-pub use transaction::{CompletedTransaction, Transaction, namespace};
-pub use vm::{new_module_instance, State, VM};
+pub use transaction::{namespace, CompletedTransaction, Transaction};
+pub use vm::{new_module_instance, VM};
 
 pub use metered_wasmi::{ImportsBuilder, Module, ModuleInstance, NopExternals};
 pub use redis::{pipe, Client, Commands, Connection, ControlFlow, PubSubCommands};
