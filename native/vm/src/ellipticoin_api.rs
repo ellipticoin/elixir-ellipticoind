@@ -2,12 +2,13 @@ use env::Env;
 use gas_costs;
 use memory::Memory;
 use metered_wasmi::Error as InterpreterError;
-use metered_wasmi::*;
+use metered_wasmi::{FuncRef, Signature, ModuleImportResolver, RuntimeValue, RuntimeArgs, ValueType, FuncInstance, TrapKind};
 use serde_cbor::to_vec;
 use std::str;
 use storage::Storage;
 use transaction::Transaction;
-use vm::*;
+use vm::VM;
+use transaction::namespace;
 
 const SENDER_FUNC_INDEX: usize = 0;
 const BLOCK_HASH_FUNC_INDEX: usize = 1;
@@ -47,6 +48,17 @@ impl<'a> EllipticoinExternals<'a> {
         }
     }
 
+    pub fn namespaced_key(
+        &self,
+        key: Vec<u8>
+    ) -> Vec<u8> {
+        [namespace(
+            self.transaction.contract_address.clone(),
+            &self.transaction.contract_name.clone(),
+            ),
+            key.clone()
+        ].concat()
+    }
     pub fn invoke_index(
         vm: &mut VM,
         index: usize,
@@ -66,7 +78,8 @@ impl<'a> EllipticoinExternals<'a> {
             BLOCK_WINNER_FUNC_INDEX => vm.write_pointer(vm.externals.env.block_winner.clone()),
             GET_MEMORY_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.externals.memory.get(&key);
+                let value = vm.externals.memory.get(&vm.externals.namespaced_key(key));
+
                 use_gas_for_external(
                     vm.externals,
                     value.len() as u32 * gas_costs::GET_BYTE_MEMORY,
@@ -80,12 +93,14 @@ impl<'a> EllipticoinExternals<'a> {
                     vm.externals,
                     value.len() as u32 * gas_costs::SET_BYTE_MEMORY,
                 )?;
-                vm.externals.memory.set(key, value);
+                vm.externals.memory.set(vm.externals.namespaced_key(key), value);
                 Ok(None)
             }
             GET_STORAGE_FUNC_INDEX => {
                 let key = vm.read_pointer(args.nth(0));
-                let value: Vec<u8> = vm.externals.storage.get(&key);
+                let value = vm.externals.storage.get(
+                    &vm.externals.namespaced_key(key)
+                );
                 use_gas_for_external(
                     vm.externals,
                     value.len() as u32 * gas_costs::GET_BYTE_STORAGE,
@@ -99,7 +114,10 @@ impl<'a> EllipticoinExternals<'a> {
                     vm.externals,
                     value.len() as u32 * gas_costs::SET_BYTE_STORAGE,
                 )?;
-                vm.externals.storage.set(key, value);
+                vm.externals.storage.set(
+                    vm.externals.namespaced_key(key),
+                    value
+                );
                 Ok(None)
             }
             THROW_FUNC_INDEX => Ok(None),

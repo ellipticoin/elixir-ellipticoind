@@ -1,5 +1,4 @@
 use serde_cbor::Value;
-use vm::namespace;
 use vm::EllipticoinExternals;
 use vm::State;
 use vm::Transaction;
@@ -26,7 +25,6 @@ pub fn create_contract(transaction: &Transaction, state: State) -> (u32, Value) 
             state.rocksdb,
             &block_index,
             state.storage_changeset,
-            namespace(transaction.sender.clone(), &contract_name),
         );
         storage.set("_code".as_bytes().to_vec(), code.to_vec());
         storage.commit();
@@ -79,15 +77,13 @@ pub fn charge_gas_fee(transaction: &Transaction, state: State, amount: u32, send
         state.redis,
         &block_index,
         state.memory_changeset,
-        transaction.namespace(),
     );
     let mut storage = Storage::new(
         state.rocksdb,
         &block_index,
         state.storage_changeset,
-        transaction.namespace(),
     );
-    let code = storage.get(&"_code".as_bytes().to_vec());
+    let code = storage.get(&[vm::namespace(transaction.contract_address.clone(), &transaction.contract_name.clone()), "_code".as_bytes().to_vec()].concat());
     let module_instance = new_module_instance(code);
     let mut externals = EllipticoinExternals {
         memory: &mut memory,

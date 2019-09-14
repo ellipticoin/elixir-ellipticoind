@@ -8,7 +8,6 @@ pub struct Storage<'a> {
     pub block_index: &'a BlockIndex<'a>,
     pub changeset: &'a mut Changeset,
     pub working_changeset: Changeset,
-    pub namespace: Vec<u8>,
 }
 
 impl<'a> Storage<'a> {
@@ -16,18 +15,13 @@ impl<'a> Storage<'a> {
         rocksdb: &'a rocksdb::ReadOnlyDB,
         block_index: &'a BlockIndex<'a>,
         changeset: &'a mut Changeset,
-        namespace: Vec<u8>,
     ) -> Storage<'a> {
         Storage {
             rocksdb,
             block_index,
             changeset,
             working_changeset: Changeset::new(),
-            namespace,
         }
-    }
-    pub fn namespaced_key(&self, key: &[u8]) -> Vec<u8> {
-        [self.namespace.clone(), key.to_vec()].concat()
     }
 
     pub fn get(&self, key: &[u8]) -> Vec<u8> {
@@ -38,14 +32,14 @@ impl<'a> Storage<'a> {
 
     pub fn get_cached(&self, key: &[u8]) -> Option<&Vec<u8>> {
         self.changeset
-            .get(&[self.namespace.clone(), key.clone().to_vec()].concat())
+            .get(key)
     }
 
     pub fn get_from_storage(&self, key: &[u8]) -> Vec<u8> {
         let latest_block = self
             .block_index
-            .get_latest(StateType::Storage, &self.namespaced_key(key));
-        let hash_key = [u64_to_vec(latest_block), self.namespaced_key(key)].concat();
+            .get_latest(StateType::Storage, &key);
+        let hash_key = [u64_to_vec(latest_block), key.to_vec()].concat();
         match self.rocksdb.get(hash_key) {
             Ok(Some(value)) => value.to_vec(),
             Ok(None) => vec![],
@@ -55,7 +49,7 @@ impl<'a> Storage<'a> {
 
     pub fn set(&mut self, key: Vec<u8>, value: Vec<u8>) {
         self.working_changeset
-            .insert([self.namespace.clone(), key].concat(), value);
+            .insert(key, value);
     }
 
     pub fn commit(&mut self) {

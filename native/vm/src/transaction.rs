@@ -62,9 +62,17 @@ impl Transaction {
         storage_changeset: &mut Changeset,
     ) -> (Result, Option<u32>) {
         let block_index = BlockIndex::new(redis);
-        let mut memory = Memory::new(redis, &block_index, memory_changeset, self.namespace());
-        let mut storage = Storage::new(rocksdb, &block_index, storage_changeset, self.namespace());
-        let code = storage.get(&"_code".as_bytes().to_vec());
+        let mut memory = Memory::new(redis, &block_index, memory_changeset);
+        let mut storage = Storage::new(rocksdb, &block_index, storage_changeset);
+        let code = storage.get(
+            &[
+                namespace(
+                    self.contract_address.clone(),
+                    &self.contract_name.clone()
+                ),
+                "_code".as_bytes().to_vec()
+            ].concat()
+        );
         if code.len() == 0 {
             return (result::contract_not_found(self), Some(self.gas_limit as u32));
         }
