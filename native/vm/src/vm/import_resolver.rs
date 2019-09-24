@@ -27,6 +27,13 @@ impl<'a> ModuleImportResolver for ImportResolver {
                 Signature::new(&[][..], Some(ValueType::I32)),
                 BLOCK_WINNER_FUNC_INDEX,
             ),
+            "__caller" => FuncInstance::alloc_host(
+                Signature::new(
+                    &[][..],
+                    Some(ValueType::I32),
+                ),
+                CALLER_FUNC_INDEX,
+            ),
             "__get_memory" => FuncInstance::alloc_host(
                 Signature::new(&[ValueType::I32][..], Some(ValueType::I32)),
                 GET_MEMORY_FUNC_INDEX,
@@ -49,12 +56,7 @@ impl<'a> ModuleImportResolver for ImportResolver {
             ),
             "__call" => FuncInstance::alloc_host(
                 Signature::new(
-                    &[
-                        ValueType::I32,
-                        ValueType::I32,
-                        ValueType::I32,
-                        ValueType::I32,
-                    ][..],
+                    &[ValueType::I32, ValueType::I32, ValueType::I32][..],
                     Some(ValueType::I32),
                 ),
                 CALL_FUNC_INDEX,

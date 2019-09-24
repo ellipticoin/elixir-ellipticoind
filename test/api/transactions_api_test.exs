@@ -13,8 +13,7 @@ defmodule API.TransactionsApiTest do
     {public_key, _private_key} = Crypto.keypair()
 
     transaction = %{
-      contract_name: :test,
-      contract_address: <<0::256>>,
+      contract_address: <<0::256>> <> "test",
       nonce: 0,
       gas_limit: 100000000,
       sender: public_key,
@@ -41,8 +40,7 @@ defmodule API.TransactionsApiTest do
     {public_key, private_key} = Crypto.keypair()
 
     unsigned_transaction = %{
-      contract_name: :test,
-      contract_address: <<0::256>>,
+      contract_address: <<0::256>> <> "test",
       nonce: 0,
       gas_limit: 100000000,
       function: :function,
@@ -65,8 +63,7 @@ defmodule API.TransactionsApiTest do
     {_public_key, private_key} = Crypto.keypair()
 
     unsigned_transaction = %{
-      contract_name: "test",
-      contract_address: <<0::256>>,
+      contract_address: <<0::256>> <> "test",
       function: :function,
       arguments: []
     }

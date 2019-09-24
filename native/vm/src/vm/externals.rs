@@ -1,24 +1,25 @@
 use gas_costs;
+use helpers::right_pad_vec;
 use metered_wasmi::{isa, RuntimeArgs, RuntimeValue, TrapKind};
 use result;
 use serde_cbor::{from_slice, to_vec};
 use std::str;
-use transaction::namespace;
+use transaction::Transaction;
 use vm::new_module_instance;
 use vm::VM;
-use transaction::Transaction;
 
 pub const SENDER_FUNC_INDEX: usize = 0;
 pub const BLOCK_HASH_FUNC_INDEX: usize = 1;
 pub const BLOCK_NUMBER_FUNC_INDEX: usize = 2;
 pub const BLOCK_WINNER_FUNC_INDEX: usize = 3;
-pub const GET_MEMORY_FUNC_INDEX: usize = 4;
-pub const SET_MEMORY_FUNC_INDEX: usize = 5;
-pub const GET_STORAGE_FUNC_INDEX: usize = 6;
-pub const SET_STORAGE_FUNC_INDEX: usize = 7;
-pub const THROW_FUNC_INDEX: usize = 8;
-pub const CALL_FUNC_INDEX: usize = 9;
-pub const LOG_WRITE: usize = 10;
+pub const CALLER_FUNC_INDEX: usize = 4;
+pub const GET_MEMORY_FUNC_INDEX: usize = 5;
+pub const SET_MEMORY_FUNC_INDEX: usize = 6;
+pub const GET_STORAGE_FUNC_INDEX: usize = 7;
+pub const SET_STORAGE_FUNC_INDEX: usize = 8;
+pub const THROW_FUNC_INDEX: usize = 9;
+pub const CALL_FUNC_INDEX: usize = 10;
+pub const LOG_WRITE: usize = 11;
 
 impl<'a> VM<'a> {
     pub fn sender(&self) -> Vec<u8> {
@@ -36,6 +37,10 @@ impl<'a> VM<'a> {
 
     pub fn block_winner(&self) -> Vec<u8> {
         self.env.block_winner.clone()
+    }
+
+    pub fn caller(&self) -> Vec<u8> {
+        self.env.caller.clone().map(|v| v.to_vec()).unwrap_or(vec![])
     }
 
     pub fn get_memory(&mut self, key_pointer: i32) -> Result<Vec<u8>, metered_wasmi::TrapKind> {
@@ -80,20 +85,15 @@ impl<'a> VM<'a> {
 
     pub fn external_call(
         &mut self,
-        contract_depolyer_pointer: i32,
-        contract_name_pointer: i32,
+        contract_address_pointer: i32,
         function_name_pointer: i32,
         arguments_pointer: i32,
     ) -> Result<Vec<u8>, metered_wasmi::Trap> {
-        let contract_depolyer = self.read_pointer(contract_depolyer_pointer);
-        let contract_name_bytes = &self.read_pointer(contract_name_pointer);
-        let contract_name = str::from_utf8(contract_name_bytes).unwrap();
+        let contract_address = self.read_pointer(contract_address_pointer);
         let function_name_bytes = self.read_pointer(function_name_pointer);
         let function_name = str::from_utf8(&function_name_bytes).unwrap();
         let arguments = from_slice(&self.read_pointer(arguments_pointer)).unwrap();
-        let code = self
-            .storage
-            .get(&namespace(contract_depolyer, &contract_name));
+        let code = self.storage.get(&right_pad_vec(contract_address.clone(), 64, 0));
         if code.len() == 0 {
             return Ok(to_vec(&(
                 result::contract_not_found(self.transaction),
@@ -103,13 +103,15 @@ impl<'a> VM<'a> {
         }
         let module_instance = new_module_instance(code);
         let mut transaction: Transaction = (*self.transaction).clone();
-        transaction.contract_name = contract_name.to_string();
+        transaction.contract_address = contract_address;
         transaction.function = function_name.to_string();
+        let mut env = &mut self.env.clone();
+        env.caller = Some(serde_bytes::ByteBuf::from(self.transaction.contract_address.clone()));
         let mut vm = VM {
             instance: &module_instance,
             memory: &mut self.memory,
             storage: &mut self.storage,
-            env: &self.env,
+            env: &env,
             transaction: &transaction,
             gas: self.gas,
         };
@@ -121,10 +123,7 @@ impl<'a> VM<'a> {
 
     pub fn namespaced_key(&self, key: Vec<u8>) -> Vec<u8> {
         [
-            namespace(
-                self.transaction.contract_address.clone(),
-                &self.transaction.contract_name.clone(),
-            ),
+            right_pad_vec(self.transaction.contract_address.clone(), 64, 0),
             key.clone(),
         ]
         .concat()
@@ -137,7 +136,8 @@ impl<'a> VM<'a> {
     ) -> Result<Option<RuntimeValue>, metered_wasmi::Trap> {
         let _log_level = self.read_pointer(log_level_pointer);
         let message = self.read_pointer(log_message_pointer);
-        println!("debug: {:?}", str::from_utf8(&message).unwrap());
+        println!("debug: WebAssembly log: {:?}", str::from_utf8(&message).unwrap());
+
         Ok(None)
     }
 }
@@ -157,6 +157,7 @@ impl metered_wasmi::Externals for VM<'_> {
             BLOCK_HASH_FUNC_INDEX => self.write_pointer(self.block_hash()),
             BLOCK_NUMBER_FUNC_INDEX => self.write_pointer(self.block_number()),
             BLOCK_WINNER_FUNC_INDEX => self.write_pointer(self.block_winner()),
+            CALLER_FUNC_INDEX => self.write_pointer(self.caller()),
             GET_MEMORY_FUNC_INDEX => {
                 let value_pointer = self.get_memory(args.nth(0))?;
                 self.write_pointer(value_pointer)
@@ -169,12 +170,11 @@ impl metered_wasmi::Externals for VM<'_> {
             SET_STORAGE_FUNC_INDEX => self.set_storage(args.nth(0), args.nth(1)),
             THROW_FUNC_INDEX => Ok(None),
             CALL_FUNC_INDEX => {
-                let result_bytes =
-                    self.external_call(args.nth(0), args.nth(1), args.nth(2), args.nth(3))?;
+                let result_bytes = self.external_call(args.nth(0), args.nth(1), args.nth(2))?;
                 self.write_pointer(result_bytes)
             }
             LOG_WRITE => self.log(args.nth(0), args.nth(1)), //{
-            _ => panic!("Called an unknown function index"),
+            _ => panic!("Called an unknown function index: {}", index),
         }
     }
 }

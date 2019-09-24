@@ -69,7 +69,6 @@ defmodule Integration.MiningTest do
                [
                  :arguments,
                  :contract_address,
-                 :contract_name,
                  :function,
                  :return_code,
                  :return_value,
@@ -80,8 +79,7 @@ defmodule Integration.MiningTest do
              [
                %{
                  arguments: [],
-                 contract_address: <<0::256>>,
-                 contract_name: :BaseToken,
+                 contract_address: <<0::256>> <> "BaseToken",
                  function: :mint,
                  return_code: 0,
                  return_value: nil,
@@ -89,8 +87,7 @@ defmodule Integration.MiningTest do
                },
                %{
                  arguments: [@bob, 50000],
-                 contract_address: <<0::256>>,
-                 contract_name: :BaseToken,
+                 contract_address: <<0::256>> <> "BaseToken",
                  function: :transfer,
                  return_code: 0,
                  return_value: nil,
@@ -120,8 +117,7 @@ defmodule Integration.MiningTest do
         block_hash: nil,
         nonce: 1,
         gas_limit: 100000000,
-        contract_name: :BaseToken,
-        contract_address: <<0::256>>,
+        contract_address: <<0::256>> <> "BaseToken",
         function: :transfer,
         return_code: 0,
         return_value: nil,
@@ -132,7 +128,7 @@ defmodule Integration.MiningTest do
     block = %Block{
       number: 0,
       hash: <<0::256>>,
-      proof_of_work_value: 7,
+      proof_of_work_value: 2,
       memory_changeset_hash:
         Base.decode16!("6CAD99E2AC8E9D4BACC64E8FC9DE852D7C5EA3E602882281CFDFE1C562967A79"),
       storage_changeset_hash:
@@ -150,7 +146,7 @@ defmodule Integration.MiningTest do
   test "creating a contract" do
     post(
       %{
-        contract_name: :system,
+        contract_address: <<0::256>> <> "system",
         nonce: 0,
         gas_limit: 100000000,
         function: :create_contract,

@@ -1,6 +1,5 @@
 defmodule API.MemoryApiTest do
   import Test.Utils
-  import Binary
   use ExUnit.Case
   alias Ellipticoind.Memory
 
@@ -18,7 +17,8 @@ defmodule API.MemoryApiTest do
 
     Memory.set(address, contract_name, block_number, memory_key, value)
 
-    key = address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> memory_key
+    key = (address <> Atom.to_string(contract_name) |> Binary.pad_trailing(64)) <> memory_key
+    
     {:ok, %{body: body}} = http_get("/memory/#{Base.url_encode64(key)}")
     assert body == "value"
   end
