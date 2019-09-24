@@ -12,15 +12,8 @@ pub fn wasm_trap(trap: metered_wasmi::Trap) -> Result {
     (1, format!("WebAssembly Trap: {:?}", trap.kind()).into())
 }
 
-pub fn contract_not_found(transaction: &Transaction) -> Result {
-    (
-        2,
-        format!(
-            "Contract {} not found",
-            transaction.contract_name.to_string()
-        )
-        .into(),
-    )
+pub fn contract_not_found(_transaction: &Transaction) -> Result {
+    (2, "Contract not found".to_string().into())
 }
 
 pub fn to_bytes(result: Result) -> Vec<u8> {

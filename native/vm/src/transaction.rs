@@ -10,12 +10,12 @@ use serde::{Deserialize, Serialize};
 use serde_cbor::Value;
 use storage::Storage;
 use vm::{new_module_instance, VM};
+use helpers::right_pad_vec;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Transaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,
-    pub contract_name: String,
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
     pub nonce: u64,
@@ -28,7 +28,6 @@ pub struct Transaction {
 pub struct CompletedTransaction {
     #[serde(with = "serde_bytes")]
     pub contract_address: Vec<u8>,
-    pub contract_name: String,
     #[serde(with = "serde_bytes")]
     pub sender: Vec<u8>,
     pub nonce: u64,
@@ -39,28 +38,14 @@ pub struct CompletedTransaction {
     pub return_code: u32,
 }
 
-pub fn namespace(contract_address: Vec<u8>, contract_name: &str) -> Vec<u8> {
-    let mut contract_name_bytes = contract_name.as_bytes().to_vec();
-    let contract_name_len = contract_name_bytes.clone().len();
-    contract_name_bytes.extend_from_slice(&vec![0; 32 - contract_name_len]);
-    [contract_address.clone(), contract_name_bytes.to_vec()].concat()
-}
-
 impl Transaction {
-    pub fn namespace(&self) -> Vec<u8> {
-        namespace(self.contract_address.clone(), &self.contract_name)
-    }
-
     pub fn run(
         &self,
         mut memory: Memory,
         mut storage: Storage,
         env: Env,
     ) -> (Changeset, Changeset, (Result, Option<u32>)) {
-        let code = storage.get(&namespace(
-            self.contract_address.clone(),
-            &self.contract_name.clone(),
-        ));
+        let code = storage.get(&right_pad_vec(self.contract_address.clone(), 64, 0));
         if code.len() == 0 {
             return (
                 memory.changeset,
@@ -87,7 +72,6 @@ impl Transaction {
     pub fn complete(&self, result: Result) -> CompletedTransaction {
         CompletedTransaction {
             contract_address: self.contract_address.clone(),
-            contract_name: self.contract_name.clone(),
             sender: self.sender.clone(),
             nonce: self.nonce.clone(),
             gas_limit: self.gas_limit.clone(),

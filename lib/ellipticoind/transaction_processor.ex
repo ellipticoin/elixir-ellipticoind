@@ -11,7 +11,8 @@ defmodule Ellipticoind.TransactionProcessor do
         %{
           block_number: block.number,
           block_winner: block.winner,
-          block_hash: block.hash
+          block_hash: block.hash,
+          caller: nil,
         },
         env
       )
@@ -52,7 +53,8 @@ defmodule Ellipticoind.TransactionProcessor do
     env = %{
       block_number: Block.next_block_number(),
       block_winner: Configuration.public_key(),
-      block_hash: <<>>
+      block_hash: <<>>,
+      caller: nil,
     }
 
     port =

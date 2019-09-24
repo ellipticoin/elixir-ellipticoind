@@ -25,6 +25,7 @@ impl<'a> VM<'a> {
                 self.storage.rollback();
                 (result::wasm_trap(trap), self.gas)
             }
+            Err(error) => panic!(format!("{:?}", error)),
             _ => panic!("vm error"),
         }
     }

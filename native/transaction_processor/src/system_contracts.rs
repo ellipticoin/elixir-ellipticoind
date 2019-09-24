@@ -7,7 +7,10 @@ use vm::Env;
 use std::collections::HashMap;
 
 pub fn is_system_contract(transaction: &Transaction) -> bool {
-    transaction.contract_address == [0; 32] && transaction.contract_name == "system"
+    transaction.contract_address == [
+        [0; 32].to_vec(),
+        "system".as_bytes().to_vec()
+    ].concat()
 }
 use vm::new_module_instance;
 
@@ -32,7 +35,7 @@ pub fn create_contract(
     if let [Value::Text(contract_name), serde_cbor::Value::Bytes(code), serde_cbor::Value::Array(arguments)] =
         &transaction.arguments[..]
     {
-        storage.set(vm::namespace(transaction.sender.clone(), contract_name), code.to_vec());
+        storage.set([&transaction.sender, contract_name.as_bytes()].concat(), code.to_vec());
         storage.commit();
         run_constuctor(transaction, memory, storage, env, contract_name, arguments)
     } else {
@@ -53,8 +56,10 @@ fn run_constuctor(
         sender: transaction.sender.clone(),
         nonce: transaction.nonce,
         gas_limit: transaction.gas_limit,
-        contract_name: contract_name.to_string(),
-        contract_address: transaction.sender.clone(),
+        contract_address: [
+            transaction.sender.clone(),
+            contract_name.as_bytes().to_vec(),
+        ].concat()
     }
     .run(
         memory,
@@ -82,15 +87,17 @@ pub fn transfer(
         Value::Integer(amount as i128),
     ];
     let transaction = Transaction {
-        contract_name: "BaseToken".to_string(),
         function: "transfer".to_string(),
         nonce: 0,
         gas_limit: transaction.gas_limit,
-        contract_address: [0 as u8; 32].to_vec(),
+        contract_address: [
+            [0 as u8; 32].to_vec(),
+            "BaseToken".as_bytes().to_vec(),
+        ].concat(),
         sender: from.clone(),
         arguments: arguments.clone(),
     };
-    let code = storage.get(&vm::namespace(transaction.contract_address.clone(), &transaction.contract_name.clone()));
+    let code = storage.get(&transaction.contract_address.clone());
     let module_instance = new_module_instance(code);
     let mut vm = VM {
         instance: &module_instance,

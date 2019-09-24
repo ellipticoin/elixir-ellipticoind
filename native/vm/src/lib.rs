@@ -25,7 +25,7 @@ pub use env::Env;
 pub use memory::Memory;
 pub use metered_wasmi::RuntimeValue;
 pub use storage::Storage;
-pub use transaction::{namespace, CompletedTransaction, Transaction};
+pub use transaction::{CompletedTransaction, Transaction};
 pub use vm::{new_module_instance, VM};
 
 pub use metered_wasmi::{ImportsBuilder, Module, ModuleInstance, NopExternals};

@@ -8,7 +8,6 @@ defmodule Ellipticoind.Models.Transaction do
   schema "transactions" do
     field(:hash, :binary)
     field(:block_hash, :binary)
-    field(:contract_name, Types.Atom)
     field(:contract_address, :binary)
     field(:function, Types.Atom)
     field(:arguments, Types.Cbor)
@@ -28,7 +27,6 @@ defmodule Ellipticoind.Models.Transaction do
       :gas_limit,
       :block_hash,
       :contract_address,
-      :contract_name,
       :return_code,
       :return_value,
       :function,
@@ -36,7 +34,6 @@ defmodule Ellipticoind.Models.Transaction do
     ])
     |> validate_required([
       :contract_address,
-      :contract_name,
       :function,
       :arguments
     ])

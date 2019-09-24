@@ -16,7 +16,7 @@ defmodule Ellipticoind.Memory do
   def get(address, contract_name, key), do: get(to_key(address, contract_name, key))
 
   def to_key(address, contract_name, key),
-    do: address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key
+    do: (address <> Atom.to_string(contract_name)|>  pad_trailing(64)) <> key
 
   def get(key) do
     if block_number = BlockIndex.get_latest(@prefix, key) do
@@ -35,13 +35,12 @@ defmodule Ellipticoind.Memory do
     end
   end
 
-  def set(address, contract_name, block_number, key, value) do
+  def set(address, contract_name, block_number, key, value), do:
     set(
       block_number,
-      address <> (Atom.to_string(contract_name) |> pad_trailing(32)) <> key,
+      to_key(address, contract_name, key),
       value
     )
-  end
 
   def set(block_number, key, value) do
     BlockIndex.add(@prefix, key, block_number)

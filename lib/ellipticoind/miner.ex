@@ -63,8 +63,7 @@ defmodule Ellipticoind.Miner do
 
   defp mint() do
     Transaction.post(%{
-      contract_address: <<0::256>>,
-      contract_name: :BaseToken,
+      contract_address: <<0::256>> <> "BaseToken",
       nonce: 0,
       gas_limit: 100000000,
       function: :mint,

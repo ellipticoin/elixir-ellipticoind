@@ -40,8 +40,8 @@ defmodule Test.Utils do
     |> Repo.insert!()
   end
 
-  def insert_test_contract(contract_name) do
-    Storage.set(0, <<0::256>>, contract_name, <<>>, test_contract_code(contract_name))
+  def insert_test_contract(contract_name, deployment_name\\ nil) do
+    Storage.set(0, <<0::256>>, (deployment_name || contract_name), <<>>, test_contract_code(contract_name))
     :timer.sleep(1000)
   end
 
@@ -124,8 +124,7 @@ defmodule Test.Utils do
 
   def build_transaction(transaction, private_key \\ nil) do
     defaults = %{
-      contract_address: <<0::256>>,
-      contract_name: :BaseToken,
+      contract_address: <<0::256>> <> "BaseToken",
       arguments: [],
       nonce: 0,
       gas_limit: 100000000,

@@ -69,7 +69,7 @@ defmodule TransactionProcessor.BlockReorganizationTest do
     do:
       run_transaction(
         %{
-          contract_name: :stack,
+          contract_address: <<0::256>> <> "stack",
           function: :push,
           arguments: [value]
         },
