@@ -8,20 +8,25 @@ use transaction::Transaction;
 use vm::new_module_instance;
 use vm::VM;
 
-pub const SENDER_FUNC_INDEX: usize = 0;
-pub const BLOCK_HASH_FUNC_INDEX: usize = 1;
-pub const BLOCK_NUMBER_FUNC_INDEX: usize = 2;
-pub const BLOCK_WINNER_FUNC_INDEX: usize = 3;
-pub const CALLER_FUNC_INDEX: usize = 4;
-pub const GET_MEMORY_FUNC_INDEX: usize = 5;
-pub const SET_MEMORY_FUNC_INDEX: usize = 6;
-pub const GET_STORAGE_FUNC_INDEX: usize = 7;
-pub const SET_STORAGE_FUNC_INDEX: usize = 8;
-pub const THROW_FUNC_INDEX: usize = 9;
-pub const CALL_FUNC_INDEX: usize = 10;
-pub const LOG_WRITE: usize = 11;
+pub const CONTRACT_ADDRESS_FUNC_INDEX: usize = 0;
+pub const SENDER_FUNC_INDEX: usize = 1;
+pub const BLOCK_HASH_FUNC_INDEX: usize = 2;
+pub const BLOCK_NUMBER_FUNC_INDEX: usize = 3;
+pub const BLOCK_WINNER_FUNC_INDEX: usize = 4;
+pub const CALLER_FUNC_INDEX: usize = 5;
+pub const GET_MEMORY_FUNC_INDEX: usize = 6;
+pub const SET_MEMORY_FUNC_INDEX: usize = 7;
+pub const GET_STORAGE_FUNC_INDEX: usize = 8;
+pub const SET_STORAGE_FUNC_INDEX: usize = 9;
+pub const THROW_FUNC_INDEX: usize = 10;
+pub const CALL_FUNC_INDEX: usize = 11;
+pub const LOG_WRITE: usize = 12;
 
 impl<'a> VM<'a> {
+    pub fn contract_address(&self) -> Vec<u8> {
+        self.transaction.contract_address.to_vec()
+    }
+
     pub fn sender(&self) -> Vec<u8> {
         self.transaction.sender.to_vec()
     }
@@ -153,6 +158,7 @@ impl metered_wasmi::Externals for VM<'_> {
         args: RuntimeArgs,
     ) -> Result<Option<RuntimeValue>, metered_wasmi::Trap> {
         match index {
+            CONTRACT_ADDRESS_FUNC_INDEX => self.write_pointer(self.contract_address()),
             SENDER_FUNC_INDEX => self.write_pointer(self.sender()),
             BLOCK_HASH_FUNC_INDEX => self.write_pointer(self.block_hash()),
             BLOCK_NUMBER_FUNC_INDEX => self.write_pointer(self.block_number()),

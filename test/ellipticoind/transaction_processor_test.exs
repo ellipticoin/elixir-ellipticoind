@@ -56,7 +56,7 @@ defmodule Ellipticoind.TransactionProcessorTest do
     }) == {:ok, <<0::256>> <> "caller"}
   end
 
-  test "env.wasm" do
+  test "env.wasm - block_number" do
     insert_test_contract(:env)
 
     assert run_transaction(
@@ -68,6 +68,17 @@ defmodule Ellipticoind.TransactionProcessorTest do
                number: 1
              }
            ) == {:ok, 1}
+  end
+
+  test "env.wasm - contract_address" do
+    insert_test_contract(:env)
+
+    assert run_transaction(
+             %{
+               contract_address: <<0::256>> <> "env",
+               function: :contract_address
+             }
+           ) == {:ok, <<0::256>> <> "env"}
   end
 
   test "state.wasm - memory" do

@@ -11,6 +11,10 @@ impl<'a> ModuleImportResolver for ImportResolver {
         _signature: &Signature,
     ) -> Result<FuncRef, InterpreterError> {
         let func_ref = match field_name {
+            "__contract_address" => FuncInstance::alloc_host(
+                Signature::new(&[][..], Some(ValueType::I32)),
+                CONTRACT_ADDRESS_FUNC_INDEX,
+            ),
             "__sender" => FuncInstance::alloc_host(
                 Signature::new(&[][..], Some(ValueType::I32)),
                 SENDER_FUNC_INDEX,
@@ -24,8 +28,7 @@ impl<'a> ModuleImportResolver for ImportResolver {
                 BLOCK_NUMBER_FUNC_INDEX,
             ),
             "__block_winner" => FuncInstance::alloc_host(
-                Signature::new(&[][..], Some(ValueType::I32)),
-                BLOCK_WINNER_FUNC_INDEX,
+                Signature::new(&[][..], Some(ValueType::I32)), BLOCK_WINNER_FUNC_INDEX,
             ),
             "__caller" => FuncInstance::alloc_host(
                 Signature::new(

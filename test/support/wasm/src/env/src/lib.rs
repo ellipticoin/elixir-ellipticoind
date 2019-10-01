@@ -1,8 +1,6 @@
-#![no_std]
 #![feature(
     proc_macro_hygiene,
     core_intrinsics,
-    alloc,
     alloc_error_handler,
 )]
 extern crate alloc;
