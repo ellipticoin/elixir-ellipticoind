@@ -23,6 +23,7 @@ mod vm;
 pub use changeset::Changeset;
 pub use env::Env;
 pub use memory::Memory;
+pub use helpers::right_pad_vec;
 pub use metered_wasmi::RuntimeValue;
 pub use storage::Storage;
 pub use transaction::{CompletedTransaction, Transaction};

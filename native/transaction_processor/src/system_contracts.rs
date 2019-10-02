@@ -4,6 +4,7 @@ use vm::VM;
 use vm::{Memory, Storage};
 use vm::Changeset;
 use vm::Env;
+use vm::right_pad_vec;
 use std::collections::HashMap;
 
 pub fn is_system_contract(transaction: &Transaction) -> bool {
@@ -35,7 +36,7 @@ pub fn create_contract(
     if let [Value::Text(contract_name), serde_cbor::Value::Bytes(code), serde_cbor::Value::Array(arguments)] =
         &transaction.arguments[..]
     {
-        storage.set([&transaction.sender, contract_name.as_bytes()].concat(), code.to_vec());
+        storage.set(right_pad_vec([&transaction.sender, contract_name.as_bytes()].concat(), 64, 0), code.to_vec());
         storage.commit();
         run_constuctor(transaction, memory, storage, env, contract_name, arguments)
     } else {
@@ -97,7 +98,7 @@ pub fn transfer(
         sender: from.clone(),
         arguments: arguments.clone(),
     };
-    let code = storage.get(&transaction.contract_address.clone());
+    let code = storage.get(&right_pad_vec(transaction.contract_address.clone(), 64, 0));
     let module_instance = new_module_instance(code);
     let mut vm = VM {
         instance: &module_instance,

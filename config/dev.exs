@@ -16,9 +16,9 @@ config :ellipticoind,
 
 config :ellipticoind, dhfile: nil
 config :ellipticoind, https: false
-config :ellipticoind, p2p_transport: P2P.Transport.Noise
+config :ellipticoind, p2p_transport: P2P.Transport.Test
 
-config :ellipticoind, P2P.Transport.Noise,
+config :ellipticoind, P2P.Transport.Test,
   private_key:
     "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==",
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
