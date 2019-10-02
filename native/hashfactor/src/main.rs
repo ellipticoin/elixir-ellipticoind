@@ -10,17 +10,17 @@ use rand::Rng;
 use num_bigint::BigUint;
 use sha2::{Sha256, Digest};
 use num_traits::{ToPrimitive, FromPrimitive};
-use std::{io, env::args};
+use std::{io, env::args, process, thread};
 use std::io::BufRead;
 
 const NUMERATOR_BYTE_LENGTH: usize = 8;
 
 fn main() {
     let target_number_of_hashes = args().nth(1).unwrap().parse().unwrap();
-    // let hashfactor_time = args().nth(2).unwrap().parse().unwrap();
     let mut line = String::new();
     let stdin = io::stdin();
     stdin.lock().read_line(&mut line).expect("Could not read line");
+    exit_on_close();
     let data = base64::decode(&line.trim_end_matches("\n")).unwrap();
     // let mut rng = rand::thread_rng();
     // let random = rng.gen_range(0, 10000);
@@ -68,4 +68,20 @@ fn sha256(message: Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.input(message);
     hasher.result().to_vec()
+}
+
+//
+//  https://stackoverflow.com/a/39772976/1356670
+// "When a process is exited (the port is closed) the spawned program / port should get an EOF on
+// its STDIN. This is the "standard" way for the process to detect when the port has been closed:
+// an end-of-file on STDIN."
+
+fn exit_on_close() {
+    thread::spawn(move || {
+        let mut buffer = String::new();
+        let bytes = io::stdin().read_line(&mut buffer).unwrap();
+        if bytes == 0 {
+            process::exit(0);
+        }
+    });
 }
