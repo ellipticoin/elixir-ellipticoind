@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :ellipticoind, transaction_processing_time: 1000
+config :ellipticoind, transaction_processing_time: 5000
 config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"

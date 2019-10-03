@@ -27,7 +27,7 @@ defmodule Router do
   plug(:dispatch)
 
   get "/transactions/:transaction_hash" do
-    transaction_hash = Base.url_decode64!(conn.path_params["transaction_hash"])
+    transaction_hash = Base.url_decode64!(conn.path_params["transaction_hash"], padding: false)
 
     transaction =
       Repo.one(
