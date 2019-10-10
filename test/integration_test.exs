@@ -19,6 +19,7 @@ defmodule Integration.MiningTest do
     :ok
   end
 
+
   test "mining a block" do
     P2P.Transport.Test.subscribe_to_test_broadcasts(self())
     base_reward = 640000

@@ -9,6 +9,7 @@ config :ellipticoind, enable_miner: false
 config :ellipticoind, https: false
 config :ellipticoind, p2p_transport: P2P.Transport.Test
 
+config :ellipticoind, ellipticoin_client: Test.MockEllipticoinClient
 config :ellipticoind, P2P.Transport.Test,
   port: 4045,
   bootnodes:

@@ -93,9 +93,20 @@ defmodule Ellipticoind.Models.Block do
   end
 
   def apply(block) do
+    IO.inspect block, label: :applying
+    IO.inspect Validations.valid_next_block?(block)
     if Validations.valid_next_block?(block) do
       Miner.stop()
+      process_transactions(block)
+      Miner.cast_mine_next_block()
+      WebsocketHandler.broadcast(:blocks, block)
+      Logger.info("Applied block #{block.number}")
+    else
+      Logger.info("Received invalid block ##{block.number}")
+    end
+  end
 
+  def process_transactions(block) do
       %{
         memory_changeset: memory_changeset,
         storage_changeset: storage_changeset
@@ -103,12 +114,5 @@ defmodule Ellipticoind.Models.Block do
 
       Memory.write_changeset(memory_changeset, block.number)
       Storage.write_changeset(storage_changeset, block.number)
-      Repo.insert!(block)
-      Miner.cast_mine_next_block()
-      WebsocketHandler.broadcast(:blocks, block)
-      Logger.info("Applied block #{block.number}")
-    else
-      Logger.info("Received invalid block ##{block.number}")
-    end
   end
 end
