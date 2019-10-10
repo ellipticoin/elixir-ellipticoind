@@ -49,20 +49,6 @@ defmodule Router do
     end
   end
 
-  get "/blocks/:hash" do
-    Block
-    |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash"]))
-    |> Repo.preload(:transactions)
-    |> BlockView.as_map()
-    |> render_success(conn)
-  end
-
-  get "/memory/:key" do
-    key = Base.url_decode64!(conn.path_params["key"])
-    resp = Memory.get(key) || <<>>
-    send_resp(conn, 200, resp)
-  end
-
   get "/blocks" do
     limit =
       if conn.query_params["limit"] do
@@ -77,7 +63,27 @@ defmodule Router do
       |> Repo.preload(:transactions)
       |> Enum.map(&BlockView.as_map/1)
 
-    send_resp(conn, 200, Cbor.encode(%{blocks: blocks}))
+    render_success(conn, blocks)
+  end
+
+  get "/blocks/:hash_or_number" do
+    block = case Integer.parse(conn.path_params["hash_or_number"]) do
+      {block_number, _} -> Block
+        |> Repo.get_by(number: block_number)
+      :error -> Block
+        |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash_or_number"]))
+    end
+  
+    block = block
+      |> Repo.preload(:transactions)
+      |> BlockView.as_map()
+    render_success(conn, block)
+  end
+
+  get "/memory/:key" do
+    key = Base.url_decode64!(conn.path_params["key"])
+    resp = Memory.get(key)
+    send_resp(conn, 200, resp)
   end
 
   post "/transactions" do

@@ -1,6 +1,5 @@
 defmodule API.BlocksApiTest do
   alias Ellipticoind.Views.BlockView
-  alias Ellipticoind.Models.Block
   alias Ellipticoind.Repo
   import Test.Utils
   import Ellipticoind.Factory
@@ -12,26 +11,23 @@ defmodule API.BlocksApiTest do
   end
 
   test "GET /blocks/:block_number:" do
-    # {public_key, _private_key} = Crypto.keypair()
-    #
-    # block = %{
-    #   contract_address: <<0::256>> <> "test",
-    #   nonce: 0,
-    #   gas_limit: 100000000,
-    #   sender: public_key,
-    #   function: :function,
-    #   arguments: []
-    # }
-    #
-    # Block.changeset(%Block{}, block)
-    # |> Repo.insert()
-    #
-    # block_hash = Crypto.hash(block)
-    block = build(:block_changeset)
-    Repo.insert!(block)
+    block_changeset = build(:block_changeset)
+    block = Repo.insert!(block_changeset)
 
     assert {:ok, response} = http_get("/blocks/#{block.number}")
 
     assert Cbor.decode!(response.body) == BlockView.as_map(block)
+  end
+
+  test "GET /blocks" do
+    block_changesets = build_list(3, :block_changeset)
+    blocks = block_changesets
+             |> Enum.map(&Repo.insert!/1)
+
+    assert {:ok, response} = http_get("/blocks")
+
+    assert Cbor.decode!(response.body) == blocks
+    |> Enum.reverse
+    |> Enum.map(&BlockView.as_map/1)
   end
 end
