@@ -17,6 +17,8 @@ config :ellipticoind,
 config :ellipticoind, dhfile: nil
 config :ellipticoind, https: false
 config :ellipticoind, p2p_transport: P2P.Transport.Libp2p
+config :ellipticoind, ellipticoin_client: EllipticoinClient
+config :ellipticoind, client_timeout: 300_000
 
 config :ellipticoind, P2P.Transport.Libp2p,
   private_key:
@@ -28,8 +30,10 @@ config :ellipticoind, P2P.Transport.Libp2p,
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
   # File.read!("./priv/bootnodes.txt")
   bootnodes:
-    if(System.get_env("BOOTNODES"), do: System.get_env("BOOTNODES"), else: "")
-    |> String.split(",", trim: true)
+  File.read!("./priv/bootnodes.txt")
+    |> String.split("\n", trim: true)
+    # if(System.get_env("BOOTNODES"), do: System.get_env("BOOTNODES"), else: "")
+    # |> String.split(",", trim: true)
 
 # bootnodes: []
 #

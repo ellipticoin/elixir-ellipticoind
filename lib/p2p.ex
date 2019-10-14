@@ -12,6 +12,10 @@ defmodule P2P do
     {:ok, %{}}
   end
 
+  def get_peers() do
+    transport().get_peers()
+  end
+
   def broadcast(message),
     do: apply(transport(), :broadcast, [message])
 

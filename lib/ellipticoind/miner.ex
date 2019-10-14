@@ -5,7 +5,7 @@ defmodule Ellipticoind.Miner do
   alias Ellipticoind.Models.{Block, Transaction}
   alias Ellipticoind.Views.BlockView
   alias Ellipticoind.{TransactionProcessor, Storage, Memory}
-  @fast_sync_batch_size 2
+  @fast_sync_batch_size 10
   @ellipticoin_client Application.get_env(:ellipticoind, :ellipticoin_client)
   
 
@@ -54,9 +54,12 @@ defmodule Ellipticoind.Miner do
 
   def handle_cast({:fast_sync}, state) do
     blocks = @ellipticoin_client.get_blocks()
-    blocks_stream = Stream.map(blocks, &(&1))
+    blocks_stream = Stream.map(Enum.reverse(blocks), &(&1))
     Enum.map(Stream.chunk_every(blocks_stream, @fast_sync_batch_size), fn blocks ->
-      Logger.info("Applied blocks #{List.first(blocks).number} to #{List.last(blocks).number}")
+      start_block_number = List.first(blocks).number
+      end_block_number = List.last(blocks).number
+      percentage_complete = end_block_number/length(blocks)
+      Logger.info("Applied blocks #{start_block_number} to #{end_block_number} (#{percentage_complete}% complete)")
       blocks |> Enum.map(&Block.process_transactions/1)
       blocks |> Enum.map(&Repo.insert/1)
     end)
@@ -64,6 +67,7 @@ defmodule Ellipticoind.Miner do
 
     {:noreply, state}
   end
+
 
   def handle_cast({:get_next_block}, state) do
     block = @ellipticoin_client.get_block(Block.next_block_number())

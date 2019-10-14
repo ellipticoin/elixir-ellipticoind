@@ -33,6 +33,7 @@ defmodule P2P.Transport.Noise do
      %{
        subscribers: [],
        port: port,
+       peers: bootnodes,
        started: false
      }}
   end
@@ -44,6 +45,10 @@ defmodule P2P.Transport.Noise do
 
   def broadcast(message) do
     broadcast(__MODULE__, message)
+  end
+
+  def get_peers() do
+    GenServer.call(__MODULE__, {:get_peers})
   end
 
   def broadcast(pid, message) do
@@ -60,6 +65,10 @@ defmodule P2P.Transport.Noise do
 
   def handle_call({:started?}, _from, state) do
     {:reply, state[:started], state}
+  end
+
+  def handle_call({:get_peers}, _from, %{peers: peers} = state) do
+    {:reply, peers, state}
   end
 
   def handle_call({:subscribe, pid}, _from, state) do

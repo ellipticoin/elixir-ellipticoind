@@ -1,6 +1,4 @@
 defmodule Test.MockEllipticoinClient do
-  alias Ellipticoind.Repo
-  alias Ellipticoind.Views.BlockView
   use GenServer
 
   def start_link(state) do

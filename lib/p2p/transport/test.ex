@@ -5,11 +5,17 @@ defmodule P2P.Transport.Test do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def init(_init_arg) do
+  def init(_state = %{bootnodes: bootnodes}) do
+
     {:ok,
      %{
-       subscribers: []
+       subscribers: [],
+       peers: bootnodes,
      }}
+  end
+
+  def get_peers() do
+    GenServer.call(__MODULE__, {:get_peers})
   end
 
   def receive(message) do
@@ -24,6 +30,10 @@ defmodule P2P.Transport.Test do
 
   def broadcast(message) do
     GenServer.call(__MODULE__, {:broadcast, message})
+  end
+
+  def handle_call({:get_peers}, _from, %{peers: peers} = state) do
+    {:reply, peers, state}
   end
 
   def handle_call({:subscribe_to_test_broadcasts, pid}, _from, state) do
