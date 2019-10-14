@@ -71,7 +71,7 @@ defmodule Router do
       {block_number, _} -> Block
         |> Repo.get_by(number: block_number)
       :error -> Block
-        |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash_or_number"]))
+        |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash_or_number"], padding: false))
     end
   
     block = block
@@ -81,7 +81,7 @@ defmodule Router do
   end
 
   get "/memory/:key" do
-    key = Base.url_decode64!(conn.path_params["key"])
+    key = Base.url_decode64!(conn.path_params["key"], padding: false)
     resp = Memory.get(key)
     send_resp(conn, 200, resp)
   end
