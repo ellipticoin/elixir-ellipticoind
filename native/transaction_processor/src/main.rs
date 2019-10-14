@@ -13,7 +13,7 @@ use serde_cbor::{from_slice, to_vec};
 use std::collections::HashMap;
 use std::env::args;
 use std::io::BufRead;
-use std::{io, thread, time, process};
+use std::{io, thread, time};
 use vm::Open;
 use vm::{Changeset, Commands, CompletedTransaction, Env, Transaction, Memory, Storage};
 mod system_contracts;
@@ -51,7 +51,6 @@ fn process_existing_block() {
         &base64::decode(&transactions_encoded.trim_end_matches("\n")).unwrap(),
     )
     .unwrap();
-    exit_on_close();
     let mut memory_changeset = HashMap::new();
     let mut storage_changeset = HashMap::new();
     let mut completed_transactions: Vec<CompletedTransaction> = Default::default();
@@ -73,7 +72,6 @@ fn process_existing_block() {
 }
 
 fn process_new_block() {
-    exit_on_close();
     let redis_client = redis::Client::open((*REDIS_URL).as_str()).unwrap();
     let redis = redis_client.get_connection().unwrap();
     let mut memory_changeset = HashMap::new();
@@ -210,19 +208,4 @@ fn get_next_transaction(redis: &vm::Connection, source: &str) -> Option<Transact
                 .expect("failed to load transaction_bytes"),
         )
     }
-}
-//
-//  https://stackoverflow.com/a/39772976/1356670
-// "When a process is exited (the port is closed) the spawned program / port should get an EOF on
-// its STDIN. This is the "standard" way for the process to detect when the port has been closed:
-// an end-of-file on STDIN."
-
-fn exit_on_close() {
-    thread::spawn(move || {
-        let mut buffer = String::new();
-        let bytes = io::stdin().read_line(&mut buffer).unwrap();
-        if bytes == 0 {
-            process::exit(0);
-        }
-    });
 }

@@ -13,7 +13,7 @@ defmodule Hashfactor do
     send(port, {self(), {:command, Base.encode64(data) <> "\n"}})
 
     receive do
-      {port, {:data, message}} ->
+      {_port, {:data, message}} ->
         message
         |> List.to_string()
         |> String.trim("\n")
