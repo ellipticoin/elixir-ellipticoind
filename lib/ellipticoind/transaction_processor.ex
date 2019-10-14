@@ -109,7 +109,7 @@ defmodule Ellipticoind.TransactionProcessor do
     end
   end
 
-  def receive_stop_or_message(_port, message \\ '') do
+  def receive_stop_or_message(port, message \\ '') do
     receive do
       :stop ->
         :stop
