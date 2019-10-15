@@ -26,9 +26,9 @@ defmodule Ellipticoind.Mixfile do
 
   defp golang_modules do
     [
-      noise: [
-        path: "native/noise",
-        install_args: ["noise.go", "ellipticoin.pb.go"]
+      libp2p: [
+        path: "native/libp2p",
+        install_args: ["libp2p.go", "pubsub.go"]
       ]
     ]
   end

@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :ellipticoind, transaction_processing_time: 5000
+config :ellipticoind, transaction_processing_time: 1000
 config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
@@ -16,11 +16,15 @@ config :ellipticoind,
 
 config :ellipticoind, dhfile: nil
 config :ellipticoind, https: false
-config :ellipticoind, p2p_transport: P2P.Transport.Test
+config :ellipticoind, p2p_transport: P2P.Transport.Libp2p
 
-config :ellipticoind, P2P.Transport.Test,
+config :ellipticoind, P2P.Transport.Libp2p,
   private_key:
-    "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA==",
+    if(System.get_env("PRIVATE_KEY"),
+      do: System.get_env("PRIVATE_KEY"),
+      else:
+        "FbJ84KTznL4ME5InsxJalt5Asv5tVTRJwGnkZTMXMLe9Ayfcm9LcBMhO15D6A5h+5VKfZu64Af7h7w1j8K+3AA=="
+    ) |>Base.decode64!() |> :binary.part(0, 32),
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
   # File.read!("./priv/bootnodes.txt")
   bootnodes:

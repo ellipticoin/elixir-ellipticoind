@@ -1,3 +1,0 @@
-davenport.ellipticoin.org:4461
-joyce.ellipticoin.org:4461
-fritz.ellipticoin.org:4461

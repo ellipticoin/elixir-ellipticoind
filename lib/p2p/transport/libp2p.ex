@@ -1,29 +1,32 @@
-defmodule P2P.Transport.LibP2P do
+defmodule P2P.Transport.Libp2p do
+  alias P2P.Messages
+  require Logger
   use GenServer
-  @crate "libp2p"
+  @module "libp2p"
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def init(
-        options = %{
-          port: port
-        }
-      ) do
-    libp2p_address = "/ip4/0.0.0.0/tcp/#{port}"
+  def init(options) do
+    defaults = %{
+      port: 4045,
+      ip: "0.0.0.0"
+    }
 
-    bootnodes =
-      Configuration.bootnodes()
-      |> Enum.join(",")
-
-    private_key =
-      (Map.get(options, :private_key) || Configuration.private_key())
-      |> Base.encode64()
+    %{
+      ip: ip,
+      port: port,
+      bootnodes: bootnodes
+    } = Map.merge(defaults, options)
 
     port =
-      Port.open({:spawn_executable, path_to_executable()},
-        args: [private_key, libp2p_address, bootnodes]
+      Port.open(
+        {:spawn_executable, path_to_executable()},
+        [
+          :stderr_to_stdout,
+          args: [Base.encode16(:binary.part(Configuration.private_key(), 0, 32)), ip, Integer.to_string(port)] ++ bootnodes
+        ]
       )
 
     {:ok,
@@ -47,6 +50,10 @@ defmodule P2P.Transport.LibP2P do
     GenServer.cast(pid, {:broadcast, message})
   end
 
+  def subscribe(recipient_pid) do
+    GenServer.call(__MODULE__, {:subscribe, recipient_pid})
+  end
+
   def subscribe(pid, recipient_pid) do
     GenServer.call(pid, {:subscribe, recipient_pid})
   end
@@ -60,18 +67,22 @@ defmodule P2P.Transport.LibP2P do
     {:reply, nil, state}
   end
 
-  def handle_cast({:broadcast, message}, state = %{port: port}) do
-    Port.command(port, "#{Base.encode64(message)}\n")
+  def handle_cast({:broadcast, struct}, state = %{port: port}) do
+    message = Messages.type(struct) <> " "<> Messages.encode(struct)
+
+    Port.command(port, <<byte_size(message)::unsigned-32>> <> message)
+
     {:noreply, state}
   end
 
-  def handle_info({_port, {:data, message}}, state) do
-    state =
-      message
-      |> to_string()
-      |> String.trim()
-      |> handle_port_data(state)
+  def handle_info({:EXIT, _port, reason}, _state) do
+    Logger.error("Libp2p error #{inspect(reason)}")
+    System.halt(1)
+  end
 
+  def handle_info({_port, {:data, data}}, state) do
+    state = split_messages(:binary.list_to_bin(data))
+    |>Enum.reduce(state, &handle_port_data/2)
     {:noreply, state}
   end
 
@@ -79,21 +90,63 @@ defmodule P2P.Transport.LibP2P do
     %{state | started: true}
   end
 
+
   def handle_port_data("message:" <> message, state = %{subscribers: subscribers}) do
-    [address, message] = String.split(message, ":")
+    case String.split(message, " ", parts: 2) do
+      [type, raw_message] ->
+        Enum.each(subscribers, fn subscriber ->
+          message = Messages.decode(raw_message, type)
 
-    Enum.each(subscribers, fn subscriber ->
-      send(subscriber, {:libp2p, address, Base.decode64!(message)})
-    end)
+          send(subscriber, {:p2p, message})
+        end)
 
+     message ->
+        IO.puts("Invalid message:")
+        IO.inspect(message)
+    end
+
+    state
+  end
+
+  def handle_port_data("log:" <> message, state) do
+    IO.puts message
     state
   end
 
   def handle_port_data(data, state) do
-    IO.puts(data)
+    IO.inspect(data)
 
     state
   end
 
-  defp path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @crate])
+  def split_messages(
+    <<
+      message_size::unsigned-32,
+      message_data :: binary>> = full_message,
+    messages \\ []
+  ) do
+    cond do
+      byte_size(message_data) == message_size  ->
+        [message_data| messages]
+      byte_size(message_data) < message_size ->
+        split_messages(continue_receiving(message_size + 4, full_message), messages)
+      byte_size(message_data) > message_size ->
+        <<message_body::binary-size(message_size), message_data::binary>> = message_data
+        split_messages(message_data, messages ++ [message_body])
+    end
+  end
+
+  def continue_receiving(length, full_message\\<<>>) do
+    receive do
+      {_port, {:data, new_part}} ->
+        new_part_bin = :binary.list_to_bin(new_part)
+        if byte_size(full_message) + byte_size(new_part_bin) == length do
+          full_message <> new_part_bin
+        else
+          continue_receiving(length, full_message <> new_part_bin)
+      end 
+    end
+  end
+
+  defp path_to_executable(), do: Application.app_dir(:ellipticoind, ["priv", "native", @module])
 end
