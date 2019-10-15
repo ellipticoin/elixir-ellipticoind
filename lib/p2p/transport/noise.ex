@@ -120,7 +120,7 @@ defmodule P2P.Transport.Noise do
     case String.split(message, " ") do
       [type, raw_message] ->
         Enum.each(subscribers, fn subscriber ->
-          message = Messages.decode(raw_message, type)
+          message = Messages.decode(Base.decode64!(raw_message), type)
 
           send(subscriber, {:p2p, message})
         end)

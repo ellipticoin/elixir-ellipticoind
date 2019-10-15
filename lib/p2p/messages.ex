@@ -8,7 +8,7 @@ defmodule P2P.Messages do
   end
 
   def decode(raw_message, type) do
-    apply(module(type), :decode, [Base.decode64!(raw_message)])
+    apply(module(type), :decode, [raw_message])
     |> Map.get(:bytes)
     |> Cbor.decode!()
     |> (&struct(model(type), &1)).()

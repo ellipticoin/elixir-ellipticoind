@@ -23,7 +23,7 @@ fn main() {
     exit_on_close();
     let data = base64::decode(&line.trim_end_matches("\n")).unwrap();
     // let mut rng = rand::thread_rng();
-    // let random = rng.gen_range(0, 10000);
+    // let random = rng.gen_range(0, 1000);
     // std::thread::sleep(std::time::Duration::from_millis(random));
     let nonce = hashfactor(data, target_number_of_hashes);
     println!("{}", nonce);
