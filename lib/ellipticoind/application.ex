@@ -1,5 +1,5 @@
 defmodule Ellipticoind.Application do
-  alias Ellipticoind.Miner
+  alias Ellipticoind.Syncer
   use Application
 
   def start(_type, _args) do
@@ -15,7 +15,7 @@ defmodule Ellipticoind.Application do
 
     children =
       if Application.fetch_env!(:ellipticoind, :enable_miner) do
-        children ++ [{Miner, name: Miner}]
+        children ++ [Syncer]
       else
         children
       end

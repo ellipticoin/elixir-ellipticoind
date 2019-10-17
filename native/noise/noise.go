@@ -100,6 +100,7 @@ func main() {
 	time.Sleep(100 * time.Millisecond)
 
 	for _, addr := range flag.Args()[2:] {
+		log("Connecting to", addr)
 		if _, err := client.Dial(addr); err != nil {
 			log(err)
 		}

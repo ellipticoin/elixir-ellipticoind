@@ -19,7 +19,6 @@ config :ellipticoind, https: false
 config :ellipticoind, p2p_transport: P2P.Transport.Libp2p
 config :ellipticoind, ellipticoin_client: EllipticoinClient
 config :ellipticoind, client_timeout: 300_000
-
 config :ellipticoind, P2P.Transport.Libp2p,
   private_key:
     if(System.get_env("PRIVATE_KEY"),

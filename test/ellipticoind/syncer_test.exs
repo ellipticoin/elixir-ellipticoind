@@ -1,21 +1,15 @@
-defmodule Integration.MiningTest do
+defmodule Ellipticoind.SyncerTest do
   import Test.Utils
   use NamedAccounts
   use ExUnit.Case, async: false
   alias Ellipticoind.Repo
-  alias Ellipticoind.Miner
+  alias Ellipticoind.Syncer
   alias Test.MockEllipticoinClient
   import Ellipticoind.Factory
   use OK.Pipe
 
   setup do
-    Redis.reset()
     checkout_repo()
-    SystemContracts.deploy()
-
-    on_exit(fn ->
-      Redis.reset()
-    end)
 
     :ok
   end
@@ -28,7 +22,7 @@ defmodule Integration.MiningTest do
       |> Enum.map(&Repo.preload(&1, :transactions))
     MockEllipticoinClient.push_blocks(Enum.slice(blocks, 0, 2))
 
-    Miner.start_link(%{})
+    Syncer.start_link(%{})
     MockEllipticoinClient.push_blocks(Enum.slice(blocks, 2, 4))
     block = poll_for_block(3)
     assert block.number == 3

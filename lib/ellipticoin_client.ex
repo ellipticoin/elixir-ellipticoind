@@ -3,7 +3,10 @@ defmodule EllipticoinClient do
   use HTTPoison.Base
 
   def get_block(block_number) do
-    cast_block(get!("blocks/#{block_number}").body)
+    case get!("blocks/#{block_number}").body do
+      nil -> nil
+      block -> cast_block(block)
+    end
   end
 
   def get_blocks() do
@@ -24,8 +27,12 @@ defmodule EllipticoinClient do
   end
 
   def process_response_body(body) do
-    body
-    |> Cbor.decode!
+    if body == "" do
+      nil
+    else
+      body
+      |> Cbor.decode!
+    end
   end
 
   def cast_block(json) do

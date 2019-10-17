@@ -23,6 +23,7 @@ defmodule P2P do
     do: apply(transport(), :subscribe)
 
   def receive(message) do
+    IO.inspect message, label: :message
     case message.__struct__ do
       Block -> Block.apply(message)
       Transaction -> Transaction.post(message)
