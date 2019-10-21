@@ -16,7 +16,13 @@ defmodule Ellipticoind.Syncer do
     SystemContracts.deploy()
     fast_sync()
 
-    {:ok, nil}
+    {:ok, %{
+      status: :syncing
+    }}
+  end
+
+  def status() do
+    GenServer.call(__MODULE__, {:status})
   end
 
   def fast_sync() do
@@ -40,24 +46,31 @@ defmodule Ellipticoind.Syncer do
       blocks |> Enum.map(&Repo.insert/1)
       Logger.info("Applied blocks #{start_block_number} to #{end_block_number} (fast-sync #{percentage_complete}% complete)")
     end)
-    IO.puts "get next block"
     get_next_block()
 
     {:noreply, state}
   end
 
-
   def handle_cast({:get_next_block}, state) do
-    IO.puts "getting next block: ##{Block.next_block_number()}"
     case @ellipticoin_client.get_block(Block.next_block_number()) do
-      nil -> Miner.start_link(%{})
+      nil ->
+        if Process.whereis(Miner) == nil do
+          Logger.info "Sync complete starting Miner"
+          Miner.start_link(%{})
+        end
       block ->
         Block.process_transactions(block)
-        Repo.insert(block)
-        get_next_block()
+        with {:ok, block} <- Repo.insert(block) do
+            Logger.info "Syncer: Applied block ##{block.number}"
+            get_next_block()
+        end
     end
 
     {:noreply, state}
   end
 
+  def handle_call({:status}, _from, state) do
+    IO.puts "getting status"
+    {:reply, Map.get(state, :status), state}
+  end
 end

@@ -93,8 +93,6 @@ defmodule Ellipticoind.Models.Block do
   end
 
   def apply(block) do
-    IO.inspect block, label: :applying
-    IO.inspect Validations.valid_next_block?(block)
     if Validations.valid_next_block?(block) do
       Miner.stop()
       process_transactions(block)

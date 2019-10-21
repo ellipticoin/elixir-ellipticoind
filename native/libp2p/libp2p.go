@@ -41,7 +41,9 @@ func createPubSub(secretKey []byte, ip string, port int, bootnodes []string) (*l
 		pInfo, _ := peer.AddrInfoFromP2pAddr(multiAddr)
 		log("Connecting to : %s", bootnode)
 		err := (*host).Connect(context.Background(), *pInfo)
-		log("%s", err)
+		if err != nil {
+			log("%s", err)
+		}
 
 		time.Sleep(time.Second * 2)
 	}

@@ -23,7 +23,14 @@ defmodule EllipticoinClient do
   end
 
   def random_peer() do
-    String.replace(Enum.random(P2P.get_peers()), "4461", "4460")
+    multiaddrr_to_url(Enum.random(P2P.get_peers()))
+  end
+
+  def multiaddrr_to_url(multiaddrr) do
+    parts = String.split(multiaddrr, "/")
+
+    "http://#{Enum.at(parts, 2)}:4460"
+
   end
 
   def process_response_body(body) do

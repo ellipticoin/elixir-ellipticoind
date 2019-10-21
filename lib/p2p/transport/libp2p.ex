@@ -25,7 +25,7 @@ defmodule P2P.Transport.Libp2p do
         {:spawn_executable, path_to_executable()},
         [
           :stderr_to_stdout,
-          args: [Base.encode16(:binary.part(Configuration.private_key(), 0, 32)), ip, Integer.to_string(port)] ++ bootnodes
+          args: [Base.encode16(Configuration.private_key()), ip, Integer.to_string(port)] ++ bootnodes
         ]
       )
 
@@ -33,8 +33,13 @@ defmodule P2P.Transport.Libp2p do
      %{
        subscribers: [],
        port: port,
+       peers: bootnodes,
        started: false
      }}
+  end
+
+  def get_peers() do
+    GenServer.call(__MODULE__, {:get_peers})
   end
 
   def ensure_started(pid) do
@@ -56,6 +61,10 @@ defmodule P2P.Transport.Libp2p do
 
   def subscribe(pid, recipient_pid) do
     GenServer.call(pid, {:subscribe, recipient_pid})
+  end
+
+  def handle_call({:get_peers}, _from, %{peers: peers} = state) do
+    {:reply, peers, state}
   end
 
   def handle_call({:started?}, _from, state) do

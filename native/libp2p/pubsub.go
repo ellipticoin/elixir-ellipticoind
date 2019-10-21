@@ -73,7 +73,7 @@ func (c *libp2pPubSub) initializePubSub(h core.Host) {
 
 // createHost creates a host with some default options and a signing identity
 func createHost(secretKey []byte, ip string, port int) (core.Host, error) {
-	sk, err := crypto.UnmarshalSecp256k1PrivateKey(secretKey)
+	sk, err := crypto.UnmarshalEd25519PrivateKey(secretKey)
 	// Starting a peer with default configs
 	opts := []libp2p.Option{
 		libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", ip, port)),

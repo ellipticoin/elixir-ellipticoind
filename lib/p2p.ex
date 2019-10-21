@@ -1,5 +1,7 @@
 defmodule P2P do
   require Logger
+  alias Ellipticoind.Syncer
+  alias Ellipticoind.Repo
   alias Ellipticoind.Models.{Block, Transaction}
   use GenServer
 
@@ -23,9 +25,11 @@ defmodule P2P do
     do: apply(transport(), :subscribe)
 
   def receive(message) do
-    IO.inspect message, label: :message
     case message.__struct__ do
-      Block -> Block.apply(message)
+      Block -> if message.number == Block.next_block_number() do
+        Block.apply(message)
+        Repo.insert(message)
+      end
       Transaction -> Transaction.post(message)
     end
   end
