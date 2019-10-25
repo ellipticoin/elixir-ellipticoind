@@ -12,7 +12,6 @@ defmodule Ellipticoind.Miner do
   end
 
   def init(_init_arg) do
-    IO.puts "Starting mining"
     SystemContracts.deploy()
     cast_mine_next_block()
 
@@ -93,6 +92,7 @@ defmodule Ellipticoind.Miner do
       P2P.broadcast(block)
       Logger.info("Mined block #{block.number}")
     end
+      
 
     cast_mine_next_block()
   end

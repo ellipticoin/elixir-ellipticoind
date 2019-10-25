@@ -3,10 +3,10 @@ defmodule Ellipticoind.Syncer do
   alias Ellipticoind.Miner
   alias Ellipticoind.Models.Block
   alias Ellipticoind.Repo
+  alias Ellipticoind.TransactionProcessor
   use GenServer
 
   @fast_sync_batch_size 10
-  @ellipticoin_client Application.get_env(:ellipticoind, :ellipticoin_client)
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -14,7 +14,11 @@ defmodule Ellipticoind.Syncer do
 
   def init(_init_arg) do
     SystemContracts.deploy()
-    fast_sync()
+    if Enum.empty?(P2P.get_peers()) do
+      Miner.start_link(%{})
+    else
+      fast_sync()
+    end
 
     {:ok, %{
       status: :syncing
@@ -34,7 +38,7 @@ defmodule Ellipticoind.Syncer do
   end
 
   def handle_cast({:fast_sync}, state) do
-    blocks = @ellipticoin_client.get_blocks()
+    blocks = Configuration.ellipticoin_client().get_blocks()
     total_blocks = length(blocks)
     blocks_stream = Stream.map(Enum.reverse(blocks), &(&1))
     Enum.map(Stream.chunk_every(blocks_stream, @fast_sync_batch_size), fn blocks ->
@@ -42,7 +46,7 @@ defmodule Ellipticoind.Syncer do
       end_block_number = List.last(blocks).number
       percentage_complete = round(end_block_number*100/total_blocks)
 
-      blocks |> Enum.map(&Block.process_transactions/1)
+      blocks |> Enum.map(&TransactionProcessor.process/1)
       blocks |> Enum.map(&Repo.insert/1)
       Logger.info("Applied blocks #{start_block_number} to #{end_block_number} (fast-sync #{percentage_complete}% complete)")
     end)
@@ -52,14 +56,13 @@ defmodule Ellipticoind.Syncer do
   end
 
   def handle_cast({:get_next_block}, state) do
-    case @ellipticoin_client.get_block(Block.next_block_number()) do
-      nil ->
-        if Process.whereis(Miner) == nil do
-          Logger.info "Sync complete starting Miner"
-          Miner.start_link(%{})
-        end
+    case Configuration.ellipticoin_client().get_block(Block.next_block_number()) do
+      nil -> if Process.whereis(Miner) == nil do
+        Logger.info "Sync complete starting Miner"
+        Miner.start_link(%{})
+      end
       block ->
-        Block.process_transactions(block)
+        TransactionProcessor.process(block)
         with {:ok, block} <- Repo.insert(block) do
             Logger.info "Syncer: Applied block ##{block.number}"
             get_next_block()

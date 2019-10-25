@@ -1,7 +1,7 @@
 use Mix.Config
 
 config :ellipticoind, transaction_processing_time: 1000
-config :ellipticoind, hashfactor_target: 10000000
+config :ellipticoind, hashfactor_target: 1
 config :ellipticoind, enable_miner: true
 config :ellipticoind, ellipticoind_url: "http://localhost:4047/"
 config :ellipticoind, base_contracts_path: "./priv/base_contracts"
@@ -28,9 +28,9 @@ config :ellipticoind, P2P.Transport.Libp2p,
     ) |>Base.decode64!() |> :binary.part(0, 32),
   port: if(System.get_env("PORT"), do: System.get_env("PORT") |> String.to_integer(), else: 4047),
   # File.read!("./priv/bootnodes.txt")
-  bootnodes:
-  File.read!("./priv/bootnodes.txt")
-    |> String.split("\n", trim: true)
+  bootnodes: []
+  # File.read!("./priv/bootnodes.txt")
+  #   |> String.split("\n", trim: true)
     # if(System.get_env("BOOTNODES"), do: System.get_env("BOOTNODES"), else: "")
     # |> String.split(",", trim: true)
 

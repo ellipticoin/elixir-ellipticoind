@@ -4,7 +4,7 @@ defmodule Ellipticoind.Mixfile do
   def project do
     [
       app: :ellipticoind,
-      version: "0.1.1",
+      version: "0.1.4",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       compilers: [:rustler, :golang] ++ Mix.compilers(),

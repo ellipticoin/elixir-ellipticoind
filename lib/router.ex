@@ -74,10 +74,15 @@ defmodule Router do
         |> Repo.get_by(hash: Base.url_decode64!(conn.path_params["hash_or_number"], padding: false))
     end
   
-    block = block
-      |> Repo.preload(:transactions)
-      |> BlockView.as_map()
-    render_success(conn, block)
+    if block do
+      response = block
+        |> Repo.preload(:transactions)
+        |> BlockView.as_map()
+
+      render_success(conn, response)
+    else
+      render_error(conn, 404, Cbor.encode(nil))
+    end
   end
 
   get "/memory/:key" do

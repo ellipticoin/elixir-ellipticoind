@@ -26,7 +26,7 @@ fn main() {
     // let random = rng.gen_range(0, 1000);
     // std::thread::sleep(std::time::Duration::from_millis(random));
     let nonce = hashfactor(data, target_number_of_hashes);
-    println!("{}", nonce);
+    println!("h{}", nonce);
 }
 
 fn hashfactor(data: Vec<u8>, target_number_of_hashes: u64) -> u64 {

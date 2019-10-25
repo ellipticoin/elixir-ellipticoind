@@ -17,9 +17,9 @@ defmodule P2P.Transport.Libp2p do
     %{
       ip: ip,
       port: port,
-      bootnodes: bootnodes
     } = Map.merge(defaults, options)
 
+    bootnodes = Application.fetch_env!(:ellipticoind, :bootnodes)
     port =
       Port.open(
         {:spawn_executable, path_to_executable()},

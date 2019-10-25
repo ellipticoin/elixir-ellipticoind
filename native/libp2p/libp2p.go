@@ -75,7 +75,6 @@ func main() {
 	ip := flag.Args()[1]
 	port, _ := strconv.Atoi(flag.Args()[2])
 	bootnodes := flag.Args()[3:]
-	log("incomming len: %d", len(secretKey))
 
 	pubsub, host := createPubSub(secretKey, ip, port, bootnodes)
 

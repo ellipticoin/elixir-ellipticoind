@@ -2,7 +2,10 @@ defmodule P2P do
   require Logger
   alias Ellipticoind.Syncer
   alias Ellipticoind.Repo
+  alias Ellipticoind.Miner
+  alias Ellipticoind.TransactionProcessor
   alias Ellipticoind.Models.{Block, Transaction}
+  alias Ellipticoind.Models.Block.Validations
   use GenServer
 
   def start_link(opts) do
@@ -26,9 +29,15 @@ defmodule P2P do
 
   def receive(message) do
     case message.__struct__ do
-      Block -> if message.number == Block.next_block_number() do
-        Block.apply(message)
+      Block -> if Validations.valid_next_block?(message) do
+      	Miner.stop()
+	TransactionProcessor.process(message)
+	WebsocketHandler.broadcast(:blocks, message)
+	Logger.info("Applied block #{message.number}")
         Repo.insert(message)
+      	Miner.cast_mine_next_block()
+      else
+      	Logger.info("Received invalid block ##{message.number}")
       end
       Transaction -> Transaction.post(message)
     end

@@ -1,4 +1,8 @@
 defmodule Configuration do
+
+  def ellipticoin_client(),
+	do: Application.fetch_env!(:ellipticoind, :ellipticoin_client)
+
   def client_timeout(),
     do: Application.fetch_env!(:ellipticoind, :client_timeout)
   def hashfactor_target(),

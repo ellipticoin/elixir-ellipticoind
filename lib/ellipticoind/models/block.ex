@@ -91,26 +91,4 @@ defmodule Ellipticoind.Models.Block do
       :winner
     ])
   end
-
-  def apply(block) do
-    if Validations.valid_next_block?(block) do
-      Miner.stop()
-      process_transactions(block)
-      Miner.cast_mine_next_block()
-      WebsocketHandler.broadcast(:blocks, block)
-      Logger.info("Applied block #{block.number}")
-    else
-      Logger.info("Received invalid block ##{block.number}")
-    end
-  end
-
-  def process_transactions(block) do
-      %{
-        memory_changeset: memory_changeset,
-        storage_changeset: storage_changeset
-      } = TransactionProcessor.process(block)
-
-      Memory.write_changeset(memory_changeset, block.number)
-      Storage.write_changeset(storage_changeset, block.number)
-  end
 end
